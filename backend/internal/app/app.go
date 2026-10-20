@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -18,6 +19,7 @@ import (
 	"github.com/suwahadi/seafarerscrew/backend/internal/config"
 	"github.com/suwahadi/seafarerscrew/backend/internal/handler"
 	"github.com/suwahadi/seafarerscrew/backend/internal/handler/admin"
+	"github.com/suwahadi/seafarerscrew/backend/internal/job"
 	"github.com/suwahadi/seafarerscrew/backend/internal/middleware"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/postgres"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/redis"
@@ -43,6 +45,8 @@ type App struct {
 	Redis    *goredis.Client
 	Auth     *service.AuthService
 	Settings *service.SettingsService
+	Jobs     *job.Queue
+	CPU      *job.Pool
 	counter  *repository.LimiterRepository
 }
 
@@ -82,7 +86,17 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 		return nil, err
 	}
 	settings := service.NewSettingsService(repository.NewSettingRepository(db), repository.NewCacheRepository(rdb), box, nil)
-	return &App{Config: cfg, Logger: logger, DB: db, Redis: rdb, Auth: auth, Settings: settings, counter: counter}, nil
+	return &App{
+		Config:   cfg,
+		Logger:   logger,
+		DB:       db,
+		Redis:    rdb,
+		Auth:     auth,
+		Settings: settings,
+		Jobs:     job.NewQueue(repository.NewJobRepository(db), rdb, logger),
+		CPU:      job.NewPool(0),
+		counter:  counter,
+	}, nil
 }
 
 // Close releases connections.
@@ -132,6 +146,7 @@ func (a *App) Router() http.Handler {
 		Counter:       a.counter,
 		Auth:          admin.NewAuthHandler(a.Auth, middleware.NewCookieWriter(a.Config.SecureCookies(), SessionAbsolute)),
 		Settings:      admin.NewSettingsHandler(a.Settings),
+		Jobs:          admin.NewJobHandler(a.Jobs),
 	})
 	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
 	return r
@@ -148,6 +163,13 @@ func (a *App) Serve(ctx context.Context) error {
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    1 << 16,
 	}
+	workerCtx, stopWorkers := context.WithCancel(ctx)
+	defer stopWorkers()
+	workersDone := make(chan struct{})
+	go func() {
+		a.Jobs.Run(workerCtx, max(2, runtime.NumCPU()/2))
+		close(workersDone)
+	}()
 	errCh := make(chan error, 1)
 	go func() {
 		a.Logger.Info("http server listening", "addr", srv.Addr, "env", a.Config.Env)
@@ -164,7 +186,10 @@ func (a *App) Serve(ctx context.Context) error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	a.Logger.Info("http server shutting down")
-	if err := srv.Shutdown(shutdownCtx); err != nil {
+	err := srv.Shutdown(shutdownCtx)
+	stopWorkers()
+	<-workersDone
+	if err != nil {
 		return fmt.Errorf("shutdown http server: %w", err)
 	}
 	return nil

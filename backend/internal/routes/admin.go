@@ -21,6 +21,7 @@ type AdminDeps struct {
 	Counter       middleware.HitCounter
 	Auth          *admin.AuthHandler
 	Settings      *admin.SettingsHandler
+	Jobs          *admin.JobHandler
 }
 
 // Admin mounts the admin API.
@@ -50,6 +51,8 @@ func Admin(r chi.Router, d AdminDeps) {
 			r.Get("/settings", d.Settings.Schema)
 			r.Get("/settings/{group}", d.Settings.Show)
 			r.Put("/settings/{group}", d.Settings.Update)
+
+			r.Get("/jobs/{id}", d.Jobs.Show)
 		})
 	})
 }
