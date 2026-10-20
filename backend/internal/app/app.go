@@ -58,6 +58,8 @@ type App struct {
 	CrewExport *service.CrewExportService
 	CrewImport *service.CrewImportService
 	Email      *service.EmailService
+	Documents  *service.DocumentService
+	templates  *service.DocumentTemplateService
 	brevo      *brevo.Client
 	counter    *repository.LimiterRepository
 }
@@ -129,6 +131,7 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 		counter:  counter,
 	}
 	a.wireCrew()
+	a.wireDocuments()
 	a.wireEmail()
 	return a, nil
 }

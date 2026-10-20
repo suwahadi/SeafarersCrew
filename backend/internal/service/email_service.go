@@ -64,8 +64,14 @@ type EmailAttachmentLoader interface {
 	Load(ctx context.Context, fileID uuid.UUID) (brevo.Attachment, error)
 }
 
+// EmailRelatedResolver maps a record's public ID to its internal ID and template variables.
+type EmailRelatedResolver interface {
+	EmailContext(ctx context.Context, relatedType, publicID string) (uuid.UUID, map[string]string, error)
+}
+
 // EmailService renders, logs and dispatches email (PRD 6.7).
 type EmailService struct {
+	related     EmailRelatedResolver
 	store       EmailStore
 	delivery    EmailDelivery
 	attachments EmailAttachmentLoader
@@ -76,8 +82,8 @@ type EmailService struct {
 }
 
 // NewEmailService builds an EmailService.
-func NewEmailService(store EmailStore, delivery EmailDelivery, attachments EmailAttachmentLoader, settings SettingsReader, jobs Enqueuer, now func() time.Time) *EmailService {
-	return &EmailService{store: store, delivery: delivery, attachments: attachments, settings: settings, jobs: jobs, policy: bluemonday.UGCPolicy(), now: now}
+func NewEmailService(store EmailStore, delivery EmailDelivery, attachments EmailAttachmentLoader, settings SettingsReader, jobs Enqueuer, related EmailRelatedResolver, now func() time.Time) *EmailService {
+	return &EmailService{related: related, store: store, delivery: delivery, attachments: attachments, settings: settings, jobs: jobs, policy: bluemonday.UGCPolicy(), now: now}
 }
 
 // EmailSendInput is one email to queue.
@@ -90,6 +96,7 @@ type EmailSendInput struct {
 	Variables         map[string]string
 	RelatedType       string
 	RelatedID         *uuid.UUID
+	RelatedPublicID   string
 	AttachmentFileIDs []uuid.UUID
 }
 
@@ -100,6 +107,9 @@ type emailJobPayload struct {
 
 // Send validates and renders the email, logs it as queued and enqueues delivery.
 func (s *EmailService) Send(ctx context.Context, in EmailSendInput) (model.EmailLog, model.Job, error) {
+	if err := s.resolveRelated(ctx, &in); err != nil {
+		return model.EmailLog{}, model.Job{}, err
+	}
 	to, cc, err := emailValidateInput(&in)
 	if err != nil {
 		return model.EmailLog{}, model.Job{}, err
@@ -145,6 +155,28 @@ func (s *EmailService) Send(ctx context.Context, in EmailSendInput) (model.Email
 		return model.EmailLog{}, model.Job{}, err
 	}
 	return log, j, nil
+}
+
+func (s *EmailService) resolveRelated(ctx context.Context, in *EmailSendInput) error {
+	if in.RelatedPublicID == "" {
+		return nil
+	}
+	if s.related == nil {
+		return apperr.Validation(map[string]string{"related_id": "Records cannot be referenced by public ID here."})
+	}
+	id, vars, err := s.related.EmailContext(ctx, in.RelatedType, in.RelatedPublicID)
+	if err != nil {
+		return err
+	}
+	merged := make(map[string]string, len(vars)+len(in.Variables))
+	for k, v := range vars {
+		merged[k] = v
+	}
+	for k, v := range in.Variables {
+		merged[k] = v
+	}
+	in.RelatedID, in.Variables = &id, merged
+	return nil
 }
 
 // SendTemplate queues a template email to one recipient, e.g. the applicant confirmation.

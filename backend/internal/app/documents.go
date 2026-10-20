@@ -16,14 +16,13 @@ func (a *App) Quotations() *service.QuotationService {
 	return service.NewQuotationService(repository.NewQuotationRepository(a.DB))
 }
 
-func (a *App) documentHandlers() routes.DocumentHandlers {
-	quotations := a.Quotations()
-	templates := service.NewDocumentTemplateService(repository.NewDocumentTemplateRepository(a.DB))
-	documents := service.NewDocumentService(service.DocumentDeps{
-		Templates:  templates,
+func (a *App) wireDocuments() {
+	a.templates = service.NewDocumentTemplateService(repository.NewDocumentTemplateRepository(a.DB))
+	a.Documents = service.NewDocumentService(service.DocumentDeps{
+		Templates:  a.templates,
 		Sources:    repository.NewDocumentSourceRepository(a.DB),
 		Crews:      a.Crews,
-		Quotations: quotations,
+		Quotations: a.Quotations(),
 		Settings:   a.Settings,
 		Files:      service.NewStoredFileReader(repository.NewFileRepository(a.DB), a.Storage),
 		Renderer:   gotenberg.NewClient(a.Config.GotenbergURL, 90*time.Second),
@@ -33,8 +32,11 @@ func (a *App) documentHandlers() routes.DocumentHandlers {
 		Pool:       a.CPU,
 		Now:        time.Now,
 	})
+}
+
+func (a *App) documentHandlers() routes.DocumentHandlers {
 	return routes.DocumentHandlers{
-		Documents:  admin.NewDocumentHandler(templates, documents),
-		Quotations: admin.NewQuotationHandler(quotations),
+		Documents:  admin.NewDocumentHandler(a.templates, a.Documents),
+		Quotations: admin.NewQuotationHandler(a.Quotations()),
 	}
 }

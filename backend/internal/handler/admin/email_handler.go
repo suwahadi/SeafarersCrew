@@ -52,7 +52,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 	log, j, err := h.emails.Send(r.Context(), service.EmailSendInput{
 		TemplateCode: in.TemplateCode, To: in.To, CC: in.CC, Subject: in.Subject, BodyHTML: in.BodyHTML,
-		Variables: in.Variables, RelatedType: in.RelatedType, RelatedID: in.RelatedUUID(), AttachmentFileIDs: in.Attachments(),
+		Variables: in.Variables, RelatedType: in.RelatedType, RelatedID: in.RelatedUUID(), RelatedPublicID: in.RelatedPublicID(), AttachmentFileIDs: in.Attachments(),
 	})
 	if err != nil {
 		resource.Error(w, r, err)

@@ -26,6 +26,7 @@ func (a *App) wireEmail() {
 		emailAttachments{files: a.Files, storage: a.Storage},
 		a.Settings,
 		a.Jobs,
+		a.Documents,
 		time.Now,
 	)
 	a.Jobs.Register(service.EmailSendJob, a.Email.Handle)

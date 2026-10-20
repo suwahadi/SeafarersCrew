@@ -76,12 +76,13 @@ func emailRouter(h *EmailHandler) http.Handler {
 func TestSendEmailReturnsAccepted(t *testing.T) {
 	emails := &stubEmails{}
 	h := emailRouter(NewEmailHandler(emails, &stubTester{}))
-	related, file := uuid.New(), uuid.New()
-	body := `{"template_code":"send_contract","to":["a@example.com"],"related_type":"contract","related_id":"` + related.String() + `","attachment_file_ids":["` + file.String() + `"]}`
+	file := uuid.New()
+	body := `{"template_code":"send_contract","to":["a@example.com"],"related_type":"contract","related_id":"ADFPKEX4K","attachment_file_ids":["` + file.String() + `"]}`
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/emails/send", strings.NewReader(body)))
 	require.Equal(t, http.StatusAccepted, rec.Code, rec.Body.String())
-	assert.Equal(t, &related, emails.lastSend.RelatedID)
+	assert.Equal(t, "ADFPKEX4K", emails.lastSend.RelatedPublicID, "contracts are referenced by their public ID")
+	assert.Nil(t, emails.lastSend.RelatedID)
 	assert.Equal(t, []uuid.UUID{file}, emails.lastSend.AttachmentFileIDs)
 	assert.Contains(t, rec.Body.String(), `"job_id"`)
 

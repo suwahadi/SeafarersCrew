@@ -24,7 +24,9 @@ type SendEmail struct {
 func (r *SendEmail) Validate() map[string]string {
 	Trim(&r.TemplateCode, &r.RelatedType, &r.RelatedID)
 	e := Errors{}
-	r.relatedID = e.UUID("related_id", r.RelatedID)
+	if !r.UsesPublicID() {
+		r.relatedID = e.UUID("related_id", r.RelatedID)
+	}
 	r.attachments = make([]uuid.UUID, 0, len(r.AttachmentFileIDs))
 	for _, raw := range r.AttachmentFileIDs {
 		id, err := uuid.Parse(raw)
@@ -35,6 +37,23 @@ func (r *SendEmail) Validate() map[string]string {
 		r.attachments = append(r.attachments, id)
 	}
 	return e
+}
+
+// UsesPublicID reports whether related_id is a 9-character public ID (contract, quotation or crew).
+func (r *SendEmail) UsesPublicID() bool {
+	switch r.RelatedType {
+	case "contract", "quotation", "crew":
+		return r.RelatedID != ""
+	}
+	return false
+}
+
+// RelatedPublicID returns related_id when it is a public ID.
+func (r *SendEmail) RelatedPublicID() string {
+	if r.UsesPublicID() {
+		return r.RelatedID
+	}
+	return ""
 }
 
 // RelatedUUID returns the parsed related ID.

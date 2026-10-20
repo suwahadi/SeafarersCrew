@@ -17,6 +17,7 @@ import (
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/brevo"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/turnstile"
 	"github.com/suwahadi/seafarerscrew/backend/internal/repository"
+	"github.com/suwahadi/seafarerscrew/backend/internal/support/apperr"
 )
 
 type memEmailStore struct {
@@ -189,7 +190,7 @@ func newEmailFixture() emailFixture {
 		},
 	}
 	now := func() time.Time { return time.Date(2026, 10, 20, 3, 0, 0, 0, time.UTC) }
-	f.svc = NewEmailService(store, f.delivery, f.files, f.settings, f.queue, now)
+	f.svc = NewEmailService(store, f.delivery, f.files, f.settings, f.queue, fakeRelated{}, now)
 	return f
 }
 
@@ -485,5 +486,30 @@ func TestIntegrationTester(t *testing.T) {
 	assert.False(t, res.OK)
 
 	_, err = tester.Test(ctx, "branding", admin)
+	requireAppErr(t, err, "not_found")
+}
+
+type fakeRelated struct{}
+
+var relatedContractID = uuid.MustParse("01a15ab4-0000-7000-8000-000000000001")
+
+func (fakeRelated) EmailContext(_ context.Context, relatedType, publicID string) (uuid.UUID, map[string]string, error) {
+	if relatedType != "contract" || publicID != "ADFPKEX4K" {
+		return uuid.Nil, nil, apperr.NotFound("Contract")
+	}
+	return relatedContractID, map[string]string{"crew_name": "Budi Santoso", "contract_id": "ADFPKEX4K", "rank": "Master"}, nil
+}
+
+func TestSendResolvesPublicIDAndFillsTemplateVariables(t *testing.T) {
+	f := newEmailFixture()
+	log, _, err := f.svc.Send(context.Background(), EmailSendInput{
+		TemplateCode: "send_contract", To: []string{"capt@example.com"}, RelatedType: "contract", RelatedPublicID: "ADFPKEX4K",
+		Variables: map[string]string{"crew_name": "Capt. Budi"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, relatedContractID, *log.RelatedID)
+	assert.Equal(t, "Contract ADFPKEX4K – Capt. Budi", log.Subject, "record values fill tags and explicit variables override them")
+
+	_, _, err = f.svc.Send(context.Background(), EmailSendInput{TemplateCode: "send_contract", To: []string{"capt@example.com"}, RelatedType: "contract", RelatedPublicID: "NOPE23456"})
 	requireAppErr(t, err, "not_found")
 }
