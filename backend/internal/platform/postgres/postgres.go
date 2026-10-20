@@ -98,3 +98,19 @@ func IsForeignKeyViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23503"
 }
+
+// ForeignKeyColumn returns the column of a violated <table>_<column>_fkey constraint on table.
+func ForeignKeyColumn(err error, table string) (string, bool) {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) || pgErr.Code != "23503" {
+		return "", false
+	}
+	name := strings.TrimSuffix(strings.TrimPrefix(pgErr.ConstraintName, table+"_"), "_fkey")
+	return name, name != pgErr.ConstraintName
+}
+
+// IsCheckViolation reports whether err is a CHECK constraint violation.
+func IsCheckViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23514"
+}

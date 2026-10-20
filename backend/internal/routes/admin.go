@@ -22,6 +22,7 @@ type AdminDeps struct {
 	Auth          *admin.AuthHandler
 	Settings      *admin.SettingsHandler
 	Jobs          *admin.JobHandler
+	Crews         *admin.CrewHandler
 }
 
 // Admin mounts the admin API.
@@ -53,6 +54,8 @@ func Admin(r chi.Router, d AdminDeps) {
 			r.Put("/settings/{group}", d.Settings.Update)
 
 			r.Get("/jobs/{id}", d.Jobs.Show)
+
+			Crew(r, d.Crews)
 		})
 	})
 }

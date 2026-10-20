@@ -41,8 +41,13 @@ func (w *Where) SQL() string {
 // Args returns the accumulated arguments.
 func (w *Where) Args() []any { return w.args }
 
-// Order builds an ORDER BY clause from a whitelist of sortable columns.
+// Order builds an ORDER BY clause from a whitelist of sortable columns, breaking ties on id.
 func Order(sort string, desc bool, columns map[string]string, fallback string) string {
+	return OrderWithTie(sort, desc, columns, fallback, "id")
+}
+
+// OrderWithTie is Order with an explicit tie-breaker column.
+func OrderWithTie(sort string, desc bool, columns map[string]string, fallback, tie string) string {
 	col, ok := columns[sort]
 	if !ok {
 		return " ORDER BY " + fallback
@@ -51,7 +56,7 @@ func Order(sort string, desc bool, columns map[string]string, fallback string) s
 	if desc {
 		dir = " DESC"
 	}
-	return " ORDER BY " + col + dir + " NULLS LAST, id" + dir
+	return " ORDER BY " + col + dir + " NULLS LAST, " + tie + dir
 }
 
 // Page is one page of rows plus the total match count.

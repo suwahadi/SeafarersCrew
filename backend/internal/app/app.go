@@ -147,9 +147,14 @@ func (a *App) Router() http.Handler {
 		Auth:          admin.NewAuthHandler(a.Auth, middleware.NewCookieWriter(a.Config.SecureCookies(), SessionAbsolute)),
 		Settings:      admin.NewSettingsHandler(a.Settings),
 		Jobs:          admin.NewJobHandler(a.Jobs),
+		Crews:         admin.NewCrewHandler(a.crewService()),
 	})
 	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
 	return r
+}
+
+func (a *App) crewService() *service.CrewService {
+	return service.NewCrewService(repository.NewCrewRepository(a.DB), repository.NewCrewRecordRepository(a.DB), a.Settings, time.Now)
 }
 
 // Serve runs the HTTP server until ctx is cancelled, then shuts down gracefully.
