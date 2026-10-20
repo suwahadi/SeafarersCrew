@@ -1,0 +1,49 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - errorlint
+    - gosec
+    - misspell
+    - noctx
+    - revive
+    - unconvert
+    - usestdlibvars
+  settings:
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+        - name: var-naming
+        - name: indent-error-flow
+        - name: error-return
+        - name: error-strings
+        - name: receiver-naming
+    gosec:
+      excludes:
+        - G104
+  exclusions:
+    rules:
+      - path: internal/middleware/auth.go
+        text: G124
+        linters:
+          - gosec
+      - path: _test\.go
+        linters:
+          - gosec
+          - noctx
+          - revive
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/suwahadi/seafarerscrew
