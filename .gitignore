@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+/backend/bin/
+/backend/coverage.out
+*.test
+
+node_modules/
+/admin/dist/
+/web/.next/
+/web/out/
+*.tsbuildinfo
+
+.DS_Store
+.idea/
+.vscode/

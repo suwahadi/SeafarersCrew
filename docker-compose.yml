@@ -1,0 +1,110 @@
+name: seafarers-crew
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  proxy:
+    <<: *restart
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  api:
+    <<: *restart
+    build:
+      context: .
+      dockerfile: deploy/api.Dockerfile
+    env_file: .env
+    entrypoint: ["/bin/sh", "-c", "/app/seafarers migrate up && /app/seafarers db:seed && exec /app/seafarers serve"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      gotenberg:
+        condition: service_healthy
+    networks: [internal]
+
+  postgres:
+    <<: *restart
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-seafarers}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-seafarers}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    <<: *restart
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redisdata:/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  gotenberg:
+    <<: *restart
+    image: gotenberg/gotenberg:8
+    command: ["gotenberg", "--api-timeout=60s", "--chromium-disable-javascript=true", "--chromium-allow-list=file:///tmp/.*"]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    <<: *restart
+    image: minio/minio:latest
+    profiles: [minio]
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-seafarers}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+    volumes:
+      - miniodata:/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+networks:
+  internal:
+
+volumes:
+  caddy_data:
+  caddy_config:
+  pgdata:
+  redisdata:
+  miniodata:
