@@ -21,6 +21,7 @@ import (
 	"github.com/suwahadi/seafarerscrew/backend/internal/handler/admin"
 	"github.com/suwahadi/seafarerscrew/backend/internal/job"
 	"github.com/suwahadi/seafarerscrew/backend/internal/middleware"
+	"github.com/suwahadi/seafarerscrew/backend/internal/platform/brevo"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/gotenberg"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/imaging"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/pdf"
@@ -56,6 +57,8 @@ type App struct {
 	Crews      *service.CrewService
 	CrewExport *service.CrewExportService
 	CrewImport *service.CrewImportService
+	Email      *service.EmailService
+	brevo      *brevo.Client
 	counter    *repository.LimiterRepository
 }
 
@@ -126,6 +129,7 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 		counter:  counter,
 	}
 	a.wireCrew()
+	a.wireEmail()
 	return a, nil
 }
 
@@ -227,6 +231,7 @@ func (a *App) Router() http.Handler {
 		Masters:       admin.NewMasterRoutes(masters.services),
 		MasterData:    admin.NewMasterDataHandler(masters.options, masters.compliance),
 		Files:         admin.NewFileHandler(a.Files),
+		Email:         a.emailHandler(),
 	})
 	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
 	return r
