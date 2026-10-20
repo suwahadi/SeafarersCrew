@@ -27,7 +27,7 @@ docker compose exec api /app/seafarers admin:create --name="Your Name" --email=y
 
 `admin:create` prints a temporary password and ten one-time recovery codes. Store the codes offline.
 
-Use `docker compose --profile minio up -d` to run the bundled MinIO instead of an external S3 bucket.
+Use `docker compose --profile s3 up -d` to run the bundled S3-compatible store (SeaweedFS) instead of an external S3 bucket. MinIO no longer publishes free container images, so SeaweedFS replaces it.
 
 ## CLI
 
