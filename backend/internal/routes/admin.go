@@ -23,6 +23,8 @@ type AdminDeps struct {
 	Settings      *admin.SettingsHandler
 	Jobs          *admin.JobHandler
 	Crews         *admin.CrewHandler
+	Masters       map[string]admin.MasterRoutes
+	MasterData    *admin.MasterDataHandler
 }
 
 // Admin mounts the admin API.
@@ -53,9 +55,25 @@ func Admin(r chi.Router, d AdminDeps) {
 			r.Get("/settings/{group}", d.Settings.Show)
 			r.Put("/settings/{group}", d.Settings.Update)
 
+			r.Get("/options", d.MasterData.Options)
+			r.Get("/compliance-matrix", d.MasterData.ComplianceMatrix)
+			r.Put("/compliance-matrix", d.MasterData.ReplaceComplianceMatrix)
+			for segment, h := range d.Masters {
+				mountMaster(r, "/"+segment, h)
+			}
+
 			r.Get("/jobs/{id}", d.Jobs.Show)
 
 			Crew(r, d.Crews)
 		})
 	})
+}
+
+func mountMaster(r chi.Router, path string, h admin.MasterRoutes) {
+	r.Get(path, h.List)
+	r.Post(path, h.Create)
+	r.Patch(path+"/reorder", h.Reorder)
+	r.Get(path+"/{id}", h.Show)
+	r.Put(path+"/{id}", h.Update)
+	r.Delete(path+"/{id}", h.Delete)
 }

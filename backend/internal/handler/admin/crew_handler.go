@@ -137,7 +137,7 @@ func (h *CrewHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 
 // Status handles PATCH /crews/{crew}/status.
 func (h *CrewHandler) Status(w http.ResponseWriter, r *http.Request) {
-	var in request.CrewStatus
+	var in request.CrewStatusChange
 	if err := request.Decode(w, r, &in); err != nil {
 		resource.Error(w, r, err)
 		return

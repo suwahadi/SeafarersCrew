@@ -84,8 +84,8 @@ func (r *Crew) Validate() map[string]string {
 // Model returns the validated crew.
 func (r *Crew) Model() model.Crew { return r.parsed }
 
-// CrewStatus is the body of PATCH /crews/{id}/status.
-type CrewStatus struct {
+// CrewStatusChange is the body of PATCH /crews/{id}/status.
+type CrewStatusChange struct {
 	Action string `json:"action"`
 	Reason string `json:"reason"`
 }

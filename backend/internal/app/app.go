@@ -128,6 +128,7 @@ func (a *App) Seed(ctx context.Context) error {
 
 // Router builds the HTTP handler tree.
 func (a *App) Router() http.Handler {
+	masters := newMasterData(a.DB, a.Redis)
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID(a.Logger))
 	r.Use(middleware.RealIP)
@@ -148,6 +149,8 @@ func (a *App) Router() http.Handler {
 		Settings:      admin.NewSettingsHandler(a.Settings),
 		Jobs:          admin.NewJobHandler(a.Jobs),
 		Crews:         admin.NewCrewHandler(a.crewService()),
+		Masters:       admin.NewMasterRoutes(masters.services),
+		MasterData:    admin.NewMasterDataHandler(masters.options, masters.compliance),
 	})
 	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
 	return r
