@@ -8,9 +8,13 @@ import (
 )
 
 // Crew mounts crew records and their tabs on an authenticated admin router.
-func Crew(r chi.Router, h *admin.CrewHandler) {
+func Crew(r chi.Router, h *admin.CrewHandler, t *admin.CrewTransferHandler) {
 	r.Get("/crews", h.Index)
 	r.Post("/crews", h.Store)
+	r.Post("/crews/export", t.Export)
+	r.Get("/crews/import-template", t.Template)
+	r.Post("/crews/import/validate", t.Validate)
+	r.Post("/crews/import/commit", t.Commit)
 	r.Route("/crews/{crew}", func(r chi.Router) {
 		r.Get("/", h.Show)
 		r.Put("/", h.Update)

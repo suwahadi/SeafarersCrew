@@ -29,6 +29,10 @@ linters:
         - G104
   exclusions:
     rules:
+      - path: internal/service/crew_import_service.go
+        text: G101
+        linters:
+          - gosec
       - path: internal/middleware/auth.go
         text: G124
         linters:

@@ -215,6 +215,25 @@ func (s *Storage) Test(ctx context.Context) error {
 	return s.Delete(ctx, key)
 }
 
+// EnsureBucket creates the configured bucket when it does not exist yet.
+func (s *Storage) EnsureBucket(ctx context.Context) error {
+	client, cfg, err := s.current(ctx)
+	if err != nil {
+		return err
+	}
+	exists, err := client.BucketExists(ctx, cfg.Bucket)
+	if err != nil {
+		return fmt.Errorf("check bucket: %w", err)
+	}
+	if exists {
+		return nil
+	}
+	if err := client.MakeBucket(ctx, cfg.Bucket, minio.MakeBucketOptions{Region: cfg.Region}); err != nil {
+		return fmt.Errorf("create bucket: %w", err)
+	}
+	return nil
+}
+
 func safeFilename(name string) string {
 	name = strings.Map(func(r rune) rune {
 		if r < 0x20 || r == '"' || r == '\\' || r == '/' {

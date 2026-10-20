@@ -292,6 +292,14 @@ func (s *FileService) store(ctx context.Context, in UploadInput, out processed) 
 	return f, nil
 }
 
+// StoreGenerated saves server-generated content such as exports and PDFs without upload validation.
+func (s *FileService) StoreGenerated(ctx context.Context, entity, filename, mime, ext string, data []byte, ownerID *uuid.UUID) (model.File, error) {
+	if !ownerTypePattern.MatchString(entity) {
+		return model.File{}, fmt.Errorf("store generated file: invalid entity %q", entity)
+	}
+	return s.store(ctx, UploadInput{Filename: filename, Data: data, OwnerType: entity, OwnerID: ownerID}, processed{data: data, mime: mime, ext: ext})
+}
+
 func (s *FileService) cleanup(ctx context.Context, keys []string) {
 	if err := s.storage.Delete(context.WithoutCancel(ctx), keys...); err != nil {
 		logctx.From(ctx).WarnContext(ctx, "orphaned objects not removed", "error", err)

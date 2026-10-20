@@ -234,3 +234,41 @@ func TestCrewRecordsKeepSinglePrimary(t *testing.T) {
 	err = records.DeleteBankAccount(ctx, uuid.New(), a.ID)
 	assert.ErrorIs(t, err, repository.ErrNotFound, "rows are scoped to their crew")
 }
+
+func TestImportCrewsIsolatesFailedRows(t *testing.T) {
+	w := setupCrewWorld(t)
+	ctx := context.Background()
+	repo := repository.NewCrewRepository(testDB)
+
+	l, err := repo.ImportLookups(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, w.master, l.Ranks["MST"])
+	assert.Equal(t, w.master, l.Ranks["MASTER"])
+	assert.Equal(t, w.passport, l.PassportType)
+
+	exp := d(2030, 1, 1)
+	ids := []string{"IMPORTAA2", "IMPORTAA2", "IMPORTBB2", "IMPORTCC2"}
+	next := func() (string, error) {
+		id := ids[0]
+		ids = ids[1:]
+		return id, nil
+	}
+	outcomes, err := repo.ImportCrews(ctx, []repository.ImportCrew{
+		{Line: 2, Crew: model.Crew{FullName: "First"}, Documents: []repository.ImportDocument{{TypeID: l.PassportType, Number: "Z9999999", ExpiredDate: &exp}}},
+		{Line: 3, Crew: model.Crew{FullName: "Collides then succeeds"}},
+		{Line: 4, Crew: model.Crew{FullName: "Unknown document type"}, Documents: []repository.ImportDocument{{TypeID: uuid.New(), Number: "Q1", ExpiredDate: &exp}}},
+	}, next, 5)
+	require.NoError(t, err)
+	require.Len(t, outcomes, 3)
+	assert.Equal(t, "IMPORTAA2", outcomes[0].PublicID)
+	assert.Equal(t, "IMPORTBB2", outcomes[1].PublicID, "retries after a public ID collision")
+	assert.NotEmpty(t, outcomes[2].Error)
+
+	existing, err := repo.ExistingDocumentNumbers(ctx, l.PassportType, []string{"Z9999999", "NOPE"})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]bool{"Z9999999": true}, existing)
+
+	var count int
+	require.NoError(t, testDB.QueryRow(ctx, `SELECT count(*) FROM crews`).Scan(&count))
+	assert.Equal(t, 2, count)
+}

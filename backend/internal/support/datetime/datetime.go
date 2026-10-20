@@ -72,3 +72,15 @@ func AddMonths(t time.Time, months int) time.Time {
 	}
 	return time.Date(first.Year(), first.Month(), day, 0, 0, 0, 0, time.UTC)
 }
+
+// Age returns the completed years between dob and today, or nil when dob is unknown.
+func Age(dob *time.Time, today time.Time) *int {
+	if dob == nil {
+		return nil
+	}
+	years := today.Year() - dob.Year()
+	if today.Month() < dob.Month() || (today.Month() == dob.Month() && today.Day() < dob.Day()) {
+		years--
+	}
+	return &years
+}

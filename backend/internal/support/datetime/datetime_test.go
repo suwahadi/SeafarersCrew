@@ -60,3 +60,12 @@ func TestAddMonthsClampsToMonthEnd(t *testing.T) {
 		assert.Equal(t, tc.want, AddMonths(tc.from, tc.months))
 	}
 }
+
+func TestAge(t *testing.T) {
+	dob := time.Date(1990, 10, 21, 0, 0, 0, 0, time.UTC)
+	assert.Equal(t, 35, *Age(&dob, time.Date(2026, 10, 20, 0, 0, 0, 0, time.UTC)), "birthday tomorrow")
+	assert.Equal(t, 36, *Age(&dob, time.Date(2026, 10, 21, 0, 0, 0, 0, time.UTC)))
+	leap := time.Date(2000, 2, 29, 0, 0, 0, 0, time.UTC)
+	assert.Equal(t, 25, *Age(&leap, time.Date(2026, 2, 28, 0, 0, 0, 0, time.UTC)))
+	assert.Nil(t, Age(nil, time.Now()))
+}

@@ -99,3 +99,13 @@ func TestClientIsRebuiltWhenSettingsChange(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotSame(t, first, changed)
 }
+
+func TestEnsureBucketCreatesMissingBucketOnce(t *testing.T) {
+	st, cfg := newFakeStorage(t, "seafarers")
+	ctx := context.Background()
+	cfg.Bucket = "fresh-bucket"
+	require.Error(t, st.Test(ctx))
+	require.NoError(t, st.EnsureBucket(ctx))
+	require.NoError(t, st.EnsureBucket(ctx), "idempotent")
+	assert.NoError(t, st.Test(ctx))
+}

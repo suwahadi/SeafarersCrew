@@ -164,7 +164,7 @@ func (h *CrewHandler) Compliance(w http.ResponseWriter, r *http.Request) {
 		resource.Error(w, r, err)
 		return
 	}
-	resource.JSON(w, http.StatusOK, res)
+	resource.JSON(w, http.StatusOK, resource.NewCompliance(res))
 }
 
 // SeaService handles GET /crews/{crew}/sea-service and GET /crews/{crew}/experiences.

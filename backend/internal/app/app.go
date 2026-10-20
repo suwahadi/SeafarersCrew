@@ -43,17 +43,20 @@ const (
 
 // App holds long-lived dependencies.
 type App struct {
-	Config   config.Config
-	Logger   *slog.Logger
-	DB       *pgxpool.Pool
-	Redis    *goredis.Client
-	Auth     *service.AuthService
-	Settings *service.SettingsService
-	Jobs     *job.Queue
-	CPU      *job.Pool
-	Storage  *s3.Storage
-	Files    *service.FileService
-	counter  *repository.LimiterRepository
+	Config     config.Config
+	Logger     *slog.Logger
+	DB         *pgxpool.Pool
+	Redis      *goredis.Client
+	Auth       *service.AuthService
+	Settings   *service.SettingsService
+	Jobs       *job.Queue
+	CPU        *job.Pool
+	Storage    *s3.Storage
+	Files      *service.FileService
+	Crews      *service.CrewService
+	CrewExport *service.CrewExportService
+	CrewImport *service.CrewImportService
+	counter    *repository.LimiterRepository
 }
 
 // NewLogger builds the JSON logger for level.
@@ -109,7 +112,7 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 		cpu,
 		time.Now,
 	)
-	return &App{
+	a := &App{
 		Config:   cfg,
 		Logger:   logger,
 		DB:       db,
@@ -121,7 +124,18 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 		Storage:  storage,
 		Files:    files,
 		counter:  counter,
-	}, nil
+	}
+	a.wireCrew()
+	return a, nil
+}
+
+func (a *App) wireCrew() {
+	crewRepo := repository.NewCrewRepository(a.DB)
+	a.Crews = service.NewCrewService(crewRepo, repository.NewCrewRecordRepository(a.DB), a.Settings, time.Now)
+	a.CrewExport = service.NewCrewExportService(a.Crews, a.Jobs, a.Files, a.Settings)
+	a.CrewImport = service.NewCrewImportService(crewRepo, repository.NewCacheRepository(a.Redis), a.Jobs)
+	a.Jobs.Register(service.CrewExportJob, a.CrewExport.Handle)
+	a.Jobs.Register(service.CrewImportJob, a.CrewImport.Handle)
 }
 
 func storageConfig(settings *service.SettingsService) s3.ConfigSource {
@@ -174,7 +188,15 @@ func (a *App) Seed(ctx context.Context) error {
 		}
 		overrides = map[string]map[string]any{"storage": storage}
 	}
-	return seeders.Reference(ctx, a.DB, a.Settings, overrides)
+	if err := seeders.Reference(ctx, a.DB, a.Settings, overrides); err != nil {
+		return err
+	}
+	if overrides != nil {
+		if err := a.Storage.EnsureBucket(ctx); err != nil {
+			a.Logger.WarnContext(ctx, "storage bucket not ensured; configure Settings > Object Storage", "error", err)
+		}
+	}
+	return nil
 }
 
 // Router builds the HTTP handler tree.
@@ -200,17 +222,14 @@ func (a *App) Router() http.Handler {
 		Auth:          admin.NewAuthHandler(a.Auth, middleware.NewCookieWriter(a.Config.SecureCookies(), SessionAbsolute)),
 		Settings:      admin.NewSettingsHandler(a.Settings),
 		Jobs:          admin.NewJobHandler(a.Jobs),
-		Crews:         admin.NewCrewHandler(a.crewService()),
+		Crews:         admin.NewCrewHandler(a.Crews),
+		CrewTransfer:  admin.NewCrewTransferHandler(a.CrewExport, a.CrewImport, a.Files),
 		Masters:       admin.NewMasterRoutes(masters.services),
 		MasterData:    admin.NewMasterDataHandler(masters.options, masters.compliance),
 		Files:         admin.NewFileHandler(a.Files),
 	})
 	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
 	return r
-}
-
-func (a *App) crewService() *service.CrewService {
-	return service.NewCrewService(repository.NewCrewRepository(a.DB), repository.NewCrewRecordRepository(a.DB), a.Settings, time.Now)
 }
 
 // Serve runs the HTTP server until ctx is cancelled, then shuts down gracefully.

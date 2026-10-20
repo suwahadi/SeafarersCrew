@@ -83,16 +83,7 @@ func NewCrew(c model.Crew, today time.Time) Crew {
 }
 
 // Age returns completed years between dob and today.
-func Age(dob *time.Time, today time.Time) *int {
-	if dob == nil {
-		return nil
-	}
-	years := today.Year() - dob.Year()
-	if today.Month() < dob.Month() || (today.Month() == dob.Month() && today.Day() < dob.Day()) {
-		years--
-	}
-	return &years
-}
+func Age(dob *time.Time, today time.Time) *int { return datetime.Age(dob, today) }
 
 // BankAccount is a crew bank account.
 type BankAccount struct {
@@ -295,4 +286,34 @@ func NewCrewList(l service.CrewList) CrewList {
 		groups = append(groups, CrewGroup{Key: g.Key, Name: g.Name, Count: g.Count})
 	}
 	return CrewList{Items: items, Groups: groups}
+}
+
+// ComplianceItem is one checklist row of the Compliance Status tab.
+type ComplianceItem struct {
+	Kind        string    `json:"kind"`
+	TypeID      uuid.UUID `json:"type_id"`
+	TypeName    string    `json:"type_name"`
+	Status      string    `json:"status"`
+	Badge       string    `json:"badge"`
+	Number      string    `json:"number,omitempty"`
+	ExpiredDate *Date     `json:"expired_date"`
+	DaysLeft    *int      `json:"days_left"`
+}
+
+// Compliance is the Compliance Status tab.
+type Compliance struct {
+	RankID    *uuid.UUID       `json:"rank_id"`
+	CheckDate Date             `json:"check_date"`
+	Compliant bool             `json:"compliant"`
+	Items     []ComplianceItem `json:"items"`
+}
+
+// NewCompliance maps a compliance result.
+func NewCompliance(c service.CrewCompliance) Compliance {
+	items := make([]ComplianceItem, len(c.Items))
+	for i, it := range c.Items {
+		items[i] = ComplianceItem{Kind: it.Kind, TypeID: it.TypeID, TypeName: it.TypeName, Status: it.Status, Badge: it.Badge,
+			Number: it.Number, ExpiredDate: NewDate(it.ExpiredDate), DaysLeft: it.DaysLeft}
+	}
+	return Compliance{RankID: c.RankID, CheckDate: Date(c.CheckDate), Compliant: c.Compliant, Items: items}
 }
