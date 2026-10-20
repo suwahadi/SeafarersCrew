@@ -28,6 +28,7 @@ type AdminDeps struct {
 	MasterData    *admin.MasterDataHandler
 	Files         *admin.FileHandler
 	Email         *admin.EmailHandler
+	Contracts     ContractRoutes
 }
 
 // Admin mounts the admin API.
@@ -72,6 +73,8 @@ func Admin(r chi.Router, d AdminDeps) {
 			r.Get("/files/{id}/url", d.Files.URL)
 			r.Delete("/files/{id}", d.Files.Delete)
 			Email(r, d.Email)
+
+			Contracts(r, d.Contracts)
 		})
 	})
 }

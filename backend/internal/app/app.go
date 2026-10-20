@@ -232,6 +232,7 @@ func (a *App) Router() http.Handler {
 		MasterData:    admin.NewMasterDataHandler(masters.options, masters.compliance),
 		Files:         admin.NewFileHandler(a.Files),
 		Email:         a.emailHandler(),
+		Contracts:     a.contractRoutes(),
 	})
 	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
 	return r
