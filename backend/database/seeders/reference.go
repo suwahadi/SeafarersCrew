@@ -30,6 +30,7 @@ func Reference(ctx context.Context, pool *pgxpool.Pool, settings SettingsSeeder,
 		{"compliance matrix", seedComplianceMatrix},
 		{"languages", seedLanguages},
 		{"email templates", seedEmailTemplates},
+		{"document templates", seedDocumentTemplates},
 	}
 	tx, err := pool.Begin(ctx)
 	if err != nil {
