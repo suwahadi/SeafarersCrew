@@ -397,7 +397,7 @@ func nonNil(s []string) []string {
 	return s
 }
 
-const printCSS = `@page{margin:0}*{box-sizing:border-box}
+const printCSS = `*{box-sizing:border-box}
 body{font-family:"Helvetica Neue",Arial,"Liberation Sans",sans-serif;font-size:10.5pt;line-height:1.45;color:#111827;margin:0}
 h1,h2,h3,h4{color:#0B2545;margin:0.8em 0 0.4em;line-height:1.25}h1{font-size:18pt}h2{font-size:14pt}h3{font-size:12pt}h4{font-size:11pt}
 p{margin:0 0 0.6em}table{width:100%;border-collapse:collapse;margin:0.4em 0 0.9em;page-break-inside:auto}
@@ -416,6 +416,41 @@ func htmlPage(t model.DocumentTemplate, inner string) string {
 }
 
 func marginPage(inner string) string {
-	return `<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:"Helvetica Neue",Arial,sans-serif;font-size:8pt;color:#334155;margin:0 0.6in;width:100%}
-img{max-height:14mm}p{margin:0}table{width:100%;border-collapse:collapse}td{vertical-align:middle}</style></head><body>` + inner + `</body></html>`
+	return `<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:"Helvetica Neue",Arial,sans-serif;font-size:8pt;color:#334155;margin:0;padding:0 0.6in;width:100%;box-sizing:border-box}
+img{max-height:14mm}p{margin:0}table{width:100%;border-collapse:collapse}td{vertical-align:middle;padding:0}
+.text-right{text-align:right}.text-center{text-align:center}.small{font-size:7.5pt}.muted{color:#64748B}</style></head><body>` + inner + `</body></html>`
+}
+
+var emailDocumentKinds = map[string]string{
+	RelatedContract:  model.DocumentSEA,
+	RelatedQuotation: model.DocumentQuotation,
+	RelatedCrew:      model.DocumentCV,
+}
+
+// EmailContext returns the internal ID and plain-text template variables of a contract, quotation or crew record.
+func (s *DocumentService) EmailContext(ctx context.Context, relatedType, publicID string) (uuid.UUID, map[string]string, error) {
+	kind, ok := emailDocumentKinds[relatedType]
+	if !ok {
+		return uuid.Nil, nil, apperr.Validation(map[string]string{"related_type": "The related type must be contract, quotation or crew."})
+	}
+	f, err := s.format(ctx)
+	if err != nil {
+		return uuid.Nil, nil, err
+	}
+	v, _, id, _, err := s.vars(ctx, DocumentRequest{Kind: kind, RelatedID: publicID}, f)
+	if err != nil {
+		return uuid.Nil, nil, err
+	}
+	company, err := s.d.Settings.Values(ctx, "company")
+	if err != nil {
+		return uuid.Nil, nil, err
+	}
+	out := make(map[string]string, len(v.Text)+4)
+	for k, val := range CompanyVars(ctx, company, s.d.Files, f).Text {
+		out[k] = val
+	}
+	for k, val := range v.Text {
+		out[k] = val
+	}
+	return id, out, nil
 }
