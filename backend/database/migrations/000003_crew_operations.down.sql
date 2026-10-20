@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS generated_documents;
+DROP TABLE IF EXISTS quotation_lines;
+DROP TABLE IF EXISTS quotations;
+DROP TABLE IF EXISTS document_templates;
+DROP TABLE IF EXISTS relief_plans;
+DROP TABLE IF EXISTS experiences;
+DROP TABLE IF EXISTS contract_allowances;
+DROP TABLE IF EXISTS contracts;
+DROP TABLE IF EXISTS certificates;
+DROP TABLE IF EXISTS travel_documents;
+DROP TABLE IF EXISTS crew_next_of_kins;
+DROP TABLE IF EXISTS crew_bank_accounts;
+DROP TABLE IF EXISTS crews;

@@ -1,0 +1,14 @@
+DROP TABLE IF EXISTS languages;
+DROP TABLE IF EXISTS contact_messages;
+DROP TABLE IF EXISTS applicant_stage_logs;
+DROP TABLE IF EXISTS applicant_files;
+DROP TABLE IF EXISTS applicants;
+DROP TABLE IF EXISTS vacancies;
+DROP TABLE IF EXISTS menu_items;
+DROP TABLE IF EXISTS stats_items;
+DROP TABLE IF EXISTS client_logos;
+DROP TABLE IF EXISTS testimonials;
+DROP TABLE IF EXISTS gallery_images;
+DROP TABLE IF EXISTS hero_slides;
+DROP TABLE IF EXISTS news;
+DROP TABLE IF EXISTS pages;

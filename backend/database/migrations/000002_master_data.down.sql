@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS compliance_requirements;
+DROP TABLE IF EXISTS certificate_types;
+DROP TABLE IF EXISTS document_types;
+DROP TABLE IF EXISTS allowance_types;
+DROP TABLE IF EXISTS crew_statuses;
+DROP TABLE IF EXISTS ranks;
+DROP TABLE IF EXISTS vessels;
+DROP TABLE IF EXISTS vessel_types;
+DROP TABLE IF EXISTS companies;
+DROP TABLE IF EXISTS currencies;

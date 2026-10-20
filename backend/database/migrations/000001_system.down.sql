@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS jobs;
+DROP TABLE IF EXISTS redirects;
+DROP TABLE IF EXISTS backups;
+DROP TABLE IF EXISTS email_logs;
+DROP TABLE IF EXISTS email_templates;
+DROP TABLE IF EXISTS files;
+DROP TABLE IF EXISTS settings;
+DROP TABLE IF EXISTS recovery_codes;
+DROP TABLE IF EXISTS admins;
+DROP FUNCTION IF EXISTS touch_updated_at();
+DROP FUNCTION IF EXISTS uuid_generate_v7();
