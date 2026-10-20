@@ -244,7 +244,7 @@ func TestUploadAllowedInputPerContextAndTransformation(t *testing.T) {
 			assert.Equal(t, tc.filename, got.OriginalName, "original name is kept only as metadata")
 			assert.Regexp(t, storedKey, got.StorageKey)
 			assert.True(t, strings.HasSuffix(got.StorageKey, "."+tc.ext))
-			assert.NotContains(t, path.Base(got.StorageKey), strings.TrimSuffix(tc.filename, path.Ext(tc.filename)))
+			assert.Regexp(t, `^[a-z0-9]{12}\.`+tc.ext+`$`, path.Base(got.StorageKey), "stored under a random name, never the original")
 			assert.Equal(t, int64(len(data)), got.SizeOriginal)
 			assert.Equal(t, int64(len(f.storage.objects[got.StorageKey])), got.SizeStored)
 			assert.Equal(t, tc.mime, f.storage.types[got.StorageKey])
