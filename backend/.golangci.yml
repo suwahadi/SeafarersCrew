@@ -33,6 +33,10 @@ linters:
         text: G124
         linters:
           - gosec
+      - path: internal/platform/pdf/pdf.go
+        text: "G204|G304"
+        linters:
+          - gosec
       - path: _test\.go
         linters:
           - gosec

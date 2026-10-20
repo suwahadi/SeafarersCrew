@@ -155,12 +155,6 @@ func (m *memRecords) GetDocument(_ context.Context, _ repository.DocumentKind, _
 	return m.docs[id], nil
 }
 
-type staticSettings map[string]map[string]any
-
-func (s staticSettings) Values(_ context.Context, group string) (map[string]any, error) {
-	return s[group], nil
-}
-
 type crewFixture struct {
 	svc     *CrewService
 	crews   *memCrews

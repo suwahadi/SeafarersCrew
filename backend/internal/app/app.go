@@ -21,8 +21,12 @@ import (
 	"github.com/suwahadi/seafarerscrew/backend/internal/handler/admin"
 	"github.com/suwahadi/seafarerscrew/backend/internal/job"
 	"github.com/suwahadi/seafarerscrew/backend/internal/middleware"
+	"github.com/suwahadi/seafarerscrew/backend/internal/platform/gotenberg"
+	"github.com/suwahadi/seafarerscrew/backend/internal/platform/imaging"
+	"github.com/suwahadi/seafarerscrew/backend/internal/platform/pdf"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/postgres"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/redis"
+	"github.com/suwahadi/seafarerscrew/backend/internal/platform/s3"
 	"github.com/suwahadi/seafarerscrew/backend/internal/repository"
 	"github.com/suwahadi/seafarerscrew/backend/internal/routes"
 	"github.com/suwahadi/seafarerscrew/backend/internal/service"
@@ -47,6 +51,8 @@ type App struct {
 	Settings *service.SettingsService
 	Jobs     *job.Queue
 	CPU      *job.Pool
+	Storage  *s3.Storage
+	Files    *service.FileService
 	counter  *repository.LimiterRepository
 }
 
@@ -86,6 +92,23 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 		return nil, err
 	}
 	settings := service.NewSettingsService(repository.NewSettingRepository(db), repository.NewCacheRepository(rdb), box, nil)
+	if err := imaging.Startup(logger); err != nil {
+		db.Close()
+		_ = rdb.Close()
+		return nil, err
+	}
+	cpu := job.NewPool(0)
+	storage := s3.New(storageConfig(settings))
+	files := service.NewFileService(
+		repository.NewFileRepository(db),
+		storage,
+		imaging.NewConverter(),
+		pdf.NewProcessor("gs", 2*time.Minute),
+		gotenberg.NewClient(cfg.GotenbergURL, 2*time.Minute),
+		settings,
+		cpu,
+		time.Now,
+	)
 	return &App{
 		Config:   cfg,
 		Logger:   logger,
@@ -94,13 +117,41 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 		Auth:     auth,
 		Settings: settings,
 		Jobs:     job.NewQueue(repository.NewJobRepository(db), rdb, logger),
-		CPU:      job.NewPool(0),
+		CPU:      cpu,
+		Storage:  storage,
+		Files:    files,
 		counter:  counter,
 	}, nil
 }
 
+func storageConfig(settings *service.SettingsService) s3.ConfigSource {
+	return func(ctx context.Context) (s3.Config, error) {
+		v, err := settings.Values(ctx, "storage")
+		if err != nil {
+			return s3.Config{}, err
+		}
+		str := func(k string) string {
+			s, _ := v[k].(string)
+			return s
+		}
+		pathStyle, _ := v["use_path_style"].(bool)
+		minutes, _ := v["presign_minutes"].(int)
+		return s3.Config{
+			Provider:        str("provider"),
+			Endpoint:        str("endpoint"),
+			Region:          str("region"),
+			Bucket:          str("bucket"),
+			AccessKeyID:     str("access_key_id"),
+			SecretAccessKey: str("secret_access_key"),
+			UsePathStyle:    pathStyle,
+			PresignMinutes:  minutes,
+		}, nil
+	}
+}
+
 // Close releases connections.
 func (a *App) Close() {
+	imaging.Shutdown()
 	a.DB.Close()
 	_ = a.Redis.Close()
 }
@@ -140,6 +191,7 @@ func (a *App) Router() http.Handler {
 	routes.Health(r, handler.NewHealthHandler(map[string]handler.Pinger{
 		"database": handler.PingFunc(a.DB.Ping),
 		"redis":    handler.PingFunc(func(ctx context.Context) error { return a.Redis.Ping(ctx).Err() }),
+		"storage":  a.Storage,
 	}))
 	routes.Admin(r, routes.AdminDeps{
 		Origin:        a.Config.AdminURL,
@@ -151,6 +203,7 @@ func (a *App) Router() http.Handler {
 		Crews:         admin.NewCrewHandler(a.crewService()),
 		Masters:       admin.NewMasterRoutes(masters.services),
 		MasterData:    admin.NewMasterDataHandler(masters.options, masters.compliance),
+		Files:         admin.NewFileHandler(a.Files),
 	})
 	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
 	return r
