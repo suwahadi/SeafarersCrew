@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import type { Vacancy, VacancyInput } from '@/api/vacancies'
-import { effectiveSlug } from '@/lib/slug'
 
 export const DEPARTMENTS = [
   { value: 'deck', label: 'Deck' },
@@ -89,10 +88,7 @@ export function valuesToInput(values: VacancyValues): VacancyInput {
   }
 }
 
-export function previewSlug(title: string, slug: string, existing: string | undefined): string {
-  if (existing !== undefined && slug.trim() === '') return existing
-  return effectiveSlug(title, slug)
-}
+export { previewSlug } from '@/lib/slug'
 
 export const vacancyFormFields = [
   'title',

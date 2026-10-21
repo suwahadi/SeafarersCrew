@@ -36,3 +36,8 @@ export function makeSlug(text: string): string {
 export function effectiveSlug(title: string, slug: string): string {
   return makeSlug(slug.trim() === '' ? title : slug)
 }
+
+export function previewSlug(title: string, slug: string, existing: string | undefined): string {
+  if (existing !== undefined && slug.trim() === '') return existing
+  return effectiveSlug(title, slug)
+}
