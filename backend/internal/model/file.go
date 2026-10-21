@@ -34,6 +34,18 @@ type File struct {
 	OwnerID      *uuid.UUID
 	IsPublic     bool
 	Variants     []FileVariant
+	Width        int
+	Height       int
 	Status       string
 	CreatedAt    time.Time
+}
+
+// Image is the stored-file data needed to render a public image.
+type Image struct {
+	ID         uuid.UUID     `json:"id"`
+	StorageKey string        `json:"storage_key"`
+	MimeType   string        `json:"mime_type"`
+	Width      int           `json:"width"`
+	Height     int           `json:"height"`
+	Variants   []FileVariant `json:"variants"`
 }

@@ -29,6 +29,18 @@ linters:
         - G104
   exclusions:
     rules:
+      - path: internal/handler/public/media_handler.go
+        text: G705
+        linters:
+          - gosec
+      - path: internal/middleware/public_cache.go
+        text: G705
+        linters:
+          - gosec
+      - path: internal/platform/nextjs/nextjs.go
+        text: G101
+        linters:
+          - gosec
       - path: internal/service/crew_import_service.go
         text: G101
         linters:

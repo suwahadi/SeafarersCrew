@@ -22,12 +22,12 @@ func NewFileRepository(pool *pgxpool.Pool) *FileRepository {
 }
 
 const fileColumns = `id, storage_key, original_name, mime_type, size_original, size_stored, sha256,
-	coalesce(owner_type, ''), owner_id, is_public, variants, status, created_at`
+	coalesce(owner_type, ''), owner_id, is_public, variants, coalesce(width, 0), coalesce(height, 0), status, created_at`
 
 func scanFile(row pgx.Row) (model.File, error) {
 	var f model.File
 	err := row.Scan(&f.ID, &f.StorageKey, &f.OriginalName, &f.MimeType, &f.SizeOriginal, &f.SizeStored, &f.SHA256,
-		&f.OwnerType, &f.OwnerID, &f.IsPublic, &f.Variants, &f.Status, &f.CreatedAt)
+		&f.OwnerType, &f.OwnerID, &f.IsPublic, &f.Variants, &f.Width, &f.Height, &f.Status, &f.CreatedAt)
 	return f, notFound(err)
 }
 
@@ -37,9 +37,9 @@ func (r *FileRepository) Create(ctx context.Context, f model.File) (model.File, 
 		f.Variants = []model.FileVariant{}
 	}
 	created, err := scanFile(r.pool.QueryRow(ctx, `INSERT INTO files
-		(storage_key, original_name, mime_type, size_original, size_stored, sha256, owner_type, owner_id, is_public, variants, status)
-		VALUES ($1, $2, $3, $4, $5, $6, nullif($7, ''), $8, $9, $10, $11) RETURNING `+fileColumns,
-		f.StorageKey, f.OriginalName, f.MimeType, f.SizeOriginal, f.SizeStored, f.SHA256, f.OwnerType, f.OwnerID, f.IsPublic, f.Variants, f.Status))
+		(storage_key, original_name, mime_type, size_original, size_stored, sha256, owner_type, owner_id, is_public, variants, width, height, status)
+		VALUES ($1, $2, $3, $4, $5, $6, nullif($7, ''), $8, $9, $10, nullif($11, 0), nullif($12, 0), $13) RETURNING `+fileColumns,
+		f.StorageKey, f.OriginalName, f.MimeType, f.SizeOriginal, f.SizeStored, f.SHA256, f.OwnerType, f.OwnerID, f.IsPublic, f.Variants, f.Width, f.Height, f.Status))
 	if err != nil {
 		return created, fmt.Errorf("create file: %w", err)
 	}

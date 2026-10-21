@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"context"
+	"io/fs"
 	"testing"
 	"time"
 
@@ -9,13 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/suwahadi/seafarerscrew/backend/database/migrations"
 	"github.com/suwahadi/seafarerscrew/backend/internal/model"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/postgres"
 	"github.com/suwahadi/seafarerscrew/backend/internal/repository"
 )
 
 func TestMigrationsRollBackAndReapplyCleanly(t *testing.T) {
-	for range 4 {
+	ups, err := fs.Glob(migrations.Files, "*.up.sql")
+	require.NoError(t, err)
+	for range ups {
 		require.NoError(t, postgres.Migrate(testDSN, "down"))
 	}
 	var n int

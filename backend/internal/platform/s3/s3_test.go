@@ -45,6 +45,12 @@ func TestPutGetStatDelete(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestGetReportsMissingObjectsAsNotFound(t *testing.T) {
+	st, _ := newFakeStorage(t, "seafarers")
+	_, err := st.Get(context.Background(), "public/none.webp")
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
 func TestPresignGetIsShortLivedAndDownloadable(t *testing.T) {
 	st, _ := newFakeStorage(t, "seafarers")
 	ctx := context.Background()

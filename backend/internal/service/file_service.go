@@ -134,6 +134,8 @@ type processed struct {
 	mime     string
 	ext      string
 	variants []imaging.Variant
+	width    int
+	height   int
 }
 
 // Upload validates, transforms, renames and stores a file and records it.
@@ -206,7 +208,7 @@ func (s *FileService) processImage(in UploadInput, cfg uploadSettings) (processe
 	if err != nil {
 		return processed{}, filecheck.Rejected("The image could not be processed.").Wrap(err)
 	}
-	return processed{data: res.Data, mime: "image/webp", ext: "webp", variants: res.Variants}, nil
+	return processed{data: res.Data, mime: "image/webp", ext: "webp", variants: res.Variants, width: res.Width, height: res.Height}, nil
 }
 
 func (s *FileService) processPDF(ctx context.Context, data []byte, preset string) ([]byte, error) {
@@ -283,6 +285,8 @@ func (s *FileService) store(ctx context.Context, in UploadInput, out processed) 
 		OwnerID:      in.OwnerID,
 		IsPublic:     public,
 		Variants:     variants,
+		Width:        out.width,
+		Height:       out.height,
 		Status:       model.FileReady,
 	})
 	if err != nil {

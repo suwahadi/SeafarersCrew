@@ -19,11 +19,13 @@ import (
 	"github.com/suwahadi/seafarerscrew/backend/internal/config"
 	"github.com/suwahadi/seafarerscrew/backend/internal/handler"
 	"github.com/suwahadi/seafarerscrew/backend/internal/handler/admin"
+	"github.com/suwahadi/seafarerscrew/backend/internal/handler/public"
 	"github.com/suwahadi/seafarerscrew/backend/internal/job"
 	"github.com/suwahadi/seafarerscrew/backend/internal/middleware"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/brevo"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/gotenberg"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/imaging"
+	"github.com/suwahadi/seafarerscrew/backend/internal/platform/nextjs"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/pdf"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/postgres"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/redis"
@@ -60,6 +62,8 @@ type App struct {
 	Email      *service.EmailService
 	Documents  *service.DocumentService
 	Dashboard  *service.DashboardService
+	Publisher  *service.SitePublisher
+	Media      *service.PublicMediaService
 	templates  *service.DocumentTemplateService
 	brevo      *brevo.Client
 	counter    *repository.LimiterRepository
@@ -131,6 +135,7 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 		Files:    files,
 		counter:  counter,
 	}
+	a.wireSite()
 	a.wireCrew()
 	a.wireDocuments()
 	a.Dashboard = service.NewDashboardService(repository.NewDashboardRepository(a.DB), repository.NewCacheRepository(a.Redis), a.Settings, time.Now)
@@ -145,6 +150,16 @@ func (a *App) wireCrew() {
 	a.CrewImport = service.NewCrewImportService(crewRepo, repository.NewCacheRepository(a.Redis), a.Jobs)
 	a.Jobs.Register(service.CrewExportJob, a.CrewExport.Handle)
 	a.Jobs.Register(service.CrewImportJob, a.CrewImport.Handle)
+}
+
+func (a *App) wireSite() {
+	a.Publisher = service.NewSitePublisher(
+		repository.NewPublicCacheRepository(a.Redis),
+		a.Jobs,
+		nextjs.NewClient(a.Config.AppURL, a.Config.RevalidateSecret, 10*time.Second),
+	)
+	a.Jobs.Register(service.RevalidateJob, a.Publisher.Handle)
+	a.Media = service.NewPublicMediaService(a.Storage, a.Config.APIURL)
 }
 
 func storageConfig(settings *service.SettingsService) s3.ConfigSource {
@@ -242,7 +257,13 @@ func (a *App) Router() http.Handler {
 		AfterWrite:    a.invalidateDashboard,
 		Documents:     a.documentHandlers(),
 	})
-	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
+	routes.Public(r, routes.PublicDeps{
+		Origin:    a.Config.AppURL,
+		Counter:   a.counter,
+		Cache:     repository.NewPublicCacheRepository(a.Redis),
+		Media:     public.NewMediaHandler(a.Media),
+		Redirects: public.NewRedirectHandler(service.NewRedirectService(repository.NewRedirectRepository(a.DB))),
+	})
 	return r
 }
 

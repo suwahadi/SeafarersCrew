@@ -22,6 +22,9 @@ import (
 // ErrNotConfigured is returned when storage settings are incomplete.
 var ErrNotConfigured = errors.New("object storage is not configured")
 
+// ErrNotFound reports a missing object.
+var ErrNotFound = errors.New("object not found")
+
 // Config is the storage configuration read from Settings.
 type Config struct {
 	Provider        string
@@ -134,6 +137,9 @@ func (s *Storage) Get(ctx context.Context, key string) ([]byte, error) {
 	defer func() { _ = obj.Close() }()
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(obj); err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return nil, fmt.Errorf("read object %s: %w", key, ErrNotFound)
+		}
 		return nil, fmt.Errorf("read object %s: %w", key, err)
 	}
 	return buf.Bytes(), nil
