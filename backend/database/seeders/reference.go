@@ -29,6 +29,8 @@ func Reference(ctx context.Context, pool *pgxpool.Pool, settings SettingsSeeder,
 		{"certificate types", seedCertificateTypes},
 		{"compliance matrix", seedComplianceMatrix},
 		{"languages", seedLanguages},
+		{"system pages", seedSystemPages},
+		{"menus", seedMenus},
 		{"email templates", seedEmailTemplates},
 		{"document templates", seedDocumentTemplates},
 	}
@@ -263,8 +265,10 @@ ON CONFLICT DO NOTHING`
 
 func seedLanguages(ctx context.Context, tx pgx.Tx) error {
 	b := &pgx.Batch{}
-	b.Queue(`INSERT INTO languages (name, code, flag_code, sort_order, is_active, is_source) VALUES ('English', 'en', 'gb', 10, true, true) ON CONFLICT (code) DO NOTHING`)
-	b.Queue(`INSERT INTO languages (name, code, flag_code, sort_order, is_active, is_source) VALUES ('Indonesian', 'id', 'id', 20, true, false) ON CONFLICT (code) DO NOTHING`)
+	b.Queue(`INSERT INTO languages (name, code, flag_code, sort_order, is_active, is_source)
+		SELECT 'English', 'en', 'gb', 10, true, true WHERE NOT EXISTS (SELECT 1 FROM languages WHERE is_source)`)
+	b.Queue(`INSERT INTO languages (name, code, flag_code, sort_order, is_active, is_source)
+		SELECT 'Indonesian', 'id', 'id', 20, true, false WHERE NOT EXISTS (SELECT 1 FROM languages WHERE lower(code) = 'id')`)
 	return execBatch(ctx, tx, b)
 }
 
