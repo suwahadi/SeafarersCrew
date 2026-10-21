@@ -192,6 +192,7 @@ export function RichTextEditor({ label, value, onChange, groups = [], error, hin
   })
 
   useEffect(() => {
+    if (editor.isDestroyed) return
     if (normalizeHtml(editor.getHTML()) !== value) editor.commands.setContent(value, { emitUpdate: false })
   }, [editor, value])
 
