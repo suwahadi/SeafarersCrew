@@ -176,6 +176,23 @@
     animation: spin 800ms linear infinite;
   }
 
+  .spinner-sm {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-width: 2px;
+    border-color: rgb(255 255 255 / 0.4);
+    border-top-color: #fff;
+  }
+
+  .hp-field {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
   .route-loading {
     position: fixed;
     inset: 0;

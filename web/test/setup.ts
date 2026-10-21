@@ -13,6 +13,8 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+Element.prototype.scrollIntoView = vi.fn()
+
 afterEach(() => {
   cleanup()
 })

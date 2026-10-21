@@ -1,4 +1,5 @@
 import { canonicalUrl } from '@/lib/seo'
+import type { VacancyDetail } from '@/lib/api'
 import type { NewsArticle, Site } from '@/lib/types'
 
 export type JsonLdNode = Record<string, unknown>
@@ -87,4 +88,44 @@ export function serializeJsonLd(node: JsonLdNode): string {
     .replaceAll('<', '\\u003c')
     .replaceAll(LINE_SEPARATOR, '\\u2028')
     .replaceAll(PARAGRAPH_SEPARATOR, '\\u2029')
+}
+
+export function employmentTypeSchema(value: string): string {
+  return value === 'permanent' ? 'FULL_TIME' : 'CONTRACTOR'
+}
+
+export function jobPostingJsonLd(vacancy: VacancyDetail, site: Site, baseUrl: string): JsonLdNode {
+  const logo = site.branding.logo_light ?? site.branding.logo_dark
+  const { organization } = site
+  const description = [vacancy.description_html, vacancy.requirements_html].filter((part) => part.trim() !== '').join('')
+  const node: JsonLdNode = {
+    '@context': 'https://schema.org',
+    '@type': 'JobPosting',
+    title: vacancy.title,
+    description: description || vacancy.title,
+    identifier: { '@type': 'PropertyValue', name: site.name, value: vacancy.id },
+    url: canonicalUrl(baseUrl, `/career/${vacancy.slug}`),
+    datePosted: vacancy.published_at.slice(0, 10),
+    employmentType: employmentTypeSchema(vacancy.employment_type),
+    occupationalCategory: vacancy.rank.name,
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: organization.legal_name || site.name,
+      sameAs: organization.website || baseUrl,
+      ...(logo ? { logo: logo.url } : {}),
+    },
+  }
+  if (vacancy.closing_date) {
+    node.validThrough = `${vacancy.closing_date}T23:59:59Z`
+  }
+  if (vacancy.location) {
+    node.jobLocation = {
+      '@type': 'Place',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: vacancy.location,
+      },
+    }
+  }
+  return node
 }
