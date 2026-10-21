@@ -22,6 +22,7 @@ import (
 	"github.com/suwahadi/seafarerscrew/backend/internal/handler/public"
 	"github.com/suwahadi/seafarerscrew/backend/internal/job"
 	"github.com/suwahadi/seafarerscrew/backend/internal/middleware"
+	"github.com/suwahadi/seafarerscrew/backend/internal/model"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/brevo"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/gotenberg"
 	"github.com/suwahadi/seafarerscrew/backend/internal/platform/imaging"
@@ -221,12 +222,19 @@ func (a *App) Seed(ctx context.Context) error {
 	if err := seeders.Reference(ctx, a.DB, a.Settings, overrides); err != nil {
 		return err
 	}
+	a.announceSiteChange(ctx, model.TagPages, model.TagSite, model.TagSitemap)
 	if overrides != nil {
 		if err := a.Storage.EnsureBucket(ctx); err != nil {
 			a.Logger.WarnContext(ctx, "storage bucket not ensured; configure Settings > Object Storage", "error", err)
 		}
 	}
 	return nil
+}
+
+func (a *App) announceSiteChange(ctx context.Context, tags ...string) {
+	if err := a.Publisher.Changed(ctx, tags...); err != nil {
+		a.Logger.WarnContext(ctx, "public cache not invalidated after seeding", "error", err)
+	}
 }
 
 // Router builds the HTTP handler tree.

@@ -4,6 +4,7 @@ package seeders
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -46,6 +47,9 @@ func Reference(ctx context.Context, pool *pgxpool.Pool, settings SettingsSeeder,
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit seed transaction: %w", err)
+	}
+	if _, err := CompanyPages(ctx, pool, noSite{}, time.Now); err != nil {
+		return fmt.Errorf("seed company pages: %w", err)
 	}
 	if err := settings.SeedDefaults(ctx, settingOverrides); err != nil {
 		return fmt.Errorf("seed settings: %w", err)

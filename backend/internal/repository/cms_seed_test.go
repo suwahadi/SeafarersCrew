@@ -26,8 +26,8 @@ func TestReferenceSeedCreatesSystemPagesMenusAndSourceLanguageOnce(t *testing.T)
 		assert.Equal(t, model.StatusPublished, p.Status, p.Title)
 		assert.Equal(t, *p.SystemKey, p.Slug)
 	}
-	assert.Len(t, menuItemsOf(t, model.MenuHeader), 4, "default menus are only seeded on an empty menu table")
-	assert.Len(t, menuItemsOf(t, model.MenuFooter), 3)
+	assert.Len(t, menuItemsOf(t, model.MenuHeader), 6, "default menus are only seeded on an empty menu table; About Us and Services are appended")
+	assert.Len(t, menuItemsOf(t, model.MenuFooter), 5, "Terms and Privacy are appended to the default footer")
 
 	langs, err := repository.NewLanguageRepository(testDB).List(ctx, listAll(repository.ListQuery{}))
 	require.NoError(t, err)
