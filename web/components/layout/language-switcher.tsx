@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '@/components/ui/icons'
+import { flagSrc } from '@/lib/flags'
 import { expiredTranslateCookies, isSourceLanguage, translateCookie } from '@/lib/language'
 import type { Language } from '@/lib/types'
 
@@ -53,10 +54,11 @@ function clearTranslateCookies(): void {
 }
 
 function Flag({ language }: { language: Language }) {
-  if (language.flag) {
+  const src = flagSrc(language)
+  if (src) {
     return (
       <img
-        src={language.flag.url}
+        src={src}
         alt=""
         width={24}
         height={16}
