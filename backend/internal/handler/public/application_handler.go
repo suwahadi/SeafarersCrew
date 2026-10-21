@@ -49,7 +49,7 @@ func (h *ApplicationHandler) Store(w http.ResponseWriter, r *http.Request) {
 		resource.Error(w, r, err)
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, int64(limits.MaxFiles)*limits.MaxFileBytes+multipartOverhead)
+	r.Body = http.MaxBytesReader(w, r.Body, int64(limits.MaxDocuments+1)*limits.MaxFileBytes+multipartOverhead)
 	if err := r.ParseMultipartForm(multipartMemory); err != nil {
 		var maxErr *http.MaxBytesError
 		if errors.As(err, &maxErr) {

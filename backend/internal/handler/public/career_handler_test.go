@@ -88,7 +88,7 @@ func postApplication(h http.Handler, body io.Reader, contentType string) *httpte
 }
 
 func TestApplicationStorePassesFieldsAndFilesToService(t *testing.T) {
-	s := &stubApplications{limits: service.ApplicationLimits{MaxFiles: 5, MaxFileBytes: 1 << 20}}
+	s := &stubApplications{limits: service.ApplicationLimits{MaxDocuments: 5, MaxFileBytes: 1 << 20}}
 	body, ct := multipartBody(t, map[string]string{
 		"vacancy": "chief-officer", "full_name": "Siti Aminah", "email": "siti@example.com", "phone": "+6281234567890",
 		"date_of_birth": "1990-05-01", "nationality": "Indonesian", "rank_applied_id": "r1", "years_experience": "8",
@@ -108,7 +108,7 @@ func TestApplicationStorePassesFieldsAndFilesToService(t *testing.T) {
 }
 
 func TestApplicationStoreForwardsHoneypotValue(t *testing.T) {
-	s := &stubApplications{limits: service.ApplicationLimits{MaxFiles: 5, MaxFileBytes: 1 << 20}}
+	s := &stubApplications{limits: service.ApplicationLimits{MaxDocuments: 5, MaxFileBytes: 1 << 20}}
 	body, ct := multipartBody(t, map[string]string{"website": "http://spam.example"}, nil)
 
 	rec := postApplication(applicationRouter(s), body, ct)
@@ -124,7 +124,7 @@ func TestApplicationStoreRejectsNonMultipartBodies(t *testing.T) {
 }
 
 func TestApplicationStoreRejectsBodiesAboveTheFileLimits(t *testing.T) {
-	s := &stubApplications{limits: service.ApplicationLimits{MaxFiles: 1, MaxFileBytes: 1024}}
+	s := &stubApplications{limits: service.ApplicationLimits{MaxDocuments: 1, MaxFileBytes: 1024}}
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 	part, err := w.CreateFormFile("cv", "cv.pdf")
@@ -141,7 +141,7 @@ func TestApplicationStoreRejectsBodiesAboveTheFileLimits(t *testing.T) {
 
 func TestApplicationStoreShowsValidationFieldsFromService(t *testing.T) {
 	s := &stubApplications{
-		limits: service.ApplicationLimits{MaxFiles: 5, MaxFileBytes: 1 << 20},
+		limits: service.ApplicationLimits{MaxDocuments: 5, MaxFileBytes: 1 << 20},
 		err:    apperr.Validation(map[string]string{"email": "This must be a valid email address."}),
 	}
 	body, ct := multipartBody(t, map[string]string{"email": "x"}, nil)
@@ -161,7 +161,7 @@ func TestApplicationStoreShowsValidationFieldsFromService(t *testing.T) {
 }
 
 func TestApplicationStoreMapsDuplicateToConflict(t *testing.T) {
-	s := &stubApplications{limits: service.ApplicationLimits{MaxFiles: 5, MaxFileBytes: 1 << 20}, err: apperr.Conflict("duplicate_application", "You have already applied.")}
+	s := &stubApplications{limits: service.ApplicationLimits{MaxDocuments: 5, MaxFileBytes: 1 << 20}, err: apperr.Conflict("duplicate_application", "You have already applied.")}
 	body, ct := multipartBody(t, nil, nil)
 
 	rec := postApplication(applicationRouter(s), body, ct)

@@ -42,6 +42,7 @@ const (
 	SessionIdleTimeout = 8 * time.Hour
 	SessionAbsolute    = 7 * 24 * time.Hour
 	requestTimeout     = 30 * time.Second
+	uploadTimeout      = 2 * time.Minute
 )
 
 // App holds long-lived dependencies.
@@ -233,7 +234,7 @@ func (a *App) Router() http.Handler {
 	r.Use(middleware.AccessLog)
 	r.Use(middleware.Recover)
 	r.Use(middleware.SecurityHeaders)
-	r.Use(middleware.Timeout(requestTimeout))
+	r.Use(middleware.TimeoutWithUploads(requestTimeout, uploadTimeout, routes.PublicPrefix+"/applications"))
 
 	routes.Health(r, handler.NewHealthHandler(map[string]handler.Pinger{
 		"database": handler.PingFunc(a.DB.Ping),

@@ -98,7 +98,7 @@ type ApplicationInput struct {
 
 // ApplicationLimits are the upload limits shown to applicants.
 type ApplicationLimits struct {
-	MaxFiles     int
+	MaxDocuments int
 	MaxFileBytes int64
 }
 
@@ -135,7 +135,7 @@ func (s *ApplicationService) Limits(ctx context.Context) (ApplicationLimits, err
 		return ApplicationLimits{}, err
 	}
 	maxFiles := uploadInt(values["max_applicant_files"], 10)
-	return ApplicationLimits{MaxFiles: maxFiles, MaxFileBytes: maxBytes}, nil
+	return ApplicationLimits{MaxDocuments: maxFiles, MaxFileBytes: maxBytes}, nil
 }
 
 // Submit processes an application and returns its Application ID. A filled honeypot field is answered with a
@@ -258,8 +258,8 @@ func validateApplicationFiles(e request.Errors, in ApplicationInput, limits Appl
 	case len(in.CV) > 1:
 		e["cv"] = "Upload exactly one CV."
 	}
-	if len(in.CV)+len(in.Documents) > limits.MaxFiles {
-		e["documents"] = fmt.Sprintf("You can upload at most %d files in total, including the CV.", limits.MaxFiles)
+	if len(in.Documents) > limits.MaxDocuments {
+		e["documents"] = fmt.Sprintf("You can upload at most %d supporting documents.", limits.MaxDocuments)
 	}
 	tooLarge := fmt.Sprintf("Each file may not be larger than %d MB.", limits.MaxFileBytes>>20)
 	for _, f := range in.CV {

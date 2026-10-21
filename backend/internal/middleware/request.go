@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"time"
 
@@ -123,9 +124,18 @@ func AccessLog(next http.Handler) http.Handler {
 
 // Timeout bounds request handling time through the request context.
 func Timeout(d time.Duration) func(http.Handler) http.Handler {
+	return TimeoutWithUploads(d, d)
+}
+
+// TimeoutWithUploads bounds requests by d, except POST requests to uploadPaths which get upload.
+func TimeoutWithUploads(d, upload time.Duration, uploadPaths ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, cancel := context.WithTimeout(r.Context(), d)
+			limit := d
+			if r.Method == http.MethodPost && slices.Contains(uploadPaths, r.URL.Path) {
+				limit = upload
+			}
+			ctx, cancel := context.WithTimeout(r.Context(), limit)
 			defer cancel()
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

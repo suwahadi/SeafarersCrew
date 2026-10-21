@@ -70,7 +70,7 @@ func (m *memCache) Set(_ context.Context, key string, value []byte, _ time.Durat
 type okApplications struct{}
 
 func (okApplications) Limits(context.Context) (service.ApplicationLimits, error) {
-	return service.ApplicationLimits{MaxFiles: 3, MaxFileBytes: 1 << 20}, nil
+	return service.ApplicationLimits{MaxDocuments: 3, MaxFileBytes: 1 << 20}, nil
 }
 
 func (okApplications) Submit(context.Context, service.ApplicationInput) (string, error) {

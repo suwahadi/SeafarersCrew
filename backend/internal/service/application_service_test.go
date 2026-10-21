@@ -276,8 +276,8 @@ func TestSubmitApplicationValidatesEveryField(t *testing.T) {
 		{"consent false", func(in *ApplicationInput) { in.Consent = "false" }, "consent"},
 		{"no CV", func(in *ApplicationInput) { in.CV = nil }, "cv"},
 		{"two CVs", func(in *ApplicationInput) { in.CV = []ApplicationFile{pdfPart("a.pdf"), pdfPart("b.pdf")} }, "cv"},
-		{"too many files in total", func(in *ApplicationInput) {
-			in.Documents = []ApplicationFile{pdfPart("1.pdf"), pdfPart("2.pdf"), pdfPart("3.pdf"), pdfPart("4.pdf")}
+		{"more supporting documents than allowed", func(in *ApplicationInput) {
+			in.Documents = []ApplicationFile{pdfPart("1.pdf"), pdfPart("2.pdf"), pdfPart("3.pdf"), pdfPart("4.pdf"), pdfPart("5.pdf")}
 		}, "documents"},
 		{"oversized CV", func(in *ApplicationInput) { in.CV[0].Size = 6 << 20 }, "cv"},
 		{"oversized document", func(in *ApplicationInput) { in.Documents[0].Size = 6 << 20 }, "documents"},
@@ -459,5 +459,16 @@ func TestApplicationLimitsComeFromSettings(t *testing.T) {
 	limits, err := f.svc.Limits(context.Background())
 
 	require.NoError(t, err)
-	assert.Equal(t, ApplicationLimits{MaxFiles: 4, MaxFileBytes: 5 << 20}, limits)
+	assert.Equal(t, ApplicationLimits{MaxDocuments: 4, MaxFileBytes: 5 << 20}, limits)
+}
+
+func TestSubmitAcceptsCVPlusTheMaximumNumberOfSupportingDocuments(t *testing.T) {
+	f := newApplicationFixture(t)
+	in := f.input()
+	in.Documents = []ApplicationFile{pdfPart("1.pdf"), pdfPart("2.pdf"), pdfPart("3.pdf"), pdfPart("4.pdf")}
+
+	_, err := f.svc.Submit(context.Background(), in)
+
+	require.NoError(t, err)
+	assert.Len(t, f.files.uploaded, 5)
 }

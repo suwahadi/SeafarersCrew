@@ -262,3 +262,23 @@ func TestAfterWriteRunsOnlyAfterSuccessfulWrites(t *testing.T) {
 	run(http.MethodDelete, http.StatusNoContent)
 	assert.Equal(t, 2, calls)
 }
+
+func TestTimeoutWithUploadsGivesUploadPostsTheLongerDeadline(t *testing.T) {
+	var got time.Duration
+	h := TimeoutWithUploads(time.Second, time.Hour, "/apply")(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		dl, _ := r.Context().Deadline()
+		got = time.Until(dl)
+	}))
+	cases := []struct {
+		method, path string
+		long         bool
+	}{
+		{http.MethodPost, "/apply", true},
+		{http.MethodGet, "/apply", false},
+		{http.MethodPost, "/contact", false},
+	}
+	for _, c := range cases {
+		h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(c.method, c.path, nil))
+		assert.Equal(t, c.long, got > time.Minute, c.method+" "+c.path)
+	}
+}
