@@ -46,6 +46,7 @@ func (a *App) scheduledTasks() []job.Task {
 		{Name: "expire-quotations", Every: time.Hour, Run: a.Maintenance.ExpireQuotations},
 		{Name: "publish-news", Every: time.Minute, Run: a.Maintenance.PublishScheduledNews},
 		{Name: "purge-files", Every: 6 * time.Hour, Slot: func(now time.Time) string { return now.UTC().Format("2006-01") }, Run: a.Maintenance.PurgeFiles},
+		{Name: "purge-applicants", Every: 6 * time.Hour, Slot: func(now time.Time) string { return now.UTC().Format("2006-01-02") }, Run: a.Maintenance.PurgeApplicants},
 		{Name: "refresh-dashboard", Every: 5 * time.Minute, Run: a.Maintenance.RefreshDashboard},
 	}
 }

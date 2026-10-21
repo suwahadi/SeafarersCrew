@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	purgeAfterDays   = 90
-	purgeBatchSize   = 200
-	purgeMaxBatches  = 50
-	newsCursorKey    = "sched:news-cursor"
-	newsCursorExpiry = 30 * 24 * time.Hour
+	applicantRetentionMonths = 24
+	purgeAfterDays           = 90
+	purgeBatchSize           = 200
+	purgeMaxBatches          = 50
+	newsCursorKey            = "sched:news-cursor"
+	newsCursorExpiry         = 30 * 24 * time.Hour
 )
 
 // MaintenanceStore holds the statements of the scheduled jobs.
@@ -26,6 +27,8 @@ type MaintenanceStore interface {
 	CountNewlyLiveNews(ctx context.Context, from, to time.Time) (int, error)
 	PurgeCandidates(ctx context.Context, cutoff time.Time, limit int) ([]model.File, error)
 	MarkPurged(ctx context.Context, ids []uuid.UUID, at time.Time) error
+	ExpiredApplicants(ctx context.Context, cutoff time.Time, limit int) ([]model.ExpiredApplicant, error)
+	DeleteApplicants(ctx context.Context, ids, fileIDs []uuid.UUID, at time.Time) error
 }
 
 // QuotationExpirer expires overdue quotations.
@@ -162,6 +165,49 @@ func (s *MaintenanceService) PurgeFiles(ctx context.Context) error {
 	}
 	if total > 0 {
 		logctx.From(ctx).InfoContext(ctx, "files purged", "count", total)
+	}
+	return nil
+}
+
+// PurgeApplicants deletes applications, and their files, kept longer than the 24 months promised in the Privacy Policy.
+func (s *MaintenanceService) PurgeApplicants(ctx context.Context) error {
+	cutoff := s.now().UTC().AddDate(0, -applicantRetentionMonths, 0)
+	total := 0
+	for range purgeMaxBatches {
+		expired, err := s.store.ExpiredApplicants(ctx, cutoff, purgeBatchSize)
+		if err != nil {
+			return err
+		}
+		if len(expired) == 0 {
+			break
+		}
+		ids := make([]uuid.UUID, 0, len(expired))
+		var fileIDs []uuid.UUID
+		var keys []string
+		for _, a := range expired {
+			ids = append(ids, a.ID)
+			for _, f := range a.Files {
+				fileIDs = append(fileIDs, f.ID)
+				keys = append(keys, f.StorageKey)
+				for _, v := range f.Variants {
+					keys = append(keys, v.StorageKey)
+				}
+			}
+		}
+		if err := s.storage.Delete(ctx, keys...); err != nil {
+			return fmt.Errorf("delete applicant files: %w", err)
+		}
+		if err := s.store.DeleteApplicants(ctx, ids, fileIDs, s.now().UTC()); err != nil {
+			return err
+		}
+		total += len(expired)
+		if len(expired) < purgeBatchSize {
+			break
+		}
+	}
+	if total > 0 {
+		logctx.From(ctx).InfoContext(ctx, "applicants purged", "count", total)
+		return s.dashboard.Invalidate(ctx)
 	}
 	return nil
 }

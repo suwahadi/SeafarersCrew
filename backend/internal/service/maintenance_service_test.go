@@ -24,6 +24,11 @@ type fakeMaintenance struct {
 	purgedIDs     []uuid.UUID
 	purgeCalls    int
 	purgeErr      error
+	applicants    [][]model.ExpiredApplicant
+	applicantCall int
+	appCutoff     time.Time
+	deletedApps   []uuid.UUID
+	deletedFiles  []uuid.UUID
 	markPurgedErr error
 }
 
@@ -47,6 +52,21 @@ func (f *fakeMaintenance) PurgeCandidates(_ context.Context, cutoff time.Time, _
 	}
 	f.purgeCalls++
 	return f.batches[f.purgeCalls-1], nil
+}
+
+func (f *fakeMaintenance) ExpiredApplicants(_ context.Context, cutoff time.Time, _ int) ([]model.ExpiredApplicant, error) {
+	f.appCutoff = cutoff
+	if f.applicantCall >= len(f.applicants) {
+		return nil, nil
+	}
+	f.applicantCall++
+	return f.applicants[f.applicantCall-1], nil
+}
+
+func (f *fakeMaintenance) DeleteApplicants(_ context.Context, ids, fileIDs []uuid.UUID, _ time.Time) error {
+	f.deletedApps = append(f.deletedApps, ids...)
+	f.deletedFiles = append(f.deletedFiles, fileIDs...)
+	return nil
 }
 
 func (f *fakeMaintenance) MarkPurged(_ context.Context, ids []uuid.UUID, _ time.Time) error {
@@ -185,4 +205,28 @@ func TestRefreshDashboardInvalidatesTheCache(t *testing.T) {
 	f := newMaintenanceFixture(t, time.Now())
 	require.NoError(t, f.svc.RefreshDashboard(context.Background()))
 	assert.Equal(t, 1, f.dashboard.calls)
+}
+
+func TestPurgeApplicantsDeletesRecordsAndFilesOlderThanTwentyFourMonths(t *testing.T) {
+	f := newMaintenanceFixture(t, time.Date(2026, 10, 21, 5, 0, 0, 0, time.UTC))
+	a, cv := uuid.New(), uuid.New()
+	f.store.applicants = [][]model.ExpiredApplicant{{{ID: a, Files: []model.File{{ID: cv, StorageKey: "applicant/2024/01/cv.pdf"}}}, {ID: uuid.New()}}}
+	f.storage.objects["applicant/2024/01/cv.pdf"] = []byte("x")
+
+	require.NoError(t, f.svc.PurgeApplicants(context.Background()))
+
+	assert.Equal(t, time.Date(2024, 10, 21, 5, 0, 0, 0, time.UTC), f.store.appCutoff)
+	assert.Len(t, f.store.deletedApps, 2)
+	assert.Equal(t, []uuid.UUID{cv}, f.store.deletedFiles)
+	assert.Empty(t, f.storage.objects)
+	assert.Equal(t, 1, f.dashboard.calls)
+}
+
+func TestPurgeApplicantsKeepsRecordsWhenTheirFilesCannotBeDeleted(t *testing.T) {
+	f := newMaintenanceFixture(t, time.Date(2026, 10, 21, 5, 0, 0, 0, time.UTC))
+	f.store.applicants = [][]model.ExpiredApplicant{{{ID: uuid.New(), Files: []model.File{{ID: uuid.New(), StorageKey: "a.pdf"}}}}}
+	f.svc.storage = &failingDelete{memBackupStorage: f.storage}
+
+	require.Error(t, f.svc.PurgeApplicants(context.Background()))
+	assert.Empty(t, f.store.deletedApps)
 }

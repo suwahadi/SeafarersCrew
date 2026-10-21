@@ -148,3 +148,46 @@ func TestBackupRepositoryTracksRunsAndRetention(t *testing.T) {
 	_, err = repo.Get(ctx, old.ID)
 	assert.ErrorIs(t, err, repository.ErrNotFound)
 }
+
+func TestExpiredApplicantsAreDeletedWithTheirHistoryEmailLogsAndFiles(t *testing.T) {
+	truncate(t, "applicants", "vacancies", "files", "email_logs")
+	ctx := context.Background()
+	exec(t, `INSERT INTO vacancies (public_id, title, slug, status) VALUES ('VAC000009', 'V', 'v', 'open')`)
+	var vacancyID uuid.UUID
+	require.NoError(t, testDB.QueryRow(ctx, `SELECT id FROM vacancies LIMIT 1`).Scan(&vacancyID))
+	insert := func(public, email string, created time.Time) uuid.UUID {
+		return mustID(t, `INSERT INTO applicants (public_id, vacancy_id, full_name, email, phone, consent_at, created_at)
+			VALUES ($1, $2, 'A', $3, '+6281', $4, $4) RETURNING id`, public, vacancyID, email, created)
+	}
+	oldID := insert("APP000001", "old@example.com", time.Date(2024, 9, 1, 0, 0, 0, 0, time.UTC))
+	keepID := insert("APP000002", "keep@example.com", time.Date(2025, 9, 1, 0, 0, 0, 0, time.UTC))
+	cv := purgeFile(t, "applicant/2024/09/cv.pdf")
+	exec(t, `INSERT INTO applicant_files (applicant_id, file_id, kind) VALUES ($1, $2, 'cv')`, oldID, cv)
+	exec(t, `INSERT INTO applicant_stage_logs (applicant_id, to_stage) VALUES ($1, 'new')`, oldID)
+	exec(t, `INSERT INTO email_logs (template_code, to_addresses, subject, status, related_type, related_id) VALUES ('applicant_confirmation', ARRAY['old@example.com'], 's', 'sent', 'applicant', $1)`, oldID)
+	repo := repository.NewMaintenanceRepository(testDB)
+	cutoff := time.Date(2024, 10, 21, 0, 0, 0, 0, time.UTC)
+
+	expired, err := repo.ExpiredApplicants(ctx, cutoff, 10)
+	require.NoError(t, err)
+	require.Len(t, expired, 1)
+	assert.Equal(t, oldID, expired[0].ID)
+	require.Len(t, expired[0].Files, 1)
+	assert.Equal(t, "applicant/2024/09/cv.pdf", expired[0].Files[0].StorageKey)
+
+	require.NoError(t, repo.DeleteApplicants(ctx, []uuid.UUID{oldID}, []uuid.UUID{cv}, cutoff))
+
+	var applicants, logs, emails int
+	require.NoError(t, testDB.QueryRow(ctx, `SELECT count(*) FROM applicants`).Scan(&applicants))
+	require.NoError(t, testDB.QueryRow(ctx, `SELECT count(*) FROM applicant_stage_logs`).Scan(&logs))
+	require.NoError(t, testDB.QueryRow(ctx, `SELECT count(*) FROM email_logs`).Scan(&emails))
+	assert.Equal(t, 1, applicants)
+	assert.Zero(t, logs)
+	assert.Zero(t, emails)
+	var survivor uuid.UUID
+	require.NoError(t, testDB.QueryRow(ctx, `SELECT id FROM applicants`).Scan(&survivor))
+	assert.Equal(t, keepID, survivor)
+	var purged bool
+	require.NoError(t, testDB.QueryRow(ctx, `SELECT purged_at IS NOT NULL FROM files WHERE id = $1`, cv).Scan(&purged))
+	assert.True(t, purged)
+}

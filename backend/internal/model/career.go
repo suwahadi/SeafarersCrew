@@ -239,3 +239,9 @@ type ContactFilter struct {
 	Q      string
 	Status string
 }
+
+// ExpiredApplicant is an application past its retention period together with its stored files.
+type ExpiredApplicant struct {
+	ID    uuid.UUID
+	Files []File
+}

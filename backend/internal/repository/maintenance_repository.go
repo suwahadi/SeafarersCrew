@@ -96,3 +96,59 @@ func (r *MaintenanceRepository) MarkPurged(ctx context.Context, ids []uuid.UUID,
 	}
 	return nil
 }
+
+// ExpiredApplicants returns applications created before cutoff with their files, oldest first.
+func (r *MaintenanceRepository) ExpiredApplicants(ctx context.Context, cutoff time.Time, limit int) ([]model.ExpiredApplicant, error) {
+	rows, err := r.pool.Query(ctx, `WITH doomed AS (SELECT id, created_at FROM applicants WHERE created_at < $1 ORDER BY created_at, id LIMIT $2)
+		SELECT d.id, f.id, f.storage_key, f.variants
+		FROM doomed d
+		LEFT JOIN applicant_files af ON af.applicant_id = d.id
+		LEFT JOIN files f ON f.id = af.file_id AND f.purged_at IS NULL
+		ORDER BY d.created_at, d.id`, cutoff, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list expired applicants: %w", err)
+	}
+	defer rows.Close()
+	var out []model.ExpiredApplicant
+	index := map[uuid.UUID]int{}
+	for rows.Next() {
+		var id uuid.UUID
+		var fileID *uuid.UUID
+		var key *string
+		var variants []model.FileVariant
+		if err := rows.Scan(&id, &fileID, &key, &variants); err != nil {
+			return nil, fmt.Errorf("scan expired applicant: %w", err)
+		}
+		i, ok := index[id]
+		if !ok {
+			i = len(out)
+			index[id] = i
+			out = append(out, model.ExpiredApplicant{ID: id})
+		}
+		if fileID != nil && key != nil {
+			out[i].Files = append(out[i].Files, model.File{ID: *fileID, StorageKey: *key, Variants: variants})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read expired applicants: %w", err)
+	}
+	return out, nil
+}
+
+// DeleteApplicants permanently removes applications, their stage history and email log entries, and marks their files purged.
+func (r *MaintenanceRepository) DeleteApplicants(ctx context.Context, ids, fileIDs []uuid.UUID, at time.Time) error {
+	return InTx(ctx, r.pool, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, `DELETE FROM email_logs WHERE related_type = 'applicant' AND related_id = ANY($1)`, ids); err != nil {
+			return fmt.Errorf("delete applicant email logs: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM applicants WHERE id = ANY($1)`, ids); err != nil {
+			return fmt.Errorf("delete applicants: %w", err)
+		}
+		if len(fileIDs) > 0 {
+			if _, err := tx.Exec(ctx, `UPDATE files SET purged_at = $2, deleted_at = coalesce(deleted_at, $2) WHERE id = ANY($1)`, fileIDs, at); err != nil {
+				return fmt.Errorf("mark applicant files purged: %w", err)
+			}
+		}
+		return nil
+	})
+}
