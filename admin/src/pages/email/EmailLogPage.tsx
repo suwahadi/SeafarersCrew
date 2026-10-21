@@ -60,13 +60,13 @@ export default function EmailLogPage() {
     <>
       <PageHeader title="Email log" description="Every email queued by the system with its delivery status." />
       <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Filters">
-        <select aria-label="Status" className={`h-9 w-auto ${inputClass}`} value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select aria-label="Status" className={`h-9 ${inputClass} w-auto!`} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
           <option value="queued">Queued</option>
           <option value="sent">Sent</option>
           <option value="failed">Failed</option>
         </select>
-        <select aria-label="Related to" className={`h-9 w-auto ${inputClass}`} value={relatedType} onChange={(e) => setRelatedType(e.target.value)}>
+        <select aria-label="Related to" className={`h-9 ${inputClass} w-auto!`} value={relatedType} onChange={(e) => setRelatedType(e.target.value)}>
           <option value="">All records</option>
           <option value="contract">Contract</option>
           <option value="quotation">Quotation</option>

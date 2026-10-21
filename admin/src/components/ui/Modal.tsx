@@ -30,7 +30,7 @@ export function Modal({ open, title, onClose, children, footer, size = 'md' }: M
         e.preventDefault()
         onClose()
       }}
-      className={`w-full ${widths[size]} rounded-lg p-0 shadow-xl backdrop:bg-slate-900/40 open:flex open:flex-col max-h-[90vh]`}
+      className={`m-auto w-full ${widths[size]} rounded-lg p-0 shadow-xl backdrop:bg-slate-900/40 open:flex open:flex-col max-h-[90vh]`}
     >
       {open ? (
         <>

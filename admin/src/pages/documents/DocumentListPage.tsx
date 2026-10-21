@@ -52,7 +52,7 @@ export default function DocumentListPage() {
         actions={<Button onClick={() => void navigate('/documents/new')}>Generate document</Button>}
       />
       <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Filters">
-        <select aria-label="Document type" className={`h-9 w-auto ${inputClass}`} value={kind} onChange={(e) => setKind(e.target.value)}>
+        <select aria-label="Document type" className={`h-9 ${inputClass} w-auto!`} value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="">All types</option>
           {Object.entries(KIND_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -60,7 +60,7 @@ export default function DocumentListPage() {
             </option>
           ))}
         </select>
-        <select aria-label="Related to" className={`h-9 w-auto ${inputClass}`} value={relatedType} onChange={(e) => setRelatedType(e.target.value)}>
+        <select aria-label="Related to" className={`h-9 ${inputClass} w-auto!`} value={relatedType} onChange={(e) => setRelatedType(e.target.value)}>
           <option value="">All records</option>
           <option value="contract">Contracts</option>
           <option value="quotation">Quotations</option>

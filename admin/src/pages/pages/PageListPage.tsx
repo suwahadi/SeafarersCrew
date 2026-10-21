@@ -55,7 +55,7 @@ const columns: ColumnDef<PageSummary>[] = [
 export default function PageListPage() {
   const navigate = useNavigate()
   const [filters, set] = useUrlFilters(FILTER_KEYS)
-  const select = `h-9 w-auto ${inputClass}`
+  const select = `h-9 ${inputClass} w-auto!`
 
   return (
     <>

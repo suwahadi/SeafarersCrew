@@ -38,7 +38,7 @@ export function ReliefPlanList({ onOpen }: { onOpen: (plan: ReliefPlan) => void 
   const [status, setStatus] = useState('')
   return (
     <div className="space-y-3">
-      <select aria-label="Status" className={`h-9 w-auto ${inputClass}`} value={status} onChange={(e) => setStatus(e.target.value)}>
+      <select aria-label="Status" className={`h-9 ${inputClass} w-auto!`} value={status} onChange={(e) => setStatus(e.target.value)}>
         <option value="">All statuses</option>
         <option value="planned">Planned</option>
         <option value="confirmed">Confirmed</option>

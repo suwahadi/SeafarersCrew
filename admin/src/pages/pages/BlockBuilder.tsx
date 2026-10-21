@@ -118,7 +118,7 @@ export function BlockBuilder({ media }: { media: PageMedia }) {
           Add block
         </Button>
         {menuOpen ? (
-          <ul id="add-block-menu" aria-label="Block types" className="absolute left-0 z-10 mt-1 w-72 rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-200">
+          <ul id="add-block-menu" aria-label="Block types" className="absolute left-0 z-20 mt-1 w-72 rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-200">
             {BLOCK_TYPES.map((b) => (
               <li key={b.type}>
                 <button type="button" onClick={() => add(b.type)} className="block w-full rounded-md px-3 py-2 text-left hover:bg-slate-100 focus-visible:bg-slate-100">

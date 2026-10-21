@@ -38,7 +38,7 @@ export default function QuotationListPage() {
   const { options } = useOptions()
   const [filters, setFilters] = useState<Record<string, string>>({})
   const set = (key: string, value: string) => setFilters((f) => ({ ...f, [key]: value }))
-  const select = `h-9 w-auto ${inputClass}`
+  const select = `h-9 ${inputClass} w-auto!`
 
   return (
     <>

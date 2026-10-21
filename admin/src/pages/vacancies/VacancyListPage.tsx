@@ -65,7 +65,7 @@ export default function VacancyListPage() {
   const navigate = useNavigate()
   const { options } = useOptions()
   const [filters, set] = useUrlFilters(FILTER_KEYS)
-  const select = `h-9 w-auto ${inputClass}`
+  const select = `h-9 ${inputClass} w-auto!`
 
   return (
     <>

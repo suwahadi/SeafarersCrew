@@ -49,7 +49,7 @@ export default function ApplicantListPage() {
   const [params, setParams] = useSearchParams()
   const [filters, set] = useUrlFilters(FILTER_KEYS)
   const kanban = params.get('view') === 'kanban'
-  const select = `h-9 w-auto ${inputClass}`
+  const select = `h-9 ${inputClass} w-auto!`
 
   const vacancies = useQuery({
     queryKey: ['vacancy-options'],

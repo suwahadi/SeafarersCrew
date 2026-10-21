@@ -40,7 +40,7 @@ export default function NewsListPage() {
     <>
       <PageHeader title="News" description="Articles shown on the news page." actions={<Button onClick={() => void navigate('/website/news/new')}>New article</Button>} />
       <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
-        <select aria-label="Status" className={`h-9 w-auto ${inputClass}`} value={filters.status} onChange={(e) => set('status', e.target.value)}>
+        <select aria-label="Status" className={`h-9 ${inputClass} w-auto!`} value={filters.status} onChange={(e) => set('status', e.target.value)}>
           <option value="">All statuses</option>
           <option value="draft">Draft</option>
           <option value="published">Published</option>
