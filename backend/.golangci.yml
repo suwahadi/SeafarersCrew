@@ -61,6 +61,10 @@ linters:
         text: "G204|G304"
         linters:
           - gosec
+      - path: database/seeders/
+        text: G404
+        linters:
+          - gosec
       - path: _test\.go
         linters:
           - gosec
