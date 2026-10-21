@@ -82,12 +82,12 @@ export function Header({ site, activeLanguage }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-white">
-      <Container className="relative flex h-16 items-center justify-between gap-4 lg:h-20">
+      <Container className="relative flex h-16 items-center justify-between gap-2 sm:gap-4 lg:h-20">
         <Link href="/" className="flex shrink-0 items-center" aria-label={`${site.name} home`}>
           {logo ? (
             <SiteImage image={logo} sizes="160px" eager alt={site.name} className="h-9 w-auto max-w-28 object-contain sm:max-w-44 lg:h-11" />
           ) : (
-            <span translate="no" className="text-xl font-bold text-primary">
+            <span translate="no" className="text-base font-bold text-primary min-[400px]:text-xl">
               {site.name}
             </span>
           )}
@@ -99,7 +99,7 @@ export function Header({ site, activeLanguage }: HeaderProps) {
             ))}
           </ul>
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <LanguageSwitcher languages={[...languages]} sourceCode={source} initialCode={activeLanguage} />
           <ButtonLink href="/career" variant="accent" className="whitespace-nowrap px-3 py-2.5 text-xs sm:px-4 sm:text-sm">
             Apply Now
