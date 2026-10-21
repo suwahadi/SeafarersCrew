@@ -61,12 +61,41 @@ jobs:
       - name: Build
         run: npm run build
 
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: TypeScript
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Vitest
+        run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          API_URL: http://localhost:8080
+          PUBLIC_API_URL: http://localhost:8080
+          APP_URL: http://localhost:3000
+          REVALIDATE_SECRET: ci-only-revalidate-secret-0123456789
+
   docker:
     runs-on: ubuntu-latest
-    needs: [backend, admin]
+    needs: [backend, admin, web]
     steps:
       - uses: actions/checkout@v4
       - name: Build API image
         run: docker build -f deploy/api.Dockerfile -t seafarers-api:ci .
       - name: Build proxy image with the admin SPA
         run: docker build -f deploy/proxy.Dockerfile -t seafarers-proxy:ci .
+      - name: Build website image
+        run: docker build -f deploy/web.Dockerfile -t seafarers-web:ci .
