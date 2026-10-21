@@ -13,6 +13,13 @@ export function applyServerErrors<T extends FieldValues>(err: unknown, setError:
   return null
 }
 
+export function unmatchedError(err: unknown, fields: readonly string[]): string | null {
+  if (!(err instanceof ApiError)) return err instanceof Error ? err.message : 'Something went wrong.'
+  const keys = Object.keys(err.fields)
+  if (keys.length === 0 || keys.some((k) => !fields.includes(k))) return err.message
+  return null
+}
+
 export function emptyToNull(value: string): string | null {
   return value.trim() === '' ? null : value
 }
