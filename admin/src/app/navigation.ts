@@ -1,6 +1,9 @@
+export type NavBadge = 'unread-contact-messages'
+
 export interface NavItem {
   to: string
   label: string
+  badge?: NavBadge
 }
 
 export interface NavGroup {
@@ -19,6 +22,14 @@ export const navigation: NavGroup[] = [
       { to: '/quotations', label: 'Quotations' },
       { to: '/documents', label: 'Generated Documents' },
       { to: '/email-logs', label: 'Email Log' },
+    ],
+  },
+  {
+    label: 'Career',
+    items: [
+      { to: '/vacancies', label: 'Vacancies' },
+      { to: '/applicants', label: 'Applicants' },
+      { to: '/contact-messages', label: 'Contact Inbox', badge: 'unread-contact-messages' },
     ],
   },
   {

@@ -1,16 +1,24 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Suspense, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { authApi } from '@/api/auth'
+import { contactMessagesApi, UNREAD_COUNT_KEY } from '@/api/contactMessages'
 import { Spinner } from '@/components/ui/Spinner'
 import { SESSION_KEY, useAuth } from './auth'
-import { navigation } from './navigation'
+import { navigation, type NavItem } from './navigation'
 
 export function AppLayout() {
   const { admin } = useAuth()
   const qc = useQueryClient()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const unread = useQuery({
+    queryKey: UNREAD_COUNT_KEY,
+    queryFn: ({ signal }) => contactMessagesApi.unreadCount(signal),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  })
+  const badgeCount = (item: NavItem): number => (item.badge === 'unread-contact-messages' ? (unread.data?.unread ?? 0) : 0)
   const logout = useMutation({
     mutationFn: authApi.logout,
     onSettled: () => {
@@ -46,6 +54,12 @@ export function AppLayout() {
                       }
                     >
                       {item.label}
+                      {badgeCount(item) > 0 ? (
+                        <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-xs font-semibold text-navy-800">
+                          {badgeCount(item)}
+                          <span className="sr-only"> unread</span>
+                        </span>
+                      ) : null}
                     </NavLink>
                   </li>
                 ))}
