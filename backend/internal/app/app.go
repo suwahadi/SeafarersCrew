@@ -201,8 +201,31 @@ func (a *App) Close() {
 	_ = a.Redis.Close()
 }
 
-// Seed loads reference data and copies S3 bootstrap values into Settings on first boot.
-func (a *App) Seed(ctx context.Context) error {
+// SeedOptions selects what db:seed loads on top of the reference data.
+type SeedOptions struct {
+	Demo  bool
+	Force bool
+}
+
+// Seed loads reference data, copies S3 bootstrap values into Settings on first boot and, when asked, the demo data set.
+func (a *App) Seed(ctx context.Context, opts SeedOptions) ([]seeders.DemoStep, error) {
+	if opts.Demo {
+		if err := seeders.CheckDemoAllowed(a.Config.Env, opts.Force); err != nil {
+			return nil, err
+		}
+	}
+	if err := a.seedReference(ctx); err != nil {
+		return nil, err
+	}
+	if !opts.Demo {
+		return nil, nil
+	}
+	steps, err := seeders.Demo(ctx, a.demoDeps())
+	a.invalidateDashboard(ctx)
+	return steps, err
+}
+
+func (a *App) seedReference(ctx context.Context) error {
 	var overrides map[string]map[string]any
 	if s := a.Config.S3Bootstrap; s.Configured() {
 		storage := map[string]any{

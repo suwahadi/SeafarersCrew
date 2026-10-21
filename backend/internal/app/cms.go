@@ -10,26 +10,39 @@ import (
 	"github.com/suwahadi/seafarerscrew/backend/internal/service"
 )
 
-func (a *App) cmsRoutes() routes.CMSRoutes {
+type cmsServices struct {
+	cms   service.CMS
+	pages *service.PageService
+	news  *service.NewsService
+	menus *service.MenuService
+}
+
+func (a *App) cmsServices() cmsServices {
 	lookup := repository.NewCMSLookupRepository(a.DB)
 	files := service.NewPublicFileChecker(lookup)
 	html := service.NewCMSPolicy()
-	cms := service.NewCMS(service.CMSStores{
-		HeroSlides:   repository.NewHeroSlideRepository(a.DB),
-		Gallery:      repository.NewGalleryImageRepository(a.DB),
-		Testimonials: repository.NewTestimonialRepository(a.DB),
-		ClientLogos:  repository.NewClientLogoRepository(a.DB),
-		Stats:        repository.NewStatsItemRepository(a.DB),
-		Languages:    repository.NewLanguageRepository(a.DB),
-	}, files, a.Publisher)
-	masters, gallery := admin.CMSMasters(cms, a.Media)
-	pages := service.NewPageService(repository.NewPageRepository(a.DB), lookup, files, html, a.Publisher, time.Now)
-	news := service.NewNewsService(repository.NewNewsRepository(a.DB), files, html, a.Publisher, time.Now)
-	menus := service.NewMenuService(repository.NewMenuRepository(a.DB), lookup, a.Publisher)
+	return cmsServices{
+		cms: service.NewCMS(service.CMSStores{
+			HeroSlides:   repository.NewHeroSlideRepository(a.DB),
+			Gallery:      repository.NewGalleryImageRepository(a.DB),
+			Testimonials: repository.NewTestimonialRepository(a.DB),
+			ClientLogos:  repository.NewClientLogoRepository(a.DB),
+			Stats:        repository.NewStatsItemRepository(a.DB),
+			Languages:    repository.NewLanguageRepository(a.DB),
+		}, files, a.Publisher),
+		pages: service.NewPageService(repository.NewPageRepository(a.DB), lookup, files, html, a.Publisher, time.Now),
+		news:  service.NewNewsService(repository.NewNewsRepository(a.DB), files, html, a.Publisher, time.Now),
+		menus: service.NewMenuService(repository.NewMenuRepository(a.DB), lookup, a.Publisher),
+	}
+}
+
+func (a *App) cmsRoutes() routes.CMSRoutes {
+	s := a.cmsServices()
+	masters, gallery := admin.CMSMasters(s.cms, a.Media)
 	return routes.CMSRoutes{
-		Pages:   admin.NewPageHandler(pages, a.Media),
-		News:    admin.NewNewsHandler(news, a.Media, time.Now),
-		Menus:   admin.NewMenuHandler(menus),
+		Pages:   admin.NewPageHandler(s.pages, a.Media),
+		News:    admin.NewNewsHandler(s.news, a.Media, time.Now),
+		Menus:   admin.NewMenuHandler(s.menus),
 		Gallery: gallery,
 		Masters: masters,
 	}

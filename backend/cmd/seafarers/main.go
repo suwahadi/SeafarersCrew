@@ -25,7 +25,7 @@ const usage = `Usage: seafarers <command> [flags]
 Commands:
   serve                                   Run the HTTP API
   migrate up|down                         Apply all migrations or roll back one step
-  db:seed                                 Load reference data (idempotent)
+  db:seed [--demo] [--force]              Load reference data (idempotent); --demo adds demo data, --force allows it in production
   admin:create --name=<n> --email=<e>     Create the administrator (prints recovery codes)
   admin:reset-password --email=<e>        Print a temporary password and force a change
   backup:run                              Dump the database to object storage now
@@ -83,10 +83,7 @@ func dispatch(ctx context.Context, a *app.App, args []string, out io.Writer) err
 	case "serve":
 		return a.Serve(ctx)
 	case "db:seed":
-		if err := a.Seed(ctx); err != nil {
-			return err
-		}
-		return write(out, "reference data seeded\n")
+		return seed(ctx, a, args[1:], out)
 	case "admin:create":
 		return createAdmin(ctx, a, args[1:], out)
 	case "backup:run":
@@ -94,6 +91,34 @@ func dispatch(ctx context.Context, a *app.App, args []string, out io.Writer) err
 	default:
 		return resetPassword(ctx, a, args[1:], out)
 	}
+}
+
+func seed(ctx context.Context, a *app.App, args []string, out io.Writer) error {
+	fs := flag.NewFlagSet("db:seed", flag.ContinueOnError)
+	demo := fs.Bool("demo", false, "also load the demo data set")
+	force := fs.Bool("force", false, "allow demo data when APP_ENV is production")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *force && !*demo {
+		return errors.New("--force only applies together with --demo")
+	}
+	steps, err := a.Seed(ctx, app.SeedOptions{Demo: *demo, Force: *force})
+	if err != nil {
+		return err
+	}
+	if !*demo {
+		return write(out, "reference data seeded\n")
+	}
+	loaded, skipped := 0, 0
+	for _, s := range steps {
+		if s.Skipped {
+			skipped++
+		} else {
+			loaded++
+		}
+	}
+	return write(out, fmt.Sprintf("reference data seeded; demo data: %d steps loaded, %d already present\n", loaded, skipped))
 }
 
 func runBackup(ctx context.Context, a *app.App, out io.Writer) error {
