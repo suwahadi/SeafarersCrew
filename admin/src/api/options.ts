@@ -1,5 +1,7 @@
 import { api } from './client'
 
+export type AllowanceBasis = 'fixed_month' | 'fixed_day' | 'percent_basic'
+
 interface MasterBase {
   id: string
   is_active: boolean
@@ -36,6 +38,8 @@ export interface NamedOption extends MasterBase {
   name: string
 }
 
+export type VesselTypeOption = NamedOption
+
 export interface CurrencyOption extends MasterBase {
   code: string
   name: string
@@ -52,7 +56,7 @@ export interface CrewStatusOption extends MasterBase {
 
 export interface AllowanceTypeOption extends MasterBase {
   name: string
-  basis: string
+  basis: AllowanceBasis
 }
 
 export interface DocumentTypeOption extends MasterBase {
