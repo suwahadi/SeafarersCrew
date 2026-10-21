@@ -125,20 +125,22 @@ func (r *PublicContentRepository) LiveNewsBySlug(ctx context.Context, now time.T
 }
 
 // OpenVacancies returns up to limit open vacancies not past their closing date, newest first.
-func (r *PublicContentRepository) OpenVacancies(ctx context.Context, today time.Time, limit int) ([]model.VacancyCard, error) {
-	rows, err := r.pool.Query(ctx, `SELECT v.public_id, v.title, v.slug, coalesce(rk.name, ''), coalesce(vt.name, ''), v.location, v.closing_date
+func (r *PublicContentRepository) OpenVacancies(ctx context.Context, today time.Time, limit int) ([]model.Vacancy, error) {
+	rows, err := r.pool.Query(ctx, `SELECT v.public_id, v.title, v.slug, coalesce(v.rank_id, '00000000-0000-0000-0000-000000000000'::uuid), coalesce(rk.name, ''),
+		v.vessel_type_id, coalesce(vt.name, ''), coalesce(v.department, ''), v.location, v.employment_type, v.closing_date, v.published_at
 		FROM vacancies v
 		LEFT JOIN ranks rk ON rk.id = v.rank_id
 		LEFT JOIN vessel_types vt ON vt.id = v.vessel_type_id
 		WHERE `+openVacancy+`
-		ORDER BY coalesce(v.published_at, v.created_at) DESC, v.id DESC LIMIT `+strconv.Itoa(limit), today)
+		ORDER BY coalesce(v.published_at, v.created_at) DESC, v.id DESC LIMIT $2`, today, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list open vacancies: %w", err)
 	}
-	cards, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (model.VacancyCard, error) {
-		var c model.VacancyCard
-		err := row.Scan(&c.PublicID, &c.Title, &c.Slug, &c.RankName, &c.VesselTypeName, &c.Location, &c.ClosingDate)
-		return c, err
+	cards, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (model.Vacancy, error) {
+		var v model.Vacancy
+		err := row.Scan(&v.PublicID, &v.Title, &v.Slug, &v.RankID, &v.RankName, &v.VesselTypeID, &v.VesselTypeName,
+			&v.Department, &v.Location, &v.EmploymentType, &v.ClosingDate, &v.PublishedAt)
+		return v, err
 	})
 	if err != nil {
 		return nil, fmt.Errorf("scan open vacancies: %w", err)

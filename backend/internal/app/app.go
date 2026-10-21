@@ -161,6 +161,7 @@ func (a *App) wireSite() {
 	)
 	a.Jobs.Register(service.RevalidateJob, a.Publisher.Handle)
 	a.Media = service.NewPublicMediaService(a.Storage, a.Config.APIURL)
+	a.Settings.SetOnChanged(service.PublishSettingChanges(a.Publisher, a.Logger))
 }
 
 func storageConfig(settings *service.SettingsService) s3.ConfigSource {
@@ -259,6 +260,7 @@ func (a *App) Router() http.Handler {
 		AfterWrite:    a.invalidateDashboard,
 		Documents:     a.documentHandlers(),
 		Career:        a.careerRoutes(career),
+		CMS:           a.cmsRoutes(),
 	})
 	routes.Public(r, routes.PublicDeps{
 		Origin:    a.Config.AppURL,
@@ -267,6 +269,7 @@ func (a *App) Router() http.Handler {
 		Media:     public.NewMediaHandler(a.Media),
 		Redirects: public.NewRedirectHandler(service.NewRedirectService(repository.NewRedirectRepository(a.DB))),
 		Career:    a.publicCareerRoutes(career),
+		Content:   a.publicContent(),
 	})
 	return r
 }

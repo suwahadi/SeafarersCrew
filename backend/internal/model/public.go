@@ -6,17 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// VacancyCard is the short form of an open vacancy shown on the home page.
-type VacancyCard struct {
-	PublicID       string
-	Title          string
-	Slug           string
-	RankName       string
-	VesselTypeName string
-	Location       string
-	ClosingDate    *time.Time
-}
-
 // SitemapEntry is one public URL with its last modification time.
 type SitemapEntry struct {
 	Path    string
@@ -39,7 +28,7 @@ type HomeData struct {
 	Slides       []HeroSlide
 	Stats        []StatsItem
 	News         []News
-	Vacancies    []VacancyCard
+	Vacancies    []Vacancy
 	Gallery      []GalleryImage
 	Testimonials []Testimonial
 	Logos        []ClientLogo
