@@ -1,0 +1,39 @@
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { Spinner } from './Spinner'
+
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost'
+type Size = 'sm' | 'md'
+
+const variants: Record<Variant, string> = {
+  primary: 'bg-navy-800 text-white hover:bg-navy-700 disabled:bg-navy-200',
+  secondary: 'bg-white text-slate-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:text-slate-400',
+  danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300',
+  ghost: 'text-slate-700 hover:bg-slate-100 disabled:text-slate-400',
+}
+
+const sizes: Record<Size, string> = {
+  sm: 'h-8 px-3 text-sm',
+  md: 'h-9 px-4 text-sm',
+}
+
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant
+  size?: Size
+  loading?: boolean
+  icon?: ReactNode
+}
+
+export function Button({ variant = 'primary', size = 'md', loading = false, icon, children, className = '', disabled, type = 'button', ...rest }: ButtonProps) {
+  return (
+    <button
+      type={type}
+      disabled={disabled ?? loading}
+      aria-busy={loading || undefined}
+      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 ease-out disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      {...rest}
+    >
+      {loading ? <Spinner size="sm" /> : icon}
+      {children}
+    </button>
+  )
+}
