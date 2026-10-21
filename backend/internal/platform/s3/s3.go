@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"mime"
 	"net/url"
 	"strings"
@@ -115,6 +116,22 @@ func (s *Storage) Put(ctx context.Context, key string, data []byte, contentType 
 		return err
 	}
 	_, err = client.PutObject(ctx, cfg.Bucket, key, bytes.NewReader(data), int64(len(data)), minio.PutObjectOptions{
+		ContentType:  contentType,
+		CacheControl: "private, max-age=0, no-store",
+	})
+	if err != nil {
+		return fmt.Errorf("put object %s: %w", key, err)
+	}
+	return nil
+}
+
+// PutReader uploads size bytes from r as a private object without buffering it in memory.
+func (s *Storage) PutReader(ctx context.Context, key string, r io.Reader, size int64, contentType string) error {
+	client, cfg, err := s.current(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = client.PutObject(ctx, cfg.Bucket, key, r, size, minio.PutObjectOptions{
 		ContentType:  contentType,
 		CacheControl: "private, max-age=0, no-store",
 	})

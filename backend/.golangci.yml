@@ -53,6 +53,10 @@ linters:
         text: G124
         linters:
           - gosec
+      - path: internal/platform/pgdump/pgdump.go
+        text: G204
+        linters:
+          - gosec
       - path: internal/platform/pdf/pdf.go
         text: "G204|G304"
         linters:

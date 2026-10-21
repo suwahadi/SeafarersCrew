@@ -47,27 +47,30 @@ const (
 
 // App holds long-lived dependencies.
 type App struct {
-	Config     config.Config
-	Logger     *slog.Logger
-	DB         *pgxpool.Pool
-	Redis      *goredis.Client
-	Auth       *service.AuthService
-	Settings   *service.SettingsService
-	Jobs       *job.Queue
-	CPU        *job.Pool
-	Storage    *s3.Storage
-	Files      *service.FileService
-	Crews      *service.CrewService
-	CrewExport *service.CrewExportService
-	CrewImport *service.CrewImportService
-	Email      *service.EmailService
-	Documents  *service.DocumentService
-	Dashboard  *service.DashboardService
-	Publisher  *service.SitePublisher
-	Media      *service.PublicMediaService
-	templates  *service.DocumentTemplateService
-	brevo      *brevo.Client
-	counter    *repository.LimiterRepository
+	Config      config.Config
+	Logger      *slog.Logger
+	DB          *pgxpool.Pool
+	Redis       *goredis.Client
+	Auth        *service.AuthService
+	Settings    *service.SettingsService
+	Jobs        *job.Queue
+	CPU         *job.Pool
+	Storage     *s3.Storage
+	Files       *service.FileService
+	Crews       *service.CrewService
+	CrewExport  *service.CrewExportService
+	CrewImport  *service.CrewImportService
+	Email       *service.EmailService
+	Documents   *service.DocumentService
+	Dashboard   *service.DashboardService
+	Publisher   *service.SitePublisher
+	Media       *service.PublicMediaService
+	Backups     *service.BackupService
+	Maintenance *service.MaintenanceService
+	Scheduler   *job.Scheduler
+	templates   *service.DocumentTemplateService
+	brevo       *brevo.Client
+	counter     *repository.LimiterRepository
 }
 
 // NewLogger builds the JSON logger for level.
@@ -141,6 +144,7 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 	a.wireDocuments()
 	a.Dashboard = service.NewDashboardService(repository.NewDashboardRepository(a.DB), repository.NewCacheRepository(a.Redis), a.Settings, time.Now)
 	a.wireEmail()
+	a.wireOperations()
 	return a, nil
 }
 
@@ -260,6 +264,7 @@ func (a *App) Router() http.Handler {
 		AfterWrite:    a.invalidateDashboard,
 		Documents:     a.documentHandlers(),
 		Career:        a.careerRoutes(career),
+		Backups:       admin.NewBackupHandler(a.Backups),
 		CMS:           a.cmsRoutes(),
 	})
 	routes.Public(r, routes.PublicDeps{
@@ -298,6 +303,11 @@ func (a *App) Serve(ctx context.Context) error {
 		a.Jobs.Run(workerCtx, max(2, runtime.NumCPU()/2))
 		close(workersDone)
 	}()
+	schedulerDone := make(chan struct{})
+	go func() {
+		a.Scheduler.Run(workerCtx)
+		close(schedulerDone)
+	}()
 	errCh := make(chan error, 1)
 	go func() {
 		a.Logger.Info("http server listening", "addr", srv.Addr, "env", a.Config.Env)
@@ -317,6 +327,7 @@ func (a *App) Serve(ctx context.Context) error {
 	err := srv.Shutdown(shutdownCtx)
 	stopWorkers()
 	<-workersDone
+	<-schedulerDone
 	if err != nil {
 		return fmt.Errorf("shutdown http server: %w", err)
 	}

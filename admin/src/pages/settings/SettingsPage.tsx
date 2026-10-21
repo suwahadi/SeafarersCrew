@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { Tabs } from '@/components/ui/Tabs'
+import { BackupPanel } from './BackupPanel'
 import { SettingsGroupForm } from './SettingsGroupForm'
 import { groupLabels } from './settingsForm'
 
@@ -44,6 +45,7 @@ export default function SettingsPage() {
             onChange={requestSwitch}
           />
           <SettingsGroupForm key={current.name} group={current} onDirtyChange={onDirtyChange} />
+          {current.name === 'backup' ? <BackupPanel /> : null}
         </div>
       ) : null}
       <ConfirmDialog

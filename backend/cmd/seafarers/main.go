@@ -28,6 +28,7 @@ Commands:
   db:seed                                 Load reference data (idempotent)
   admin:create --name=<n> --email=<e>     Create the administrator (prints recovery codes)
   admin:reset-password --email=<e>        Print a temporary password and force a change
+  backup:run                              Dump the database to object storage now
   healthcheck                             Probe the local /healthz endpoint (container healthcheck)
 `
 
@@ -61,7 +62,7 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 			return err
 		}
 		return write(out, "migrate "+direction+": done\n")
-	case "serve", "db:seed", "admin:create", "admin:reset-password":
+	case "serve", "db:seed", "admin:create", "admin:reset-password", "backup:run":
 		return withApp(ctx, cfg, func(a *app.App) error { return dispatch(ctx, a, args, out) })
 	default:
 		return errors.Join(write(out, usage), fmt.Errorf("unknown command %q", args[0]))
@@ -88,9 +89,19 @@ func dispatch(ctx context.Context, a *app.App, args []string, out io.Writer) err
 		return write(out, "reference data seeded\n")
 	case "admin:create":
 		return createAdmin(ctx, a, args[1:], out)
+	case "backup:run":
+		return runBackup(ctx, a, out)
 	default:
 		return resetPassword(ctx, a, args[1:], out)
 	}
+}
+
+func runBackup(ctx context.Context, a *app.App, out io.Writer) error {
+	b, err := a.Backups.RunNow(ctx)
+	if err != nil {
+		return err
+	}
+	return write(out, fmt.Sprintf("backup %s: %s (%d bytes)\n", b.Status, b.StorageKey, b.SizeBytes))
 }
 
 func createAdmin(ctx context.Context, a *app.App, args []string, out io.Writer) error {

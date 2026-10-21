@@ -33,6 +33,7 @@ type AdminDeps struct {
 	Documents     DocumentHandlers
 	Dashboard     *admin.DashboardHandler
 	Career        CareerRoutes
+	Backups       *admin.BackupHandler
 	CMS           CMSRoutes
 	AfterWrite    func(ctx context.Context)
 }
@@ -89,6 +90,8 @@ func Admin(r chi.Router, d AdminDeps) {
 
 			Contracts(r, d.Contracts)
 			Career(r, d.Career)
+			r.Get("/backups", d.Backups.Index)
+			r.Post("/backups/run", d.Backups.Run)
 			CMS(r, d.CMS)
 		})
 	})

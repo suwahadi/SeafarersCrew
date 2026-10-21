@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,6 +44,15 @@ func TestPutGetStatDelete(t *testing.T) {
 	require.NoError(t, st.Delete(ctx, "crews/2026/10/abc123def456.pdf"))
 	_, err = st.Stat(ctx, "crews/2026/10/abc123def456.pdf")
 	assert.Error(t, err)
+}
+
+func TestPutReaderStreamsAnObject(t *testing.T) {
+	st, _ := newFakeStorage(t, "seafarers")
+	ctx := context.Background()
+	require.NoError(t, st.PutReader(ctx, "backups/a.dump", strings.NewReader("PGDMP-data"), 10, "application/octet-stream"))
+	data, err := st.Get(ctx, "backups/a.dump")
+	require.NoError(t, err)
+	assert.Equal(t, "PGDMP-data", string(data))
 }
 
 func TestGetReportsMissingObjectsAsNotFound(t *testing.T) {
