@@ -182,6 +182,12 @@ func TestCORSAllowsOnlyConfiguredOrigin(t *testing.T) {
 	assert.Equal(t, "https://admin.example.com", rec.Header().Get("Access-Control-Allow-Origin"))
 	assert.Equal(t, "true", rec.Header().Get("Access-Control-Allow-Credentials"))
 
+	allowed := httptest.NewRequest(http.MethodGet, "/", nil)
+	allowed.Header.Set("Origin", "https://admin.example.com")
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, allowed)
+	assert.Equal(t, "X-Request-ID, Retry-After", rec.Header().Get("Access-Control-Expose-Headers"), "browsers need Retry-After to show when a form may be sent again")
+
 	get := httptest.NewRequest(http.MethodGet, "/", nil)
 	get.Header.Set("Origin", "https://evil.example.com")
 	rec = httptest.NewRecorder()

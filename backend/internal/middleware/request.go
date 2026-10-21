@@ -164,7 +164,7 @@ func CORS(allowedOrigin string) func(http.Handler) http.Handler {
 			if origin != "" && origin == allowedOrigin {
 				h.Set("Access-Control-Allow-Origin", origin)
 				h.Set("Access-Control-Allow-Credentials", "true")
-				h.Set("Access-Control-Expose-Headers", "X-Request-ID")
+				h.Set("Access-Control-Expose-Headers", "X-Request-ID, Retry-After")
 			}
 			if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 				if origin != allowedOrigin {
