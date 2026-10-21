@@ -321,6 +321,15 @@ func (s *EmailService) ListLogs(ctx context.Context, f model.EmailLogFilter, pag
 	return s.store.ListLogs(ctx, f, perPage, (page-1)*perPage)
 }
 
+// ResolveRelated returns the internal ID behind the public ID of a contract, quotation or crew record.
+func (s *EmailService) ResolveRelated(ctx context.Context, relatedType, publicID string) (uuid.UUID, error) {
+	if s.related == nil {
+		return uuid.Nil, apperr.Validation(map[string]string{"related_id": "Records cannot be referenced by public ID here."})
+	}
+	id, _, err := s.related.EmailContext(ctx, relatedType, strings.ToUpper(publicID))
+	return id, err
+}
+
 // Templates lists the email templates.
 func (s *EmailService) Templates(ctx context.Context) ([]model.EmailTemplate, error) {
 	return s.store.ListTemplates(ctx)

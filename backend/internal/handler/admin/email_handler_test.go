@@ -23,6 +23,7 @@ import (
 type stubEmails struct {
 	lastSend   service.EmailSendInput
 	lastFilter model.EmailLogFilter
+	resolved   uuid.UUID
 }
 
 func (s *stubEmails) Send(_ context.Context, in service.EmailSendInput) (model.EmailLog, model.Job, error) {
@@ -53,6 +54,11 @@ func (s *stubEmails) UpdateTemplate(_ context.Context, code, subject, body strin
 
 func (s *stubEmails) PreviewTemplate(context.Context, string, string, string, map[string]string) (service.EmailPreview, error) {
 	return service.EmailPreview{Subject: "s", BodyHTML: "b", UnknownTags: []string{}}, nil
+}
+
+func (s *stubEmails) ResolveRelated(context.Context, string, string) (uuid.UUID, error) {
+	s.resolved = uuid.New()
+	return s.resolved, nil
 }
 
 type stubTester struct{ admin model.Admin }
@@ -108,6 +114,16 @@ func TestEmailLogsFiltersAndValidation(t *testing.T) {
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/email-logs?status=bounced", nil))
 	assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+}
+
+func TestEmailLogsResolvePublicRelatedID(t *testing.T) {
+	emails := &stubEmails{}
+	h := emailRouter(NewEmailHandler(emails, &stubTester{}))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/email-logs?related_type=contract&related_id=ADFPKEX4K", nil))
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.NotNil(t, emails.lastFilter.RelatedID)
+	assert.Equal(t, emails.resolved, *emails.lastFilter.RelatedID)
 }
 
 func TestResendErrors(t *testing.T) {

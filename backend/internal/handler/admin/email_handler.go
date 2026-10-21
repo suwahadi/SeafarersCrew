@@ -21,6 +21,7 @@ type EmailService interface {
 	Send(ctx context.Context, in service.EmailSendInput) (model.EmailLog, model.Job, error)
 	Resend(ctx context.Context, id uuid.UUID) (model.EmailLog, model.Job, error)
 	ListLogs(ctx context.Context, f model.EmailLogFilter, page, perPage int) (repository.Page[model.EmailLog], error)
+	ResolveRelated(ctx context.Context, relatedType, publicID string) (uuid.UUID, error)
 	Templates(ctx context.Context) ([]model.EmailTemplate, error)
 	Template(ctx context.Context, code string) (model.EmailTemplate, error)
 	UpdateTemplate(ctx context.Context, code, subject, body string) (model.EmailTemplate, error)
@@ -61,18 +62,30 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	resource.JSON(w, http.StatusAccepted, resource.QueuedEmail{Log: resource.NewEmailLog(log), JobID: j.ID})
 }
 
-// Logs handles GET /email-logs?related_type=&related_id=&status=.
+// Logs handles GET /email-logs?related_type=&related_id=&status=; related_id may be a public ID.
 func (h *EmailHandler) Logs(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	p := request.ParseList(q)
 	e := request.Errors{}
 	f := model.EmailLogFilter{RelatedType: q.Get("related_type"), Status: q.Get("status")}
-	f.RelatedID = e.UUID("related_id", q.Get("related_id"))
+	rawRelated := q.Get("related_id")
+	publicRelated := rawRelated != "" && len(rawRelated) == 9 && (f.RelatedType == "contract" || f.RelatedType == "quotation" || f.RelatedType == "crew")
+	if !publicRelated {
+		f.RelatedID = e.UUID("related_id", rawRelated)
+	}
 	e.OneOf("status", f.Status, model.EmailQueued, model.EmailSent, model.EmailFailed)
 	e.OneOf("related_type", f.RelatedType, service.EmailRelatedTypes...)
 	if len(e) > 0 {
 		resource.Error(w, r, apperr.Validation(e))
 		return
+	}
+	if publicRelated {
+		id, err := h.emails.ResolveRelated(r.Context(), f.RelatedType, rawRelated)
+		if err != nil {
+			resource.Error(w, r, err)
+			return
+		}
+		f.RelatedID = &id
 	}
 	page, err := h.emails.ListLogs(r.Context(), f, p.Page, p.PerPage)
 	if err != nil {
