@@ -33,6 +33,20 @@ export const navigation: NavGroup[] = [
     ],
   },
   {
+    label: 'Website',
+    items: [
+      { to: '/website/pages', label: 'Pages' },
+      { to: '/website/news', label: 'News' },
+      { to: '/website/hero-slides', label: 'Hero Slider' },
+      { to: '/website/gallery', label: 'Gallery' },
+      { to: '/website/testimonials', label: 'Testimonials' },
+      { to: '/website/client-logos', label: 'Client Logos' },
+      { to: '/website/stats', label: 'Stats' },
+      { to: '/website/menus', label: 'Menus' },
+      { to: '/website/languages', label: 'Languages' },
+    ],
+  },
+  {
     label: 'Master Data',
     items: [
       { to: '/masters/companies', label: 'Companies & Principals' },
