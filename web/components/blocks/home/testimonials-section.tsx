@@ -32,12 +32,8 @@ export function TestimonialsSection({ testimonials }: { testimonials: readonly T
         <SectionHeading id="home-testimonials" eyebrow="Testimonials" title="What our crew say" />
         <CardCarousel label="Testimonials">
           {testimonials.map((testimonial) => (
-            <figure
-              key={testimonial.id}
-              role="group"
-              aria-roledescription="slide"
-              className="flex h-full flex-col rounded-lg border border-line bg-white p-6"
-            >
+            <div key={testimonial.id} role="group" aria-roledescription="slide">
+            <figure className="flex h-full flex-col rounded-lg border border-line bg-white p-6">
               <Stars rating={testimonial.rating} />
               <blockquote className="mt-4 flex-1 text-base leading-7 text-ink">{testimonial.quote}</blockquote>
               <figcaption className="mt-6 flex items-center gap-3">
@@ -55,6 +51,7 @@ export function TestimonialsSection({ testimonials }: { testimonials: readonly T
                 </span>
               </figcaption>
             </figure>
+            </div>
           ))}
         </CardCarousel>
       </Container>

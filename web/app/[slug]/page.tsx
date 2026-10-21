@@ -18,7 +18,7 @@ function guardSlug(slug: string): void {
   if (slug === 'home') {
     permanentRedirect('/')
   }
-  if (SYSTEM_SLUGS.has(slug)) {
+  if (SYSTEM_SLUGS.has(slug) || slug.includes('.')) {
     notFound()
   }
 }

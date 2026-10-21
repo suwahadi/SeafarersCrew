@@ -31,8 +31,8 @@ describe('color contrast', () => {
   })
 
   it('darkens an accent until it is AA readable as text on white', () => {
-    const text = darkenUntilContrast('#13A89E', '#FFFFFF')
-    expect(contrastRatio(parseHex(text)!, [255, 255, 255])).toBeGreaterThanOrEqual(4.5)
+    const text = darkenUntilContrast('#13A89E', '#F3F6F9')
+    expect(contrastRatio(parseHex(text)!, [243, 246, 249])).toBeGreaterThanOrEqual(4.5)
   })
 
   it('rejects invalid colors and expands shorthand', () => {

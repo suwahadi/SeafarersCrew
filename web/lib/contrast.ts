@@ -3,6 +3,7 @@ export type Rgb = readonly [number, number, number]
 const DEFAULT_PRIMARY = '#0B2545'
 const DEFAULT_ACCENT = '#13A89E'
 const WHITE = '#FFFFFF'
+const SURFACE = '#F3F6F9'
 const INK = '#0B1220'
 const AA_TEXT_RATIO = 4.5
 
@@ -80,6 +81,6 @@ export function brandTheme(primary: string | undefined, accent: string | undefin
     accent: accentColor,
     onPrimary: readableTextOn(primaryColor),
     onAccent: readableTextOn(accentColor),
-    accentText: darkenUntilContrast(accentColor, WHITE),
+    accentText: darkenUntilContrast(accentColor, SURFACE),
   }
 }
