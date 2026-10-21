@@ -99,3 +99,29 @@ jobs:
         run: docker build -f deploy/proxy.Dockerfile -t seafarers-proxy:ci .
       - name: Build website image
         run: docker build -f deploy/web.Dockerfile -t seafarers-web:ci .
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    needs: [docker]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare environment
+        run: sh deploy/ci/env.sh
+      - name: Start the stack
+        run: docker compose -f docker-compose.yml -f deploy/ci/compose.ci.yml --profile s3 up -d --build --wait api web postgres redis gotenberg s3
+      - name: Load the demo data
+        run: docker compose exec -T api /app/seafarers db:seed --demo
+      - name: Lighthouse on Home, a CMS page, News detail, Career and Contact
+        run: node deploy/ci/lighthouse.mjs
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: .lighthouseci
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
