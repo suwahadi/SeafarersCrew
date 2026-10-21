@@ -20,6 +20,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
+      web:
+        condition: service_healthy
     networks: [internal]
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2019/config/"]
@@ -33,6 +35,8 @@ services:
       context: .
       dockerfile: deploy/api.Dockerfile
     env_file: .env
+    environment:
+      WEB_URL: http://web:3000
     entrypoint: ["/bin/sh", "-c", "/app/seafarers migrate up && /app/seafarers db:seed && exec /app/seafarers serve"]
     depends_on:
       postgres:
@@ -45,6 +49,27 @@ services:
         condition: service_healthy
         required: false
     networks: [internal]
+
+  web:
+    <<: *restart
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    environment:
+      API_URL: http://api:8080
+      PUBLIC_API_URL: ${API_URL:?set API_URL in .env}
+      APP_URL: ${APP_URL:?set APP_URL in .env}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:?set REVALIDATE_SECRET in .env}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   postgres:
     <<: *restart
