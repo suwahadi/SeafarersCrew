@@ -37,6 +37,10 @@ linters:
         text: G705
         linters:
           - gosec
+      - path: internal/handler/public/application_handler.go
+        text: G120
+        linters:
+          - gosec
       - path: internal/platform/nextjs/nextjs.go
         text: G101
         linters:

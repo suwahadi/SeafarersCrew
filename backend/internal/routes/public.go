@@ -25,6 +25,7 @@ type PublicDeps struct {
 	Cache     middleware.PublicCacheStore
 	Media     *public.MediaHandler
 	Redirects *public.RedirectHandler
+	Career    PublicCareerRoutes
 }
 
 // Public mounts the public API.
@@ -35,6 +36,7 @@ func Public(r chi.Router, d PublicDeps) {
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.RateLimit(d.Counter, "public-api", 600, time.Minute))
 			r.With(cached(d, model.TagRedirects)).Get("/redirects/*", d.Redirects.Show)
+			PublicCareer(r, d)
 		})
 	})
 }

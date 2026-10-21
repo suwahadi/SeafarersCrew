@@ -32,6 +32,7 @@ type AdminDeps struct {
 	Contracts     ContractRoutes
 	Documents     DocumentHandlers
 	Dashboard     *admin.DashboardHandler
+	Career        CareerRoutes
 	AfterWrite    func(ctx context.Context)
 }
 
@@ -86,6 +87,7 @@ func Admin(r chi.Router, d AdminDeps) {
 			Email(r, d.Email)
 
 			Contracts(r, d.Contracts)
+			Career(r, d.Career)
 		})
 	})
 }
