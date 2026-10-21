@@ -73,7 +73,7 @@ func (s *Scheduler) tick(ctx context.Context, t Task) {
 	if !acquired {
 		return
 	}
-	if err := runTask(ctx, t); err != nil {
+	if err := runTask(ctx, t); err != nil && ctx.Err() == nil {
 		s.logger.ErrorContext(ctx, "scheduled task failed", "task", t.Name, "error", err)
 	}
 }

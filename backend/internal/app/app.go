@@ -161,7 +161,7 @@ func (a *App) wireSite() {
 	a.Publisher = service.NewSitePublisher(
 		repository.NewPublicCacheRepository(a.Redis),
 		a.Jobs,
-		nextjs.NewClient(a.Config.AppURL, a.Config.RevalidateSecret, 10*time.Second),
+		nextjs.NewClient(a.Config.WebURL, a.Config.RevalidateSecret, 10*time.Second),
 	)
 	a.Jobs.Register(service.RevalidateJob, a.Publisher.Handle)
 	a.Media = service.NewPublicMediaService(a.Storage, a.Config.APIURL)

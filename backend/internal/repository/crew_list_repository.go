@@ -78,9 +78,11 @@ func crewWhere(f model.CrewFilter) (*Where, func() string) {
 	w.Add("c.deleted_at IS NULL")
 	if f.Q != "" {
 		like := LikePattern(f.Q)
-		w.Add(`(c.full_name ILIKE %s OR c.public_id = %s OR EXISTS (
-			SELECT 1 FROM travel_documents td JOIN document_types dt ON dt.id = td.document_type_id
-			WHERE td.crew_id = c.id AND dt.code IN ('passport', 'seaman_book', 'buku_pelaut') AND td.number ILIKE %s))`,
+		w.Add(`c.id IN (
+			SELECT id FROM crews WHERE full_name ILIKE %s
+			UNION SELECT id FROM crews WHERE public_id = %s
+			UNION SELECT td.crew_id FROM travel_documents td JOIN document_types dt ON dt.id = td.document_type_id
+			WHERE dt.code IN ('passport', 'seaman_book', 'buku_pelaut') AND td.number ILIKE %s)`,
 			like, strings.ToUpper(f.Q), like)
 	}
 	if len(f.StatusCodes) > 0 {

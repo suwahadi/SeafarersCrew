@@ -43,6 +43,7 @@ type Config struct {
 	RedisURL         string
 	GotenbergURL     string
 	RevalidateSecret string
+	WebURL           string
 	S3Bootstrap      S3Bootstrap
 	LogLevel         slog.Level
 	HTTPAddr         string
@@ -65,6 +66,7 @@ func Load(getenv func(string) string) (Config, error) {
 		RedisURL:         strings.TrimSpace(getenv("REDIS_URL")),
 		GotenbergURL:     strings.TrimSpace(getenv("GOTENBERG_URL")),
 		RevalidateSecret: strings.TrimSpace(getenv("REVALIDATE_SECRET")),
+		WebURL:           strings.TrimSpace(getenv("WEB_URL")),
 		HTTPAddr:         ":8080",
 		S3Bootstrap: S3Bootstrap{
 			Endpoint:        strings.TrimSpace(getenv("S3_BOOTSTRAP_ENDPOINT")),
@@ -82,6 +84,10 @@ func Load(getenv func(string) string) (Config, error) {
 		errs = append(errs, fmt.Errorf("APP_ENV must be one of local, staging, production; got %q", cfg.Env))
 	}
 
+	if addr := strings.TrimSpace(getenv("HTTP_ADDR")); addr != "" {
+		cfg.HTTPAddr = addr
+	}
+
 	var err error
 	if cfg.AppURL, err = origin("APP_URL", getenv("APP_URL")); err != nil {
 		errs = append(errs, err)
@@ -90,6 +96,12 @@ func Load(getenv func(string) string) (Config, error) {
 		errs = append(errs, err)
 	}
 	if cfg.APIURL, err = origin("API_URL", getenv("API_URL")); err != nil {
+		errs = append(errs, err)
+	}
+	cfg.WebURL = strings.TrimRight(cfg.WebURL, "/")
+	if cfg.WebURL == "" {
+		cfg.WebURL = cfg.AppURL
+	} else if cfg.WebURL, err = origin("WEB_URL", cfg.WebURL); err != nil {
 		errs = append(errs, err)
 	}
 	if cfg.EncryptionKey, err = encryptionKey(getenv("APP_ENCRYPTION_KEY")); err != nil {

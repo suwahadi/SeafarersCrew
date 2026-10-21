@@ -55,6 +55,7 @@ func TestLoadRejectsInvalidValues(t *testing.T) {
 		{"missing redis", "REDIS_URL", "", "REDIS_URL is required"},
 		{"missing gotenberg", "GOTENBERG_URL", "", "GOTENBERG_URL is required"},
 		{"short revalidate secret", "REVALIDATE_SECRET", "replace_with_secure_secret", "REVALIDATE_SECRET"},
+		{"web url with path", "WEB_URL", "http://web:3000/x", "WEB_URL"},
 		{"bad log level", "LOG_LEVEL", "trace", "LOG_LEVEL"},
 	}
 	for _, tc := range cases {
@@ -66,6 +67,30 @@ func TestLoadRejectsInvalidValues(t *testing.T) {
 			assert.Contains(t, err.Error(), tc.msg)
 		})
 	}
+}
+
+func TestLoadUsesTheInternalWebURLForRevalidationWhenGiven(t *testing.T) {
+	env := validEnv()
+	cfg, err := Load(getenv(env))
+	require.NoError(t, err)
+	assert.Equal(t, cfg.AppURL, cfg.WebURL)
+
+	env["WEB_URL"] = "http://web:3000/"
+	cfg, err = Load(getenv(env))
+	require.NoError(t, err)
+	assert.Equal(t, "http://web:3000", cfg.WebURL)
+}
+
+func TestLoadListensOnPort8080UnlessHTTPAddrIsSet(t *testing.T) {
+	env := validEnv()
+	cfg, err := Load(getenv(env))
+	require.NoError(t, err)
+	assert.Equal(t, ":8080", cfg.HTTPAddr)
+
+	env["HTTP_ADDR"] = "127.0.0.1:8090"
+	cfg, err = Load(getenv(env))
+	require.NoError(t, err)
+	assert.Equal(t, "127.0.0.1:8090", cfg.HTTPAddr)
 }
 
 func TestLoadRequiresHTTPSOutsideLocal(t *testing.T) {
