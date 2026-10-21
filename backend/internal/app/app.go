@@ -59,6 +59,7 @@ type App struct {
 	CrewImport *service.CrewImportService
 	Email      *service.EmailService
 	Documents  *service.DocumentService
+	Dashboard  *service.DashboardService
 	templates  *service.DocumentTemplateService
 	brevo      *brevo.Client
 	counter    *repository.LimiterRepository
@@ -132,6 +133,7 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 	}
 	a.wireCrew()
 	a.wireDocuments()
+	a.Dashboard = service.NewDashboardService(repository.NewDashboardRepository(a.DB), repository.NewCacheRepository(a.Redis), a.Settings, time.Now)
 	a.wireEmail()
 	return a, nil
 }
@@ -236,10 +238,18 @@ func (a *App) Router() http.Handler {
 		Files:         admin.NewFileHandler(a.Files),
 		Email:         a.emailHandler(),
 		Contracts:     a.contractRoutes(),
+		Dashboard:     admin.NewDashboardHandler(a.Dashboard),
+		AfterWrite:    a.invalidateDashboard,
 		Documents:     a.documentHandlers(),
 	})
 	routes.Public(r, routes.PublicDeps{Origin: a.Config.AppURL, Counter: a.counter})
 	return r
+}
+
+func (a *App) invalidateDashboard(ctx context.Context) {
+	if err := a.Dashboard.Invalidate(ctx); err != nil {
+		a.Logger.WarnContext(ctx, "dashboard cache not invalidated", "error", err)
+	}
 }
 
 // Serve runs the HTTP server until ctx is cancelled, then shuts down gracefully.

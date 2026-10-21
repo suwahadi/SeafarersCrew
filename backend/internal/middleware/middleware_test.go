@@ -247,3 +247,18 @@ func TestRequestIDIsGeneratedOrPropagated(t *testing.T) {
 	h2.ServeHTTP(httptest.NewRecorder(), req)
 	assert.NotEqual(t, "<script>", seen)
 }
+
+func TestAfterWriteRunsOnlyAfterSuccessfulWrites(t *testing.T) {
+	calls := 0
+	mw := AfterWrite(func(context.Context) { calls++ })
+	run := func(method string, status int) {
+		h := mw(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(status) }))
+		h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(method, "/", nil))
+	}
+	run(http.MethodGet, http.StatusOK)
+	run(http.MethodPost, http.StatusUnprocessableEntity)
+	assert.Equal(t, 0, calls)
+	run(http.MethodPost, http.StatusCreated)
+	run(http.MethodDelete, http.StatusNoContent)
+	assert.Equal(t, 2, calls)
+}

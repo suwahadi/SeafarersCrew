@@ -2,6 +2,7 @@
 package routes
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -30,6 +31,8 @@ type AdminDeps struct {
 	Email         *admin.EmailHandler
 	Contracts     ContractRoutes
 	Documents     DocumentHandlers
+	Dashboard     *admin.DashboardHandler
+	AfterWrite    func(ctx context.Context)
 }
 
 // Admin mounts the admin API.
@@ -44,6 +47,7 @@ func Admin(r chi.Router, d AdminDeps) {
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.RequireSession(d.Authenticator))
 			r.Use(middleware.CSRF)
+			r.Use(middleware.AfterWrite(d.AfterWrite))
 			r.Use(middleware.RequirePasswordCurrent(
 				http.MethodGet+" "+AdminPrefix+"/me",
 				http.MethodPut+" "+AdminPrefix+"/me/password",
@@ -68,6 +72,11 @@ func Admin(r chi.Router, d AdminDeps) {
 			}
 
 			r.Get("/jobs/{id}", d.Jobs.Show)
+
+			r.Get("/dashboard/summary", d.Dashboard.Summary)
+			r.Get("/dashboard/charts", d.Dashboard.Charts)
+			r.Get("/dashboard/expiring", d.Dashboard.Expiring)
+			r.Get("/dashboard/reliefs", d.Dashboard.Reliefs)
 
 			Crew(r, d.Crews, d.CrewTransfer)
 			Documents(r, d.Documents)

@@ -183,3 +183,20 @@ func RequireJSON(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// AfterWrite calls fn after every successful state-changing request, e.g. to invalidate cached aggregates.
+func AfterWrite(fn func(ctx context.Context)) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+				next.ServeHTTP(w, r)
+				return
+			}
+			rec := &statusRecorder{ResponseWriter: w}
+			next.ServeHTTP(rec, r)
+			if rec.status == 0 || rec.status < http.StatusBadRequest {
+				fn(context.WithoutCancel(r.Context()))
+			}
+		})
+	}
+}
