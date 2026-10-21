@@ -7,12 +7,17 @@ interface PaginationProps {
   current: number
   pages: number
   label?: string
+  hrefFor?: (page: number) => string
 }
 
 const ITEM =
   'inline-flex min-w-10 items-center justify-center gap-1 rounded-md border border-line px-3 py-2 text-sm font-medium text-primary transition-colors duration-150 ease-out hover:bg-surface'
 
-export function Pagination({ basePath, current, pages, label = 'Pagination' }: PaginationProps) {
+const ACTIVE_ITEM =
+  'inline-flex min-w-10 items-center justify-center gap-1 rounded-md border border-primary bg-primary px-3 py-2 text-sm font-medium text-on-primary transition-colors duration-150 ease-out hover:bg-primary-hover'
+
+export function Pagination({ basePath, current, pages, label = 'Pagination', hrefFor }: PaginationProps) {
+  const href = hrefFor ?? ((page: number) => pageHref(basePath, page))
   if (pages <= 1) {
     return null
   }
@@ -21,7 +26,7 @@ export function Pagination({ basePath, current, pages, label = 'Pagination' }: P
       <ul className="flex flex-wrap items-center justify-center gap-2">
         <li>
           {current > 1 ? (
-            <Link href={pageHref(basePath, current - 1)} rel="prev" className={ITEM}>
+            <Link href={href(current - 1)} rel="prev" className={ITEM}>
               <Icon name="chevron-left" className="size-4" />
               Previous
             </Link>
@@ -35,11 +40,11 @@ export function Pagination({ basePath, current, pages, label = 'Pagination' }: P
           ) : (
             <li key={item}>
               <Link
-                href={pageHref(basePath, item)}
+                href={href(item)}
                 aria-current={item === current ? 'page' : undefined}
                 aria-label={`Page ${String(item)}`}
                 className={
-                  item === current ? `${ITEM} border-primary bg-primary text-on-primary hover:bg-primary-hover` : ITEM
+                  item === current ? ACTIVE_ITEM : ITEM
                 }
               >
                 {item}
@@ -49,7 +54,7 @@ export function Pagination({ basePath, current, pages, label = 'Pagination' }: P
         )}
         <li>
           {current < pages ? (
-            <Link href={pageHref(basePath, current + 1)} rel="next" className={ITEM}>
+            <Link href={href(current + 1)} rel="next" className={ITEM}>
               Next
               <Icon name="chevron-right" className="size-4" />
             </Link>
