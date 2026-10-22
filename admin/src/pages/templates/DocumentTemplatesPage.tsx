@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { ApiError, errorMessage } from '@/api/client'
 import { DOCUMENT_TEMPLATES_KEY, documentTemplatesApi, type DocumentKind, type DocumentTemplate } from '@/api/templates'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { Badge, Card, EmptyState, PageHeader } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
@@ -36,8 +37,14 @@ export default function DocumentTemplatesPage() {
         title="Document templates"
         description="Layouts used to generate contracts, quotations and CVs as PDF."
         actions={
-          <Link to="/document-templates/new" className="inline-flex h-9 items-center rounded-md bg-navy-800 px-4 text-sm font-medium text-white hover:bg-navy-700">
-            New template
+          <Link
+            to="/document-templates/new"
+            aria-label="New template"
+            title="New template"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-navy-800 px-4 text-sm font-medium text-white hover:bg-navy-700 max-sm:size-9 max-sm:px-0"
+          >
+            <Icon name="plus" />
+            <span className="max-sm:sr-only">New template</span>
           </Link>
         }
       />
@@ -60,20 +67,28 @@ export default function DocumentTemplatesPage() {
                 ) : (
                   <ul className="divide-y divide-slate-100">
                     {rows.map((t) => (
-                      <li key={t.id} className="flex flex-wrap items-center gap-3 py-2 text-sm">
-                        <span className="font-medium text-slate-900">{t.name}</span>
+                      <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+                        <span className="min-w-0 break-words font-medium text-slate-900">{t.name}</span>
                         {t.is_default ? <Badge tone="green">Default</Badge> : null}
                         <span className="text-slate-500">
                           {t.paper_size.toUpperCase()} · {t.orientation}
                         </span>
                         <span className="text-xs text-slate-500">Updated {formatDateTime(t.updated_at)}</span>
                         <span className="ml-auto flex gap-1">
-                          <Link to={`/document-templates/${t.id}`} aria-label={`Edit ${t.name}`} className="rounded px-3 py-1 text-navy-700 hover:bg-slate-100">
-                            Edit
+                          <Link
+                            to={`/document-templates/${t.id}`}
+                            aria-label={`Edit ${t.name}`}
+                            title={`Edit ${t.name}`}
+                            className="relative inline-flex h-8 items-center justify-center gap-2 rounded px-3 text-navy-700 hover:bg-slate-100 max-sm:size-9 max-sm:px-0"
+                          >
+                            <Icon name="edit" />
+                            <span className="max-sm:sr-only">Edit</span>
                           </Link>
                           <Button
                             size="sm"
                             variant="ghost"
+                            icon={<Icon name="trash" />}
+                            collapse
                             aria-label={`Delete ${t.name}`}
                             onClick={() => {
                               setDeleteError(null)

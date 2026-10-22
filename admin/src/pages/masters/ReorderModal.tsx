@@ -3,9 +3,11 @@ import { useState } from 'react'
 import { errorMessage } from '@/api/client'
 import { fetchAllMasterRows, masterApi, OPTIONS_KEY, type MasterRecord } from '@/api/masters'
 import { Button } from '@/components/ui/Button'
+import { DragHandle } from '@/components/ui/DragHandle'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
+import { useSortable } from '@/hooks/useSortable'
 import type { MasterConfig } from './config'
 import { moveItem } from './reorder'
 
@@ -28,7 +30,6 @@ export function ReorderList({ config, onDone }: { config: MasterConfig; onDone: 
   const toast = useToast()
   const rows = useQuery({ queryKey: ['reorder', config.segment], queryFn: () => fetchAllMasterRows(config.segment), gcTime: 0 })
   const [order, setOrder] = useState<MasterRecord[] | null>(null)
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
   const items = order ?? rows.data ?? []
 
   const save = useMutation({
@@ -41,7 +42,17 @@ export function ReorderList({ config, onDone }: { config: MasterConfig; onDone: 
     onError: (err) => toast.error(errorMessage(err)),
   })
 
-  const move = (from: number, to: number) => setOrder(moveItem(items, from, to))
+  const sort = useSortable(
+    items.map((r) => r.id),
+    (from, to) =>
+      setOrder(
+        moveItem(
+          items,
+          items.findIndex((r) => r.id === from),
+          items.findIndex((r) => r.id === to),
+        ),
+      ),
+  )
 
   if (rows.isPending) {
     return (
@@ -53,36 +64,12 @@ export function ReorderList({ config, onDone }: { config: MasterConfig; onDone: 
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-600">Drag rows, or use the arrow buttons, to set the order used in every dropdown.</p>
+      <p className="text-sm text-slate-600">Drag a row by its handle, or focus the handle and press the up and down arrow keys, to set the order used in every dropdown.</p>
       <ol className="divide-y divide-slate-100 rounded-md ring-1 ring-slate-200" aria-label="Order">
-        {items.map((row, i) => (
-          <li
-            key={row.id}
-            draggable
-            onDragStart={() => setDragIndex(i)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault()
-              if (dragIndex !== null) move(dragIndex, i)
-              setDragIndex(null)
-            }}
-            onDragEnd={() => setDragIndex(null)}
-            className={`flex items-center gap-3 px-3 py-2 text-sm ${dragIndex === i ? 'bg-navy-50' : 'bg-white'}`}
-          >
-            <span aria-hidden className="cursor-grab text-slate-400">⋮⋮</span>
-            <span className="flex-1">{rowLabel(row)}</span>
-            <button type="button" aria-label={`Move ${rowLabel(row)} up`} disabled={i === 0} onClick={() => move(i, i - 1)} className="rounded px-2 py-0.5 hover:bg-slate-100 disabled:opacity-30">
-              ↑
-            </button>
-            <button
-              type="button"
-              aria-label={`Move ${rowLabel(row)} down`}
-              disabled={i === items.length - 1}
-              onClick={() => move(i, i + 1)}
-              className="rounded px-2 py-0.5 hover:bg-slate-100 disabled:opacity-30"
-            >
-              ↓
-            </button>
+        {items.map((row) => (
+          <li key={row.id} {...sort.rowProps(row.id)} className="flex items-center gap-2 bg-white px-2 py-1 text-sm">
+            <DragHandle label={rowLabel(row)} {...sort.handleProps(row.id)} />
+            <span className="min-w-0 flex-1 break-words">{rowLabel(row)}</span>
           </li>
         ))}
       </ol>

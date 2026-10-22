@@ -74,7 +74,8 @@ describe('settings field rendering by kind', () => {
       />,
     )
     expect(screen.getByRole('checkbox', { name: 'Show About' })).not.toBeChecked()
-    await userEvent.click(screen.getByRole('button', { name: 'Move Hero down' }))
+    screen.getByRole('button', { name: /^Reorder Hero\./ }).focus()
+    await userEvent.keyboard('{ArrowDown}')
     expect(onChange).toHaveBeenCalledWith(['news', 'hero'])
     await userEvent.click(screen.getByRole('checkbox', { name: 'Show About' }))
     expect(onChange).toHaveBeenLastCalledWith(['hero', 'news', 'about'])

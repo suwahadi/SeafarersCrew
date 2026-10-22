@@ -23,7 +23,7 @@ export default function EmailTemplatesPage() {
       ) : templates.data.length === 0 ? (
         <EmptyState title="No email templates" />
       ) : (
-        <div className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+        <div className="relative overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>

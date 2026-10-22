@@ -3,7 +3,9 @@ import type { SettingField } from '@/api/settings'
 import { FileUploadField } from '@/components/forms/FileUploadField'
 import { TagInput } from '@/components/forms/TagInput'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
+import { DragHandle } from '@/components/ui/DragHandle'
 import { CheckboxField, FieldShell, inputClass, SelectField, TextAreaField, TextField } from '@/components/ui/Field'
+import { useSortable } from '@/hooks/useSortable'
 import { titleCase } from '@/lib/format'
 import { fieldLabel, orderedListValue, type FieldValue } from './settingsForm'
 
@@ -96,7 +98,7 @@ export function SettingFieldInput({ field, value, onChange, error, secret }: Set
             onChange={(e) => onChange(e.target.value.toUpperCase())}
             className="h-9 w-12 rounded border border-slate-300"
           />
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <TextField label={label} value={text} error={error} onChange={(e) => onChange(e.target.value)} />
           </div>
         </div>
@@ -169,6 +171,11 @@ function OrderedOptionList({ label, field, value, onChange }: { label: string; f
     commit(next)
   }
   const toggle = (index: number) => commit(items.map((it, i) => (i === index ? { ...it, enabled: !it.enabled } : it)))
+  const names = items.map((it) => it.item)
+  const sort = useSortable(
+    items.filter((it) => it.enabled).map((it) => it.item),
+    (from, to) => move(names.indexOf(from), names.indexOf(to)),
+  )
 
   return (
     <fieldset className="space-y-1">
@@ -176,18 +183,13 @@ function OrderedOptionList({ label, field, value, onChange }: { label: string; f
       <ol className="divide-y divide-slate-100 rounded-md ring-1 ring-slate-200">
         {items.map((it, i) => {
           const name = titleCase(it.item)
-          const canUp = it.enabled && i > 0 && items[i - 1]?.enabled === true
-          const canDown = it.enabled && items[i + 1]?.enabled === true
           return (
-            <li key={it.item} className="flex items-center gap-3 px-3 py-2 text-sm">
-              <input type="checkbox" aria-label={`Show ${name}`} checked={it.enabled} onChange={() => toggle(i)} className="h-4 w-4 rounded border-slate-300 text-navy-800" />
-              <span className={`flex-1 ${it.enabled ? '' : 'text-slate-400'}`}>{name}</span>
-              <button type="button" aria-label={`Move ${name} up`} disabled={!canUp} onClick={() => move(i, i - 1)} className="rounded px-2 py-0.5 hover:bg-slate-100 disabled:opacity-30">
-                ↑
-              </button>
-              <button type="button" aria-label={`Move ${name} down`} disabled={!canDown} onClick={() => move(i, i + 1)} className="rounded px-2 py-0.5 hover:bg-slate-100 disabled:opacity-30">
-                ↓
-              </button>
+            <li key={it.item} {...(it.enabled ? sort.rowProps(it.item) : {})} className="flex items-center gap-2 px-2 py-1 text-sm">
+              {it.enabled ? <DragHandle label={name} {...sort.handleProps(it.item)} /> : <span aria-hidden className="size-9 shrink-0" />}
+              <label className="flex min-h-9 min-w-0 flex-1 items-center gap-3">
+                <input type="checkbox" aria-label={`Show ${name}`} checked={it.enabled} onChange={() => toggle(i)} className="h-4 w-4 shrink-0 rounded border-slate-300 text-navy-800" />
+                <span className={`truncate ${it.enabled ? '' : 'text-slate-400'}`}>{name}</span>
+              </label>
             </li>
           )
         })}

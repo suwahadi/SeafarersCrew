@@ -6,6 +6,7 @@ import { ApiError, errorMessage, type Query } from '@/api/client'
 import { masterApi, optionsQuery, OPTIONS_KEY, type MasterRecord } from '@/api/masters'
 import { DataGrid } from '@/components/datagrid/DataGrid'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { Badge, PageHeader } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
@@ -19,6 +20,10 @@ export default function MasterPage() {
     return <p className="text-sm text-slate-600">Unknown master data list.</p>
   }
   return <MasterList key={master} config={masterConfigs[master]} />
+}
+
+function rowName(row: MasterRecord, config: MasterConfig): string {
+  return typeof row.name === 'string' && row.name !== '' ? row.name : config.singular.toLowerCase()
 }
 
 export function MasterList({ config }: { config: MasterConfig }) {
@@ -83,13 +88,16 @@ export function MasterList({ config }: { config: MasterConfig }) {
         enableHiding: false,
         cell: ({ row }) => (
           <div className="flex justify-end gap-1">
-            <Button size="sm" variant="ghost" onClick={() => setEditing(row.original)}>
+            <Button size="sm" variant="ghost" icon={<Icon name="edit" />} collapse aria-label={`Edit ${rowName(row.original, config)}`} onClick={() => setEditing(row.original)}>
               Edit
             </Button>
             {config.readonlyOnSystem && row.original.is_system === true ? null : (
               <Button
                 size="sm"
                 variant="ghost"
+                icon={<Icon name="trash" />}
+                collapse
+                aria-label={`Delete ${rowName(row.original, config)}`}
                 onClick={() => {
                   setDeleteError(null)
                   setDeleting(row.original)
@@ -114,10 +122,10 @@ export function MasterList({ config }: { config: MasterConfig }) {
         description={config.description}
         actions={
           <>
-            <Button variant="secondary" onClick={() => setReordering(true)}>
+            <Button variant="secondary" icon={<Icon name="grip" />} collapse onClick={() => setReordering(true)}>
               Reorder
             </Button>
-            <Button onClick={() => setCreating(true)}>New {config.singular.toLowerCase()}</Button>
+            <Button icon={<Icon name="plus" />} collapse onClick={() => setCreating(true)}>New {config.singular.toLowerCase()}</Button>
           </>
         }
       />
@@ -132,8 +140,8 @@ export function MasterList({ config }: { config: MasterConfig }) {
           return { rows: res.data, total: res.meta.total }
         }}
         toolbar={
-          <>
-            <FilterSelect label="Status" value={filters.is_active ?? ''} onChange={(v) => setFilters((f) => ({ ...f, is_active: v }))} options={[
+          <div className="filter-bar min-w-0 flex-1 sm:flex-none sm:flex-nowrap">
+            <FilterSelect label="Visibility" allLabel="Active and inactive" value={filters.is_active ?? ''} onChange={(v) => setFilters((f) => ({ ...f, is_active: v }))} options={[
               { value: 'true', label: 'Active' },
               { value: 'false', label: 'Inactive' },
             ]} />
@@ -146,7 +154,7 @@ export function MasterList({ config }: { config: MasterConfig }) {
                 options={f.options ?? (options.data && f.source ? f.source(options.data) : [])}
               />
             ))}
-          </>
+          </div>
         }
       />
       <MasterFormModal config={config} row={editing} open={creating || editing !== null} onClose={() => {
@@ -170,12 +178,12 @@ export function MasterList({ config }: { config: MasterConfig }) {
   )
 }
 
-function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+function FilterSelect({ label, allLabel, value, onChange, options }: { label: string; allLabel?: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   return (
-    <label className="flex items-center gap-1 text-sm text-slate-600">
+    <label className="block text-sm text-slate-600">
       <span className="sr-only">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="h-9 rounded-md border-0 bg-white text-sm text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500">
-        <option value="">All {label.toLowerCase()}</option>
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="h-9 w-full rounded-md border-0 bg-white text-sm text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500">
+        <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}

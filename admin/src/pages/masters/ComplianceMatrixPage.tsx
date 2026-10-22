@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { errorMessage } from '@/api/client'
 import { complianceApi, COMPLIANCE_KEY, type ComplianceMatrix, type Rank } from '@/api/masters'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { Badge, PageHeader } from '@/components/ui/Layout'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
@@ -63,20 +64,20 @@ export function MatrixEditor({ matrix }: { matrix: ComplianceMatrix }) {
         actions={
           <>
             {dirty ? <Badge tone="orange">Unsaved changes</Badge> : null}
-            <Button variant="secondary" disabled={!dirty || save.isPending} onClick={() => setChecked(new Set(initial))}>
+            <Button variant="secondary" icon={<Icon name="refresh" />} collapse disabled={!dirty || save.isPending} onClick={() => setChecked(new Set(initial))}>
               Discard
             </Button>
-            <Button onClick={() => save.mutate()} loading={save.isPending} disabled={!dirty}>
+            <Button icon={<Icon name="check" />} collapse onClick={() => save.mutate()} loading={save.isPending} disabled={!dirty}>
               Save matrix
             </Button>
           </>
         }
       />
-      <div className="max-h-[75vh] overflow-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="max-h-[75vh] max-w-full overflow-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
         <table className="border-separate border-spacing-0 text-xs">
           <thead>
             <tr>
-              <th scope="col" className="sticky top-0 left-0 z-30 min-w-48 border-b border-slate-200 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-600">
+              <th scope="col" className="sticky top-0 left-0 z-30 min-w-36 border-b sm:min-w-48 border-slate-200 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-600">
                 Rank
               </th>
               {columns.map((c) => (
@@ -109,7 +110,7 @@ export function MatrixEditor({ matrix }: { matrix: ComplianceMatrix }) {
                   <th scope="row" className="sticky left-0 z-10 border-b border-slate-100 bg-white px-3 py-1.5 text-left font-medium whitespace-nowrap text-slate-800">
                     <label className="flex items-center gap-2">
                       <input type="checkbox" aria-label={`Require all items for ${r.name}`} checked={allOn(rowKeys(r))} onChange={(e) => update(rowKeys(r), e.target.checked)} />
-                      {r.name} <span className="text-slate-400">{r.short_code}</span>
+                      {r.name} <span className="text-slate-400 max-sm:hidden">{r.short_code}</span>
                     </label>
                   </th>
                   {columns.map((c) => {

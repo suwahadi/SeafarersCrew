@@ -89,7 +89,7 @@ function GroupFields({ group, values, onDirtyChange }: { group: SettingGroup; va
       <Card>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {group.fields.map((field) => (
-            <div key={field.key} className={field.kind === 'html' || field.kind === 'textarea' || field.kind === 'list' ? 'md:col-span-2' : ''}>
+            <div key={field.key} className={`min-w-0 ${field.kind === 'html' || field.kind === 'textarea' || field.kind === 'list' ? 'md:col-span-2' : ''}`}>
               <Controller
                 control={control}
                 name={field.key}
