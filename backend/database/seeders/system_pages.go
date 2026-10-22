@@ -14,7 +14,7 @@ type systemPageSeed struct {
 
 var systemPages = []systemPageSeed{
 	{"home", "Home", "", true, false},
-	{"news", "News", "<p>Company news, industry updates and announcements.</p>", true, true},
+	{"news", "News", "", true, true},
 	{"career", "Career", "", true, true},
 	{"gallery", "Gallery", "", true, false},
 	{"contact", "Contact", "<p>Get in touch with our crewing team.</p>", true, true},

@@ -11,7 +11,7 @@ export function ShareButtons({ url, title }: { url: string; title: string }) {
       <p className="mr-1 text-sm font-semibold text-muted">Share</p>
       {shareTargets(url, title).map((target) => (
         <a key={target.key} href={target.href} target="_blank" rel="noopener noreferrer" className={BUTTON}>
-          <Icon name={target.key} className={`size-4 ${target.key === 'whatsapp' ? 'text-[#25D366]' : ''}`} />
+          <Icon name={target.key} className="size-4" />
           <span className="max-sm:sr-only">
             {target.label}
             <span className="sr-only"> (opens in a new tab)</span>

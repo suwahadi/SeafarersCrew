@@ -81,7 +81,7 @@ export default async function ContactPage() {
               ) : null}
               {whatsappHref ? (
                 <p className="flex items-center gap-3">
-                  <Icon name="whatsapp" className="size-5 shrink-0 text-[#25D366]" />
+                  <Icon name="whatsapp" className="size-5 shrink-0 text-accent-text" />
                   <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={DETAIL_LINK}>
                     Chat on WhatsApp
                   </a>

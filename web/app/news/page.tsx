@@ -44,7 +44,6 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
     <>
       <PageHeader
         title={title}
-        introHtml={page?.intro_html}
         crumbs={[
           { name: 'Home', path: '/' },
           { name: title, path: '/news' },
