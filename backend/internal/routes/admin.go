@@ -34,6 +34,7 @@ type AdminDeps struct {
 	Dashboard     *admin.DashboardHandler
 	Career        CareerRoutes
 	Backups       *admin.BackupHandler
+	Branding      *admin.BrandingHandler
 	CMS           CMSRoutes
 	AfterWrite    func(ctx context.Context)
 }
@@ -44,6 +45,7 @@ func Admin(r chi.Router, d AdminDeps) {
 		r.Use(middleware.CORS(d.Origin))
 		r.Use(middleware.RateLimit(d.Counter, "admin-api", 1200, time.Minute))
 
+		r.Get("/branding", d.Branding.Show)
 		r.With(middleware.RequireJSON).Post("/auth/login", d.Auth.Login)
 		r.With(middleware.RequireJSON).Post("/auth/recovery", d.Auth.Recover)
 

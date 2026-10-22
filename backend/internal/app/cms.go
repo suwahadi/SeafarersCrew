@@ -48,7 +48,7 @@ func (a *App) cmsRoutes() routes.CMSRoutes {
 	}
 }
 
-func (a *App) publicContent() *public.ContentHandler {
+func (a *App) publicService() *service.PublicService {
 	lists := service.PublicLists{
 		Slides:       repository.NewHeroSlideRepository(a.DB),
 		Stats:        repository.NewStatsItemRepository(a.DB),
@@ -57,7 +57,7 @@ func (a *App) publicContent() *public.ContentHandler {
 		Gallery:      repository.NewGalleryImageRepository(a.DB),
 		Languages:    repository.NewLanguageRepository(a.DB),
 	}
-	svc := service.NewPublicService(
+	return service.NewPublicService(
 		a.Settings,
 		repository.NewPublicContentRepository(a.DB),
 		repository.NewMenuRepository(a.DB),
@@ -65,5 +65,8 @@ func (a *App) publicContent() *public.ContentHandler {
 		lists,
 		time.Now,
 	)
-	return public.NewContentHandler(svc, a.Media)
+}
+
+func (a *App) publicContent() *public.ContentHandler {
+	return public.NewContentHandler(a.publicService(), a.Media)
 }

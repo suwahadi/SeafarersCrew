@@ -296,6 +296,7 @@ func (a *App) Router() http.Handler {
 		Documents:     a.documentHandlers(),
 		Career:        a.careerRoutes(career),
 		Backups:       admin.NewBackupHandler(a.Backups),
+		Branding:      admin.NewBrandingHandler(a.publicService(), a.Media),
 		CMS:           a.cmsRoutes(),
 	})
 	routes.Public(r, routes.PublicDeps{

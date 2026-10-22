@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router'
 import { ApiError } from '@/api/client'
 import { AuthProvider } from '@/app/auth'
 import { router } from '@/app/router'
+import { FaviconSync } from '@/components/ui/FaviconSync'
 import { Spinner } from '@/components/ui/Spinner'
 import { ToastProvider } from '@/components/ui/Toast'
 import './index.css'
@@ -25,6 +26,7 @@ if (!root) throw new Error('Root element missing')
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
+      <FaviconSync />
       <ToastProvider>
         <AuthProvider>
           <Suspense

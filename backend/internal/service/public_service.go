@@ -111,6 +111,27 @@ func (s *PublicService) Site(ctx context.Context) (model.SiteData, error) {
 	return data, nil
 }
 
+// Favicon returns the website favicon chosen in Settings, or nil when none is set.
+func (s *PublicService) Favicon(ctx context.Context) (*model.Image, error) {
+	company, err := s.settings.Values(ctx, "company")
+	if err != nil {
+		return nil, err
+	}
+	id, ok := SettingFileID(company, "favicon_file_id")
+	if !ok {
+		return nil, nil
+	}
+	images, err := s.images.Images(ctx, []uuid.UUID{id})
+	if err != nil {
+		return nil, err
+	}
+	img, found := images[id]
+	if !found {
+		return nil, nil
+	}
+	return &img, nil
+}
+
 func siteImageIDs(settings map[string]map[string]any) []uuid.UUID {
 	var ids []uuid.UUID
 	for _, ref := range [][2]string{{"company", "logo_light_file_id"}, {"company", "logo_dark_file_id"}, {"company", "favicon_file_id"}, {"seo", "og_image_file_id"}} {
