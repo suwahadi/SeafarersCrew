@@ -68,7 +68,7 @@ function KinForm({ crewId, row, onDone }: { crewId: string; row: NextOfKin | nul
       </div>
       <TextAreaField label="Address" rows={2} error={e.address?.message} {...form.register('address')} />
       <CheckboxField label="Primary contact" {...form.register('is_primary')} />
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-2 max-sm:*:flex-1">
         <Button variant="secondary" onClick={onDone}>
           Cancel
         </Button>

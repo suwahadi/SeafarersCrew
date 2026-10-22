@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router'
 import { pagesApi, type PageSummary } from '@/api/pages'
 import { DataGrid } from '@/components/datagrid/DataGrid'
 import { Button } from '@/components/ui/Button'
-import { inputClass } from '@/components/ui/Field'
+import { Icon } from '@/components/ui/Icon'
+import { filterClass } from '@/components/ui/Field'
 import { Badge, PageHeader } from '@/components/ui/Layout'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { formatDateTime } from '@/lib/format'
@@ -55,16 +56,20 @@ const columns: ColumnDef<PageSummary>[] = [
 export default function PageListPage() {
   const navigate = useNavigate()
   const [filters, set] = useUrlFilters(FILTER_KEYS)
-  const select = `h-9 ${inputClass} w-auto!`
+  const select = filterClass
 
   return (
     <>
       <PageHeader
         title="Pages"
         description="Website pages built from content blocks."
-        actions={<Button onClick={() => void navigate('/website/pages/new')}>New page</Button>}
+        actions={
+          <Button icon={<Icon name="plus" />} onClick={() => void navigate('/website/pages/new')}>
+            New page
+          </Button>
+        }
       />
-      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
+      <div className="filter-bar mb-3" role="group" aria-label="Filters">
         <select aria-label="Status" className={select} value={filters.status} onChange={(e) => set('status', e.target.value)}>
           <option value="">All statuses</option>
           <option value="draft">Draft</option>

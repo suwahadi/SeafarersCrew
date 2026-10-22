@@ -73,7 +73,7 @@ export default function DocumentNewPage() {
           </Link>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
         <Card title="Options">
           <div className="space-y-4">
             <SelectField

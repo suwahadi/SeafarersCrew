@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { ApiError, errorMessage } from '@/api/client'
 import { quotationsApi, type Quotation } from '@/api/quotations'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { SelectField, TextAreaField, TextField } from '@/components/ui/Field'
 import { Card, PageHeader } from '@/components/ui/Layout'
 import { Spinner } from '@/components/ui/Spinner'
@@ -95,8 +96,8 @@ function QuotationForm({ quotation }: { quotation: Quotation | undefined }) {
           </>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
-        <form onSubmit={onSubmit} noValidate className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <form onSubmit={onSubmit} noValidate className="min-w-0 space-y-6">
           {formError ? (
             <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
               {formError}
@@ -105,7 +106,7 @@ function QuotationForm({ quotation }: { quotation: Quotation | undefined }) {
           {locked ? <p className="rounded-md bg-slate-100 p-3 text-sm text-slate-700">Only draft quotations can be edited.</p> : null}
           <fieldset disabled={locked} className="min-w-0 space-y-6">
             <Card title="Details">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <SelectField
                   label="Client"
                   required
@@ -143,17 +144,17 @@ function QuotationForm({ quotation }: { quotation: Quotation | undefined }) {
                     <div key={f.id} className="rounded-md bg-slate-50 p-3 ring-1 ring-slate-200">
                       <div className="mb-2 flex items-center justify-between">
                         <span className="text-xs font-semibold text-slate-600 uppercase">{row?.line_type === 'lump_sum' ? 'Lump sum' : 'Daily rate'}</span>
-                        <Button variant="ghost" size="sm" onClick={() => lines.remove(i)} aria-label={`Remove line ${i + 1}`} disabled={locked}>
+                        <Button variant="ghost" size="sm" collapse icon={<Icon name="trash" />} onClick={() => lines.remove(i)} aria-label={`Remove line ${i + 1}`} disabled={locked}>
                           Remove
                         </Button>
                       </div>
                       {row?.line_type === 'lump_sum' ? (
-                        <div className="grid gap-3 md:grid-cols-[1fr_10rem]">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_10rem]">
                           <TextField label={`Line ${i + 1} description`} error={lineErrors?.description?.message} {...register(`lines.${i}.description`)} />
                           <TextField label={`Line ${i + 1} amount`} inputMode="decimal" error={lineErrors?.amount?.message} {...register(`lines.${i}.amount`)} />
                         </div>
                       ) : (
-                        <div className="grid gap-3 md:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 max-md:*:first:col-span-2">
                           <SelectField
                             label={`Line ${i + 1} rank`}
                             placeholder="Select a rank"
@@ -175,17 +176,17 @@ function QuotationForm({ quotation }: { quotation: Quotation | undefined }) {
               </div>
               {formState.errors.lines?.message ? <p role="alert" className="mt-2 text-xs text-red-600">{formState.errors.lines.message}</p> : null}
               {formState.errors.lines?.root?.message ? <p role="alert" className="mt-2 text-xs text-red-600">{formState.errors.lines.root.message}</p> : null}
-              <div className="mt-3 flex gap-2">
-                <Button variant="secondary" size="sm" onClick={() => lines.append({ ...emptyDailyLine })} disabled={locked}>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button variant="secondary" size="sm" icon={<Icon name="plus" />} onClick={() => lines.append({ ...emptyDailyLine })} disabled={locked}>
                   Add daily rate line
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => lines.append({ ...emptyLumpLine })} disabled={locked}>
+                <Button variant="secondary" size="sm" icon={<Icon name="plus" />} onClick={() => lines.append({ ...emptyLumpLine })} disabled={locked}>
                   Add lump sum line
                 </Button>
               </div>
             </Card>
             <Card title="Totals">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <TextField label="Discount" inputMode="decimal" error={formState.errors.discount_amount?.message} {...register('discount_amount')} />
                 <TextField label="Tax (%)" inputMode="decimal" error={formState.errors.tax_percent?.message} {...register('tax_percent')} />
               </div>
@@ -206,7 +207,7 @@ function QuotationForm({ quotation }: { quotation: Quotation | undefined }) {
             </Card>
           </fieldset>
           {locked ? null : (
-            <div className="flex justify-end">
+            <div className="flex justify-end max-sm:*:flex-1">
               <Button type="submit" loading={save.isPending}>
                 {quotation ? 'Save quotation' : 'Create draft quotation'}
               </Button>

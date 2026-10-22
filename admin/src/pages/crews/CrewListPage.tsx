@@ -6,6 +6,7 @@ import { crewsApi, type CrewRow } from '@/api/crews'
 import { departmentLabel } from '@/api/options'
 import { DataGrid, type GridPage } from '@/components/datagrid/DataGrid'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { ExpiryBadge, PageHeader } from '@/components/ui/Layout'
 import { useToast } from '@/components/ui/Toast'
 import { formatDate, formatSpan } from '@/lib/format'
@@ -83,10 +84,12 @@ export default function CrewListPage() {
         description="Seafarer records, documents, certificates and compliance."
         actions={
           <>
-            <Button variant="secondary" onClick={() => void navigate('/crews/import')}>
+            <Button variant="secondary" collapse icon={<Icon name="upload" />} onClick={() => void navigate('/crews/import')}>
               Import CSV
             </Button>
-            <Button onClick={() => void navigate('/crews/new')}>New crew</Button>
+            <Button collapse icon={<Icon name="plus" />} onClick={() => void navigate('/crews/new')}>
+              New crew
+            </Button>
           </>
         }
       />
@@ -106,13 +109,24 @@ export default function CrewListPage() {
         }}
         toolbar={
           <>
-            <Button variant="secondary" aria-expanded={showFilters} onClick={() => setShowFilters((s) => !s)}>
-              Filters{count > 0 ? ` (${String(count)})` : ''}
+            <Button
+              variant="secondary"
+              collapse
+              icon={
+                <span className="relative inline-flex">
+                  <Icon name="filter" />
+                  {count > 0 ? <span className="absolute -top-2 -right-2 min-w-4 rounded-full bg-navy-800 px-1 text-center text-[10px] leading-4 text-white sm:hidden">{count}</span> : null}
+                </span>
+              }
+              aria-expanded={showFilters}
+              onClick={() => setShowFilters((s) => !s)}
+            >
+              {`Filters${count > 0 ? ` (${String(count)})` : ''}`}
             </Button>
-            <Button variant="secondary" loading={exportCsv.isPending} disabled={exporting} onClick={() => runExport(exportCsv)}>
+            <Button variant="secondary" collapse icon={<Icon name="download" />} loading={exportCsv.isPending} disabled={exporting} onClick={() => runExport(exportCsv)}>
               Export CSV
             </Button>
-            <Button variant="secondary" loading={exportXlsx.isPending} disabled={exporting} onClick={() => runExport(exportXlsx)}>
+            <Button variant="secondary" collapse icon={<Icon name="file" />} loading={exportXlsx.isPending} disabled={exporting} onClick={() => runExport(exportXlsx)}>
               Export Excel
             </Button>
           </>

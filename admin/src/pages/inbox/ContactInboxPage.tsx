@@ -70,6 +70,7 @@ export default function ContactInboxPage() {
 
   const open = (message: ContactMessage) => {
     setSelected(message)
+    window.scrollTo({ top: 0 })
     const body = openPatch(message)
     if (body) patch.mutate({ id: message.id, body })
   }
@@ -89,20 +90,22 @@ export default function ContactInboxPage() {
           }}
         />
       </div>
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
-        <DataGrid<ContactMessage>
-          id="contact-messages"
-          columns={columns}
-          filters={{ status }}
-          searchPlaceholder="Search name, email or subject…"
-          rowKey={(r) => r.id}
-          onRowClick={open}
-          emptyMessage="No messages."
-          fetchPage={async (params, signal) => {
-            const res = await contactMessagesApi.list(params, signal)
-            return { rows: res.data, total: res.meta.total }
-          }}
-        />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className={`min-w-0 ${selected ? 'max-xl:hidden' : ''}`}>
+          <DataGrid<ContactMessage>
+            id="contact-messages"
+            columns={columns}
+            filters={{ status }}
+            searchPlaceholder="Search name, email or subject…"
+            rowKey={(r) => r.id}
+            onRowClick={open}
+            emptyMessage="No messages."
+            fetchPage={async (params, signal) => {
+              const res = await contactMessagesApi.list(params, signal)
+              return { rows: res.data, total: res.meta.total }
+            }}
+          />
+        </div>
         {selected ? (
           <InboxMessagePanel
             message={selected}

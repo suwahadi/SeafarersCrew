@@ -72,7 +72,7 @@ export default function CrewImportPage() {
           {preview ? (
             <div className="mt-4 space-y-4">
               <ImportPreviewTable preview={preview} />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 max-sm:*:flex-1">
                 <Button variant="secondary" onClick={() => setPreview(null)} disabled={commit.isPending}>
                   Discard
                 </Button>

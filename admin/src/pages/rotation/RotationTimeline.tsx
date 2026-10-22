@@ -25,7 +25,7 @@ export function RotationTimeline({ timeline, onSelectBar, onSelectPlan }: Props)
     <div className="overflow-x-auto rounded-lg bg-white ring-1 ring-slate-200">
       <div className="min-w-[56rem]">
         <div className="grid grid-cols-[11rem_1fr] border-b border-slate-200 bg-slate-50 text-xs text-slate-600">
-          <div className="px-3 py-2 font-semibold uppercase">Vessel</div>
+          <div className="sticky left-0 z-30 bg-slate-50 px-3 py-2 font-semibold uppercase">Vessel</div>
           <div className="relative h-8" aria-hidden>
             {ticks.map((t) => (
               <span key={t.label} className="absolute top-2 border-l border-slate-300 pl-1" style={{ left: `${t.left}%` }}>
@@ -37,7 +37,7 @@ export function RotationTimeline({ timeline, onSelectBar, onSelectPlan }: Props)
         {lanes.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">No vessels match this filter.</p> : null}
         {lanes.map((lane) => (
           <div key={lane.vessel.id} className="grid grid-cols-[11rem_1fr] border-b border-slate-100 last:border-0">
-            <div className="px-3 py-2">
+            <div className="sticky left-0 z-30 bg-white px-3 py-2">
               <p className="text-sm font-medium text-slate-800">{lane.vessel.name}</p>
               <p className="text-xs text-slate-500">{lane.vessel_type || '—'}</p>
             </div>

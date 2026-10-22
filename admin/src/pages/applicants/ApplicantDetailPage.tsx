@@ -5,6 +5,7 @@ import { applicantsApi, type ApplicantDetail, type Stage, type StageLog } from '
 import { errorMessage } from '@/api/client'
 import { openFile } from '@/api/files'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { inputClass } from '@/components/ui/Field'
 import { Card, DescriptionList, EmptyState, PageHeader } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
@@ -75,8 +76,8 @@ export function ApplicantDetailView({ applicant }: { applicant: ApplicantDetail 
           </>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_24rem]">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="min-w-0 space-y-6">
           <Card title="Applicant">
             <DescriptionList
               items={[
@@ -125,6 +126,8 @@ export function ApplicantDetailView({ applicant }: { applicant: ApplicantDetail 
                     <Button
                       variant="secondary"
                       size="sm"
+                      collapse
+                      icon={<Icon name="download" />}
                       aria-label={`Download ${f.name}`}
                       loading={download.isPending && download.variables === f.file_id}
                       onClick={() => download.mutate(f.file_id)}
@@ -137,7 +140,7 @@ export function ApplicantDetailView({ applicant }: { applicant: ApplicantDetail 
             )}
           </Card>
         </div>
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card title="Pipeline stage">
             <div className="space-y-3">
               <div className="space-y-1">

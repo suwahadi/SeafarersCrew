@@ -122,7 +122,7 @@ export function DataGrid<T>({
           />
           {query.isFetching ? <Spinner size="sm" label="Updating" /> : null}
         </div>
-        <div className="flex items-center gap-2 sm:ml-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
           {toolbar}
           <ColumnChooser table={table} />
         </div>
@@ -132,19 +132,19 @@ export function DataGrid<T>({
           {errorMessage(query.error)}
         </p>
       ) : null}
-      <div className="max-w-full overflow-x-auto">
+      <div className="relative max-w-full overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
-                {hg.headers.map((h) => {
+                {hg.headers.map((h, index) => {
                   const sorted = h.column.getIsSorted()
                   return (
                     <th
                       key={h.id}
                       scope="col"
                       aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}
-                      className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase whitespace-nowrap"
+                      className={`${index === 0 ? stickyFirst + ' bg-slate-50' : ''} px-3 py-2 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase whitespace-nowrap`}
                     >
                       {h.isPlaceholder ? null : h.column.getCanSort() ? (
                         <button type="button" onClick={h.column.getToggleSortingHandler()} className="inline-flex items-center gap-1 tracking-wide uppercase hover:text-slate-900">
@@ -162,7 +162,7 @@ export function DataGrid<T>({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 bg-white">
             {query.isPending ? (
               <tr>
                 <td colSpan={visibleCount} className="p-8 text-center">
@@ -194,10 +194,10 @@ export function DataGrid<T>({
                   <tr
                     key={row.id}
                     onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-                    className={onRowClick ? 'cursor-pointer hover:bg-slate-50' : undefined}
+                    className={`bg-white ${onRowClick ? 'cursor-pointer hover:bg-slate-50' : ''}`}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-3 py-2 whitespace-nowrap text-slate-800">
+                    {row.getVisibleCells().map((cell, index) => (
+                      <td key={cell.id} className={`${index === 0 ? stickyFirst + ' bg-inherit' : ''} px-3 py-2 whitespace-nowrap text-slate-800`}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -222,6 +222,8 @@ export function DataGrid<T>({
     </div>
   )
 }
+
+const stickyFirst = 'max-sm:sticky max-sm:left-0 max-sm:z-10 max-sm:shadow-[1px_0_0_var(--color-slate-200)]'
 
 function groupLabel(g: GridGroup | undefined): string {
   if (g === undefined || g.name === '') return 'Not assigned'

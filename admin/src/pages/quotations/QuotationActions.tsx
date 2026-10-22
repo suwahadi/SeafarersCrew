@@ -7,6 +7,7 @@ import { DocumentHistory } from '@/components/documents/DocumentHistory'
 import { EmailSendDialog, type EmailAttachment } from '@/components/email/EmailSendDialog'
 import { RelatedEmailLog } from '@/components/email/RelatedEmailLog'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { Card } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
@@ -53,10 +54,11 @@ export function QuotationActions({ quotation }: { quotation: Quotation }) {
   return (
     <aside className="space-y-6">
       <Card title="Actions">
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {QUOTATION_TRANSITIONS[quotation.status].map((s) => (
             <Button
               key={s}
+              icon={<Icon name={s === 'rejected' || s === 'expired' ? 'ban' : 'check'} />}
               variant={s === 'rejected' || s === 'expired' ? 'secondary' : 'primary'}
               onClick={() => {
                 setTarget(s)
@@ -66,11 +68,12 @@ export function QuotationActions({ quotation }: { quotation: Quotation }) {
               {LABELS[s]}
             </Button>
           ))}
-          <Button variant="secondary" onClick={() => void navigate(`/documents/new?kind=quotation&related_id=${quotation.id}`)}>
+          <Button variant="secondary" icon={<Icon name="file" />} onClick={() => void navigate(`/documents/new?kind=quotation&related_id=${quotation.id}`)}>
             Generate PDF
           </Button>
           <Button
             variant="secondary"
+            icon={<Icon name="mail" />}
             onClick={() => {
               setAttachments([])
               setDialog('email')
@@ -79,7 +82,7 @@ export function QuotationActions({ quotation }: { quotation: Quotation }) {
             Send email
           </Button>
           {quotation.status === 'draft' ? (
-            <Button variant="danger" onClick={() => setDialog('delete')}>
+            <Button variant="danger" icon={<Icon name="trash" />} onClick={() => setDialog('delete')}>
               Delete draft
             </Button>
           ) : null}

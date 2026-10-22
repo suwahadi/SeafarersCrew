@@ -66,7 +66,7 @@ function BankForm({ crewId, row, onDone }: { crewId: string; row: BankAccount | 
         <TextField label="Remarks" placeholder="e.g. DIRECT" error={e.remarks?.message} {...form.register('remarks')} />
       </div>
       <CheckboxField label="Primary account" hint="Only one account can be primary." {...form.register('is_primary')} />
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-2 max-sm:*:flex-1">
         <Button variant="secondary" onClick={onDone}>
           Cancel
         </Button>

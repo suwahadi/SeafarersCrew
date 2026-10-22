@@ -100,7 +100,7 @@ export function MovementLines({ data }: { data: MonthlyMovement[] }) {
 
 export function AllCharts({ charts }: { charts: Charts }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <StatusDonut data={charts.by_status} />
       <MovementLines data={charts.movements} />
       <RankBars data={charts.by_rank} />

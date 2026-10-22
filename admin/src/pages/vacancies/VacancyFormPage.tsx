@@ -8,6 +8,7 @@ import { vacanciesApi, type Vacancy, type VacancyStatus } from '@/api/vacancies'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { TagInput } from '@/components/forms/TagInput'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { SelectField, TextField } from '@/components/ui/Field'
 import { Card, PageHeader } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
@@ -166,7 +167,7 @@ export function VacancyForm({ vacancy }: { vacancy: Vacancy | undefined }) {
           </p>
         ) : null}
         <Card title="Position">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <TextField label="Title" required error={formState.errors.title?.message} {...register('title')} />
             </div>
@@ -251,12 +252,12 @@ export function VacancyForm({ vacancy }: { vacancy: Vacancy | undefined }) {
           </div>
         </Card>
         <Card title="Publishing">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <TextField label="Closing date" type="date" error={formState.errors.closing_date?.message} hint="An open vacancy needs a closing date of today or later." {...register('closing_date')} />
             <SelectField label="Status" required options={[...VACANCY_STATUSES]} error={formState.errors.status?.message} {...register('status')} />
           </div>
         </Card>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
           <Button type="submit" loading={save.isPending}>
             {vacancy ? 'Save changes' : 'Create vacancy'}
           </Button>
@@ -272,8 +273,8 @@ export function VacancyForm({ vacancy }: { vacancy: Vacancy | undefined }) {
                   Close vacancy
                 </Button>
               ) : null}
-              {dirty ? <span className="text-xs text-slate-500">Save your changes to use the quick status actions.</span> : null}
-              <Button variant="danger" className="ml-auto" onClick={() => setDeleting(true)}>
+              {dirty ? <span className="col-span-2 text-xs text-slate-500 sm:col-span-1">Save your changes to use the quick status actions.</span> : null}
+              <Button variant="danger" className="sm:ml-auto" icon={<Icon name="trash" />} onClick={() => setDeleting(true)}>
                 Delete
               </Button>
             </>

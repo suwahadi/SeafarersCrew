@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router'
 import { quotationsApi, type Quotation } from '@/api/quotations'
 import { DataGrid } from '@/components/datagrid/DataGrid'
 import { Button } from '@/components/ui/Button'
-import { inputClass } from '@/components/ui/Field'
+import { Icon } from '@/components/ui/Icon'
+import { FilterField, filterClass } from '@/components/ui/Field'
 import { PageHeader } from '@/components/ui/Layout'
 import { useOptions } from '@/hooks/useOptions'
 import { formatDate, formatMoney } from '@/lib/format'
@@ -38,16 +39,20 @@ export default function QuotationListPage() {
   const { options } = useOptions()
   const [filters, setFilters] = useState<Record<string, string>>({})
   const set = (key: string, value: string) => setFilters((f) => ({ ...f, [key]: value }))
-  const select = `h-9 ${inputClass} w-auto!`
+  const select = filterClass
 
   return (
     <>
       <PageHeader
         title="Quotations"
         description="Crew supply quotations with daily rates and lump sums."
-        actions={<Button onClick={() => void navigate('/quotations/new')}>New quotation</Button>}
+        actions={
+          <Button icon={<Icon name="plus" />} onClick={() => void navigate('/quotations/new')}>
+            New quotation
+          </Button>
+        }
       />
-      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
+      <div className="filter-bar mb-3" role="group" aria-label="Filters">
         <select aria-label="Status" className={select} value={filters.status ?? ''} onChange={(e) => set('status', e.target.value)}>
           <option value="">All statuses</option>
           {statuses.map((s) => (
@@ -72,14 +77,12 @@ export default function QuotationListPage() {
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-1 text-sm text-slate-600">
-          From
+        <FilterField label="From">
           <input type="date" className={select} value={filters.date_from ?? ''} onChange={(e) => set('date_from', e.target.value)} />
-        </label>
-        <label className="flex items-center gap-1 text-sm text-slate-600">
-          to
+        </FilterField>
+        <FilterField label="To" shortLabel="to">
           <input type="date" className={select} value={filters.date_to ?? ''} onChange={(e) => set('date_to', e.target.value)} />
-        </label>
+        </FilterField>
       </div>
       <DataGrid<Quotation>
         id="quotations"

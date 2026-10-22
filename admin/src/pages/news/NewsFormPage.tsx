@@ -12,6 +12,7 @@ import { SlugField } from '@/components/cms/SlugField'
 import { UnsavedChangesDialog } from '@/components/cms/UnsavedChangesDialog'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { SelectField, TextAreaField, TextField } from '@/components/ui/Field'
 import { Card, PageHeader } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
@@ -146,7 +147,7 @@ export function NewsForm({ news }: { news: NewsDetail | undefined }) {
       />
       <form onSubmit={onSubmit} noValidate className="space-y-6">
         <ErrorSummary lines={problems} message={formError} />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="min-w-0 space-y-6">
             <Card title="Article">
               <div className="space-y-4">
@@ -212,12 +213,12 @@ export function NewsForm({ news }: { news: NewsDetail | undefined }) {
             </Card>
           </aside>
         </div>
-        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white/95 px-1 py-3">
+        <div className="sticky bottom-0 z-10 -mx-1 flex items-center gap-2 max-sm:*:first:flex-1 border-t border-slate-200 bg-white/95 px-1 py-3">
           <Button type="submit" loading={save.isPending}>
             {news ? 'Save changes' : 'Create article'}
           </Button>
           {news ? (
-            <Button variant="danger" className="ml-auto" onClick={() => setDeleting(true)}>
+            <Button variant="danger" className="ml-auto" collapse icon={<Icon name="trash" />} onClick={() => setDeleting(true)}>
               Delete article
             </Button>
           ) : null}

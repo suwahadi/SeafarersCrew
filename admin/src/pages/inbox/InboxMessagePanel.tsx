@@ -1,5 +1,7 @@
 import type { ContactMessage, ContactMessagePatch } from '@/api/contactMessages'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
+import { IconButton } from '@/components/ui/IconButton'
 import { Badge, Card } from '@/components/ui/Layout'
 import { formatDateTime } from '@/lib/format'
 import { archiveTogglePatch, readTogglePatch, replyHref } from '@/lib/inbox'
@@ -16,9 +18,12 @@ export function InboxMessagePanel({ message, busy, onPatch, onClose }: InboxMess
     <Card
       title={message.subject}
       actions={
-        <button type="button" onClick={onClose} aria-label="Close message" className="rounded p-1 text-slate-500 hover:bg-slate-100">
-          ✕
-        </button>
+        <>
+          <Button variant="ghost" size="sm" className="xl:hidden" icon={<Icon name="chevronLeft" />} onClick={onClose}>
+            Back to messages
+          </Button>
+          <IconButton icon="close" label="Close message" className="max-xl:hidden" onClick={onClose} />
+        </>
       }
     >
       <article aria-label="Message detail" className="space-y-4">
@@ -26,7 +31,7 @@ export function InboxMessagePanel({ message, busy, onPatch, onClose }: InboxMess
           {message.is_read ? <Badge>Read</Badge> : <Badge tone="blue">Unread</Badge>}
           {message.is_archived ? <Badge tone="orange">Archived</Badge> : null}
         </div>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+        <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
           <dt className="text-slate-500">From</dt>
           <dd className="text-slate-900">{message.name}</dd>
           <dt className="text-slate-500">Email</dt>
@@ -43,17 +48,20 @@ export function InboxMessagePanel({ message, busy, onPatch, onClose }: InboxMess
           <dd className="text-slate-900">{message.ip_address || '—'}</dd>
         </dl>
         <p className="text-sm break-words whitespace-pre-wrap text-slate-900">{message.message}</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="action-bar">
           <a
             href={replyHref(message)}
-            className="inline-flex h-9 items-center justify-center rounded-md bg-navy-800 px-4 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-navy-700"
+            aria-label="Reply by email"
+            title="Reply by email"
+            className="relative inline-flex h-9 items-center justify-center gap-2 rounded-md bg-navy-800 px-4 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-navy-700 max-sm:size-9 max-sm:px-0"
           >
-            Reply by email
+            <Icon name="mail" />
+            <span className="max-sm:sr-only">Reply by email</span>
           </a>
-          <Button variant="secondary" disabled={busy} onClick={() => onPatch(readTogglePatch(message))}>
+          <Button variant="secondary" collapse icon={<Icon name="eye" />} disabled={busy} onClick={() => onPatch(readTogglePatch(message))}>
             {message.is_read ? 'Mark as unread' : 'Mark as read'}
           </Button>
-          <Button variant="secondary" disabled={busy} onClick={() => onPatch(archiveTogglePatch(message))}>
+          <Button variant="secondary" collapse icon={<Icon name="archive" />} disabled={busy} onClick={() => onPatch(archiveTogglePatch(message))}>
             {message.is_archived ? 'Unarchive' : 'Archive'}
           </Button>
         </div>

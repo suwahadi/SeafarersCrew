@@ -198,7 +198,7 @@ export function ReliefPlanDialog({ target, plan, onClose }: Props) {
           </p>
         ) : null}
         <fieldset disabled={closed} className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <TextField label="Relief date" type="date" required error={formState.errors.planned_relief_date?.message} {...register('planned_relief_date')} />
             <TextField label="Joining port" error={formState.errors.joining_port?.message} {...register('joining_port')} />
           </div>

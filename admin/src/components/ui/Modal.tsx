@@ -30,20 +30,20 @@ export function Modal({ open, title, onClose, children, footer, size = 'md' }: M
         e.preventDefault()
         onClose()
       }}
-      className={`m-auto w-full ${widths[size]} rounded-lg p-0 shadow-xl backdrop:bg-slate-900/40 open:flex open:flex-col max-h-[90vh]`}
+      className={`m-auto w-[calc(100%-1rem)] ${widths[size]} max-h-[92dvh] rounded-lg p-0 shadow-xl backdrop:bg-slate-900/40 open:flex open:flex-col sm:w-full sm:max-h-[90dvh]`}
     >
       {open ? (
         <>
-          <header className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+          <header className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 sm:px-5">
             <h2 id="modal-title" className="text-base font-semibold text-navy-800">
               {title}
             </h2>
-            <button type="button" onClick={onClose} aria-label="Close" className="rounded p-1 text-slate-500 hover:bg-slate-100">
+            <button type="button" onClick={onClose} aria-label="Close" className="inline-flex size-9 shrink-0 items-center justify-center rounded text-slate-500 hover:bg-slate-100">
               ✕
             </button>
           </header>
-          <div className="overflow-y-auto px-5 py-4">{children}</div>
-          {footer ? <footer className="flex justify-end gap-2 border-t border-slate-200 px-5 py-3">{footer}</footer> : null}
+          <div className="min-h-0 overflow-y-auto px-4 py-4 sm:px-5">{children}</div>
+          {footer ? <footer className="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-4 py-3 sm:px-5">{footer}</footer> : null}
         </>
       ) : null}
     </dialog>

@@ -48,7 +48,7 @@ export function ApplicantKanban({ filters }: { filters: Query }) {
           {errorMessage(error)}
         </p>
       ) : null}
-      <div className="grid gap-3 overflow-x-auto pb-2 lg:grid-cols-[repeat(5,minmax(13rem,1fr))]" role="group" aria-label="Applicant pipeline">
+      <div className="grid auto-cols-[82%] grid-flow-col gap-3 overflow-x-auto pb-2 sm:auto-cols-[45%] lg:grid-flow-row lg:grid-cols-[repeat(5,minmax(13rem,1fr))]" role="group" aria-label="Applicant pipeline">
         {STAGES.map((stage, i) => {
           const result = columns[i]
           const items = groupByStage(result?.data?.data ?? [])[stage]
@@ -75,7 +75,7 @@ export function ApplicantKanban({ filters }: { filters: Query }) {
                   {totals[stage]}
                 </span>
               </header>
-              <ul className="flex flex-1 flex-col gap-2">
+              <ul className="relative flex flex-1 flex-col gap-2">
                 {result?.isPending ? (
                   <li className="flex justify-center p-4 text-navy-800">
                     <Spinner label={`Loading ${STAGE_LABELS[stage]} applicants`} />
@@ -149,7 +149,7 @@ function KanbanCard({ applicant: a, onDragStart, onDragEnd, onMove }: KanbanCard
         {a.years_experience !== null ? ` · ${a.years_experience} yr${a.years_experience === 1 ? '' : 's'}` : ''}
       </p>
       <p className="text-xs text-slate-500">{formatDateTime(a.created_at)}</p>
-      <label className="mt-2 block">
+      <label className="relative mt-2 block">
         <span className="sr-only">Move {a.full_name} to another stage</span>
         <select
           value=""
@@ -157,7 +157,7 @@ function KanbanCard({ applicant: a, onDragStart, onDragEnd, onMove }: KanbanCard
             const to = moveTargets(a.stage).find((s) => s === e.target.value)
             if (to) onMove(to)
           }}
-          className="h-8 w-full rounded-md border-0 bg-white px-2 text-xs ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500"
+          className="h-9 w-full rounded-md border-0 bg-white px-2 text-xs ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500"
         >
           <option value="">Move to…</option>
           {moveTargets(a.stage).map((s) => (

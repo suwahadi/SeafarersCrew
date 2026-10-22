@@ -68,7 +68,7 @@ function DialogBody({ action, loading, error, onConfirm, onClose }: Props & { ac
         error={problem ?? undefined}
         onChange={(e) => setReason(e.target.value)}
       />
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-2 max-sm:*:flex-1">
         <Button variant="secondary" onClick={onClose} disabled={loading}>
           Cancel
         </Button>

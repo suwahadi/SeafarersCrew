@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router'
 import { vacanciesApi, type Vacancy } from '@/api/vacancies'
 import { DataGrid } from '@/components/datagrid/DataGrid'
 import { Button } from '@/components/ui/Button'
-import { inputClass } from '@/components/ui/Field'
+import { Icon } from '@/components/ui/Icon'
+import { filterClass } from '@/components/ui/Field'
 import { Badge, PageHeader } from '@/components/ui/Layout'
 import { useOptions } from '@/hooks/useOptions'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
@@ -65,16 +66,20 @@ export default function VacancyListPage() {
   const navigate = useNavigate()
   const { options } = useOptions()
   const [filters, set] = useUrlFilters(FILTER_KEYS)
-  const select = `h-9 ${inputClass} w-auto!`
+  const select = filterClass
 
   return (
     <>
       <PageHeader
         title="Vacancies"
         description="Job openings published on the career page."
-        actions={<Button onClick={() => void navigate('/vacancies/new')}>New vacancy</Button>}
+        actions={
+          <Button icon={<Icon name="plus" />} onClick={() => void navigate('/vacancies/new')}>
+            New vacancy
+          </Button>
+        }
       />
-      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
+      <div className="filter-bar mb-3" role="group" aria-label="Filters">
         <select aria-label="Status" className={select} value={filters.status} onChange={(e) => set('status', e.target.value)}>
           <option value="">All statuses</option>
           {VACANCY_STATUSES.map((s) => (

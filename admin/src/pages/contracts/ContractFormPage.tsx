@@ -7,6 +7,7 @@ import { contractsApi, type Contract } from '@/api/contracts'
 import { ApiError, errorMessage } from '@/api/client'
 import { CrewPicker } from '@/components/forms/CrewPicker'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { inputClass, SelectField, TextAreaField, TextField } from '@/components/ui/Field'
 import { Card, PageHeader } from '@/components/ui/Layout'
 import { Spinner } from '@/components/ui/Spinner'
@@ -128,8 +129,8 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
           </>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
-        <form onSubmit={onSubmit} noValidate className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <form onSubmit={onSubmit} noValidate className="min-w-0 space-y-6">
           {formError ? (
             <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
               {formError}
@@ -142,7 +143,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
           ) : null}
           {readOnly ? <p className="rounded-md bg-slate-100 p-3 text-sm text-slate-700">This contract is closed and read-only.</p> : null}
           <Card title="Assignment">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Controller
                 control={control}
                 name="crew"
@@ -195,7 +196,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
             </div>
           </Card>
           <Card title="Period">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <TextField
                 label="Sign-on date"
                 type="date"
@@ -230,7 +231,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
             </div>
           </Card>
           <Card title="Wages">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <SelectField
                 label="Currency"
                 required
@@ -241,7 +242,8 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
               />
               <TextField label="Basic salary (monthly)" inputMode="decimal" required disabled={!editable('basic_salary')} error={formState.errors.basic_salary?.message} {...register('basic_salary')} />
             </div>
-            <table className="mt-4 min-w-full text-sm">
+            <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
               <caption className="sr-only">Allowances</caption>
               <thead>
                 <tr className="text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
@@ -262,7 +264,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
                         <select
                           aria-label={`Allowance ${i + 1} type`}
                           disabled={!editable('allowances')}
-                          className={inputClass}
+                          className={`${inputClass} min-w-36`}
                           {...register(`allowances.${i}.allowance_type_id`)}
                         >
                           <option value="">Select…</option>
@@ -276,7 +278,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
                           <p className="text-xs text-red-600">{formState.errors.allowances[i].allowance_type_id.message}</p>
                         ) : null}
                       </td>
-                      <td className="py-1 pr-2 leading-8 text-slate-600">{basis === 'fixed_day' ? 'Per day × 30' : basis === 'percent_basic' ? '% of basic' : 'Per month'}</td>
+                      <td className="py-1 pr-2 leading-8 whitespace-nowrap text-slate-600">{basis === 'fixed_day' ? 'Per day × 30' : basis === 'percent_basic' ? '% of basic' : 'Per month'}</td>
                       <td className="py-1 pr-2">
                         <input
                           aria-label={`Allowance ${i + 1} value`}
@@ -290,7 +292,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
                       <td className="py-1 pr-2 text-right leading-8 tabular-nums">{formatMoney(monthlyAllowance(basis, row?.value ?? '', basic, decimals), currency, decimals)}</td>
                       <td className="py-1 text-right">
                         {editable('allowances') ? (
-                          <Button variant="ghost" size="sm" onClick={() => allowances.remove(i)} aria-label={`Remove allowance ${i + 1}`}>
+                          <Button variant="ghost" size="sm" collapse icon={<Icon name="trash" />} onClick={() => allowances.remove(i)} aria-label={`Remove allowance ${i + 1}`}>
                             Remove
                           </Button>
                         ) : null}
@@ -311,8 +313,9 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
                 </tr>
               </tfoot>
             </table>
+            </div>
             {editable('allowances') ? (
-              <Button variant="secondary" size="sm" className="mt-2" onClick={() => allowances.append({ allowance_type_id: '', value: '' })}>
+              <Button variant="secondary" size="sm" className="mt-2" icon={<Icon name="plus" />} onClick={() => allowances.append({ allowance_type_id: '', value: '' })}>
                 Add allowance
               </Button>
             ) : null}
@@ -322,7 +325,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
             <TextAreaField label="Notes" disabled={!editable('notes')} error={formState.errors.notes?.message} {...register('notes')} />
           </Card>
           {readOnly ? null : (
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 max-sm:*:flex-1">
               <Button type="submit" loading={save.isPending}>
                 {contract ? 'Save contract' : 'Create draft contract'}
               </Button>

@@ -21,7 +21,7 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabItem[]; active: stri
   }
 
   return (
-    <div role="tablist" aria-orientation="horizontal" className="flex flex-wrap border-b border-slate-200">
+    <div role="tablist" aria-orientation="horizontal" className="flex overflow-x-auto border-b border-slate-200 sm:flex-wrap sm:overflow-visible">
       {tabs.map((t, i) => {
         const selected = t.id === active
         return (
@@ -37,7 +37,7 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabItem[]; active: stri
             tabIndex={selected ? 0 : -1}
             onKeyDown={(e) => onKey(e, i)}
             onClick={() => onChange(t.id)}
-            className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
+            className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
               selected ? 'border-navy-800 text-navy-800' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'
             }`}
           >

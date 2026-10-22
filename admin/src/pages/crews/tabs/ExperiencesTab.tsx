@@ -127,7 +127,7 @@ function ExperienceForm({ crewId, row, onDone }: { crewId: string; row: Experien
         <TextField label="Sign-off date" type="date" error={e.sign_off_date?.message} {...form.register('sign_off_date')} />
       </div>
       <TextAreaField label="Remarks" rows={2} error={e.remarks?.message} {...form.register('remarks')} />
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-2 max-sm:*:flex-1">
         <Button variant="secondary" onClick={onDone}>
           Cancel
         </Button>

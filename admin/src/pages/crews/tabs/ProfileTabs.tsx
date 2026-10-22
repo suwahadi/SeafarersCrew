@@ -67,7 +67,7 @@ export function PersonalTab({ crew, onDirtyChange }: TabProps) {
     <form onSubmit={onSubmit} noValidate className="space-y-4" aria-label="Personal data">
       <FormError message={formError} />
       <PersonalFields register={form.register} control={form.control} errors={form.formState.errors} age={crew.age} />
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 max-sm:*:flex-1">
         <Button variant="secondary" disabled={!dirty} onClick={() => form.reset(personalFromCrew(crew))}>
           Discard changes
         </Button>
@@ -102,7 +102,7 @@ export function ContactTab({ crew, onDirtyChange }: TabProps) {
     <form onSubmit={onSubmit} noValidate className="space-y-4" aria-label="Contact and address">
       <FormError message={formError} />
       <ContactFields register={form.register} errors={form.formState.errors} />
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 max-sm:*:flex-1">
         <Button variant="secondary" disabled={!dirty} onClick={() => form.reset(contactFromCrew(crew))}>
           Discard changes
         </Button>

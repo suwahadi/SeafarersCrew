@@ -30,7 +30,7 @@ export function MultiSelect({ label, options, value, onChange, placeholder = 'An
   const toggle = (v: string) => onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v])
 
   return (
-    <div ref={root} className={`relative ${hideLabel ? 'min-w-40' : 'space-y-1'}`}>
+    <div ref={root} className={`relative ${hideLabel ? 'sm:min-w-40' : 'space-y-1'}`}>
       <span id={`${id}-label`} className={hideLabel ? 'sr-only' : 'block text-sm font-medium text-slate-700'}>
         {label}
       </span>
@@ -62,7 +62,7 @@ export function MultiSelect({ label, options, value, onChange, placeholder = 'An
         >
           {options.length === 0 ? <p className="px-2 py-1 text-sm text-slate-500">No options</p> : null}
           {options.map((o) => (
-            <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-slate-50">
+            <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-slate-50 sm:py-1">
               <input type="checkbox" checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
               {o.label}
             </label>

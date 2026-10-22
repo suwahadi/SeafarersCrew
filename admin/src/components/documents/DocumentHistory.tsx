@@ -4,6 +4,7 @@ import { documentsApi, KIND_LABELS, type GeneratedDocument, type RelatedType } f
 import { openFile } from '@/api/files'
 import { formatBytes, formatDateTime } from '@/lib/format'
 import { Button } from '../ui/Button'
+import { Icon } from '../ui/Icon'
 import { useToast } from '../ui/Toast'
 
 interface DocumentHistoryProps {
@@ -26,18 +27,18 @@ export function DocumentHistory({ relatedType, relatedId, onSend }: DocumentHist
     <ul className="divide-y divide-slate-100 text-sm">
       {docs.map((d) => (
         <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-          <div>
+          <div className="min-w-0">
             <p className="font-medium text-slate-800">{KIND_LABELS[d.kind]}</p>
             <p className="text-xs text-slate-500">
               {d.template_name} · {formatDateTime(d.created_at)} · {formatBytes(d.file_size)}
             </p>
           </div>
           <div className="flex gap-1">
-            <Button variant="secondary" size="sm" onClick={() => void openFile(d.file_id).catch((e: unknown) => toast.error(errorMessage(e)))}>
+            <Button variant="secondary" size="sm" collapse icon={<Icon name="external" />} onClick={() => void openFile(d.file_id).catch((e: unknown) => toast.error(errorMessage(e)))}>
               Open
             </Button>
             {onSend ? (
-              <Button variant="secondary" size="sm" onClick={() => onSend(d)}>
+              <Button variant="secondary" size="sm" collapse icon={<Icon name="mail" />} onClick={() => onSend(d)}>
                 Email
               </Button>
             ) : null}

@@ -5,6 +5,7 @@ import { ApiError, errorMessage } from '@/api/client'
 import { crewKeys, crewsApi, type Crew, type StatusAction } from '@/api/crews'
 import { filesApi } from '@/api/files'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { EmptyState } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { Tabs, type TabItem } from '@/components/ui/Tabs'
@@ -45,9 +46,9 @@ function Photo({ fileId, name }: { fileId: string | null; name: string }) {
     staleTime: 4 * 60_000,
   })
   return (
-    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200">
+    <div className="h-16 w-16 shrink-0 overflow-hidden sm:h-20 sm:w-20 rounded-lg bg-slate-100 ring-1 ring-slate-200">
       {url.data ? (
-        <img src={url.data.url} alt={`Photo of ${name}`} width={80} height={80} className="h-20 w-20 object-cover" />
+        <img src={url.data.url} alt={`Photo of ${name}`} width={80} height={80} className="h-full w-full object-cover" />
       ) : (
         <div aria-hidden className="flex h-full items-center justify-center text-2xl font-semibold text-slate-400">
           {name.slice(0, 1).toUpperCase()}
@@ -69,11 +70,11 @@ function CrewHeader({ crew, rankName, compliant, onAction, onDelete }: HeaderPro
   const status = crew.status.code
   const blacklisted = status === 'blacklisted'
   return (
-    <header className="mb-6 flex flex-wrap items-start justify-between gap-4 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <div className="flex items-center gap-4">
+    <header className="mb-4 flex flex-col gap-4 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200 sm:mb-6 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:p-4">
+      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
         <Photo fileId={crew.photo_file_id} name={crew.full_name} />
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold text-navy-800">{crew.full_name}</h1>
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-xl font-semibold break-words text-navy-800">{crew.full_name}</h1>
           <p className="text-sm text-slate-600">
             Crew ID <span className="font-mono">{crew.id}</span>
             {rankName ? <> · {rankName}</> : null}
@@ -88,26 +89,29 @@ function CrewHeader({ crew, rankName, compliant, onAction, onDelete }: HeaderPro
       <div className="flex flex-wrap items-center gap-2">
         <Link
           to={`/documents/new?kind=cv&related_id=${crew.id}`}
-          className="inline-flex h-9 items-center rounded-md bg-white px-4 text-sm font-medium text-slate-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+          aria-label="Generate CV"
+          title="Generate CV"
+          className="relative inline-flex h-9 items-center justify-center gap-2 rounded-md bg-white px-4 text-sm font-medium text-slate-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 max-sm:size-9 max-sm:px-0"
         >
-          Generate CV
+          <Icon name="file" />
+          <span className="max-sm:sr-only">Generate CV</span>
         </Link>
         {status !== 'medical_leave' && status !== 'on_board' && !blacklisted ? (
-          <Button variant="secondary" onClick={() => onAction('medical_leave')}>
+          <Button variant="secondary" collapse icon={<Icon name="activity" />} onClick={() => onAction('medical_leave')}>
             {STATUS_ACTIONS.medical_leave.label}
           </Button>
         ) : null}
         {status !== 'available' && status !== 'on_board' ? (
-          <Button variant="secondary" onClick={() => onAction('ready')}>
+          <Button variant="secondary" collapse icon={<Icon name="check" />} onClick={() => onAction('ready')}>
             {STATUS_ACTIONS.ready.label}
           </Button>
         ) : null}
         {!blacklisted && status !== 'on_board' ? (
-          <Button variant="secondary" onClick={() => onAction('blacklist')}>
+          <Button variant="secondary" collapse icon={<Icon name="ban" />} onClick={() => onAction('blacklist')}>
             {STATUS_ACTIONS.blacklist.label}
           </Button>
         ) : null}
-        <Button variant="danger" onClick={onDelete}>
+        <Button variant="danger" collapse icon={<Icon name="trash" />} onClick={onDelete}>
           Delete crew
         </Button>
       </div>

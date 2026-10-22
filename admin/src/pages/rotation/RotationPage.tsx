@@ -61,18 +61,18 @@ export default function RotationPage() {
           <ReliefPlanList onOpen={(plan) => setEditing({ target: { contractId: plan.contract_id, label: `${plan.relieved.name} (${plan.rank.name}) on ${plan.vessel.name}`, defaultDate: plan.planned_relief_date }, plan })} />
         ) : (
           <div className="space-y-3">
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="w-40">
+            <div className="grid grid-cols-2 items-end gap-3 sm:flex sm:flex-wrap">
+              <div className="sm:w-40">
                 <TextField label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
               </div>
-              <div className="w-40">
+              <div className="sm:w-40">
                 <TextField label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} error={from !== '' && to !== '' && from > to ? 'Must be after From.' : undefined} />
               </div>
-              <div>
+              <div className="col-span-2 sm:col-auto">
                 <label htmlFor="rotation-vessel" className="mb-1 block text-sm font-medium text-slate-700">
                   Vessel
                 </label>
-                <select id="rotation-vessel" className={`h-9 w-56 ${inputClass}`} value={vesselId} onChange={(e) => setVesselId(e.target.value)}>
+                <select id="rotation-vessel" className={`h-9 sm:w-56 ${inputClass}`} value={vesselId} onChange={(e) => setVesselId(e.target.value)}>
                   <option value="">All vessels</option>
                   {options.vessels.map((v) => (
                     <option key={v.id} value={v.id}>
@@ -83,6 +83,7 @@ export default function RotationPage() {
               </div>
               <Button
                 variant="secondary"
+                className="col-span-2 sm:col-auto"
                 onClick={() => {
                   setFrom(addDays(today, -30))
                   setTo(addDays(today, 180))

@@ -7,7 +7,8 @@ import { openFile } from '@/api/files'
 import { DataGrid } from '@/components/datagrid/DataGrid'
 import { EmailSendDialog } from '@/components/email/EmailSendDialog'
 import { Button } from '@/components/ui/Button'
-import { inputClass } from '@/components/ui/Field'
+import { Icon } from '@/components/ui/Icon'
+import { filterClass } from '@/components/ui/Field'
 import { PageHeader } from '@/components/ui/Layout'
 import { useToast } from '@/components/ui/Toast'
 import { formatBytes, formatDateTime } from '@/lib/format'
@@ -33,10 +34,10 @@ export default function DocumentListPage() {
       enableHiding: false,
       cell: ({ row }) => (
         <div className="flex gap-1">
-          <Button size="sm" variant="secondary" onClick={() => void openFile(row.original.file_id).catch((e: unknown) => toast.error(errorMessage(e)))}>
+          <Button size="sm" variant="secondary" collapse icon={<Icon name="external" />} onClick={() => void openFile(row.original.file_id).catch((e: unknown) => toast.error(errorMessage(e)))}>
             Open
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setSending(row.original)}>
+          <Button size="sm" variant="secondary" collapse icon={<Icon name="mail" />} onClick={() => setSending(row.original)}>
             Send by email
           </Button>
         </div>
@@ -49,10 +50,14 @@ export default function DocumentListPage() {
       <PageHeader
         title="Generated documents"
         description="PDF contracts, quotations and CVs generated from templates."
-        actions={<Button onClick={() => void navigate('/documents/new')}>Generate document</Button>}
+        actions={
+          <Button icon={<Icon name="file" />} onClick={() => void navigate('/documents/new')}>
+            Generate document
+          </Button>
+        }
       />
-      <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Filters">
-        <select aria-label="Document type" className={`h-9 ${inputClass} w-auto!`} value={kind} onChange={(e) => setKind(e.target.value)}>
+      <div className="filter-bar mb-3" role="group" aria-label="Filters">
+        <select aria-label="Document type" className={filterClass} value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="">All types</option>
           {Object.entries(KIND_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -60,7 +65,7 @@ export default function DocumentListPage() {
             </option>
           ))}
         </select>
-        <select aria-label="Related to" className={`h-9 ${inputClass} w-auto!`} value={relatedType} onChange={(e) => setRelatedType(e.target.value)}>
+        <select aria-label="Related to" className={filterClass} value={relatedType} onChange={(e) => setRelatedType(e.target.value)}>
           <option value="">All records</option>
           <option value="contract">Contracts</option>
           <option value="quotation">Quotations</option>

@@ -43,7 +43,7 @@ export function CrewFilterPanel({ value, onApply }: Props) {
         e.preventDefault()
         onApply(draft)
       }}
-      className="mb-4 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200"
+      className="mb-4 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200 sm:p-4"
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MultiSelect label="Status" options={statusOptions} value={draft.status} onChange={(v) => set('status', v)} />
@@ -83,14 +83,14 @@ export function CrewFilterPanel({ value, onApply }: Props) {
             onChange={(e) => set('doc_days', e.target.value)}
           />
         </div>
-        <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 lg:col-span-2">
+        <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 sm:col-span-2 lg:col-span-2">
           <SelectField label="Minimum sea service in rank" placeholder="Any rank" options={rankOptions} value={draft.sea_rank_id} onChange={(e) => set('sea_rank_id', e.target.value)} />
           <TextField label="Years" type="number" min={0} disabled={draft.sea_rank_id === ''} value={draft.sea_min_years} onChange={(e) => set('sea_min_years', e.target.value)} />
           <TextField label="Months" type="number" min={0} max={11} disabled={draft.sea_rank_id === ''} value={draft.sea_min_months} onChange={(e) => set('sea_min_months', e.target.value)} />
         </div>
         <SelectField label="Group by" placeholder="No grouping" options={GROUPS} value={draft.group_by} onChange={(e) => set('group_by', e.target.value)} />
       </div>
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
         <Button
           variant="ghost"
           onClick={() => {

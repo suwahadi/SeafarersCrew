@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router'
 import { newsApi, type NewsSummary } from '@/api/news'
 import { DataGrid } from '@/components/datagrid/DataGrid'
 import { Button } from '@/components/ui/Button'
-import { inputClass } from '@/components/ui/Field'
+import { Icon } from '@/components/ui/Icon'
+import { filterClass } from '@/components/ui/Field'
 import { PageHeader } from '@/components/ui/Layout'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { formatDateTime } from '@/lib/format'
@@ -38,9 +39,13 @@ export default function NewsListPage() {
 
   return (
     <>
-      <PageHeader title="News" description="Articles shown on the news page." actions={<Button onClick={() => void navigate('/website/news/new')}>New article</Button>} />
-      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
-        <select aria-label="Status" className={`h-9 ${inputClass} w-auto!`} value={filters.status} onChange={(e) => set('status', e.target.value)}>
+      <PageHeader title="News" description="Articles shown on the news page." actions={
+          <Button icon={<Icon name="plus" />} onClick={() => void navigate('/website/news/new')}>
+            New article
+          </Button>
+        } />
+      <div className="filter-bar mb-3" role="group" aria-label="Filters">
+        <select aria-label="Status" className={filterClass} value={filters.status} onChange={(e) => set('status', e.target.value)}>
           <option value="">All statuses</option>
           <option value="draft">Draft</option>
           <option value="published">Published</option>

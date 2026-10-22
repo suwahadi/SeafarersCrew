@@ -63,7 +63,7 @@ export default function CrewCreatePage() {
         <Card title="Contact & address">
           <ContactFields register={contact.register} errors={contact.formState.errors} />
         </Card>
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 max-sm:*:flex-1">
           <Button variant="secondary" onClick={() => void navigate('/crews')}>
             Cancel
           </Button>

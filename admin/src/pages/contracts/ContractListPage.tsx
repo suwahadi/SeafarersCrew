@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router'
 import { contractsApi, type Contract } from '@/api/contracts'
 import { DataGrid } from '@/components/datagrid/DataGrid'
 import { Button } from '@/components/ui/Button'
-import { inputClass } from '@/components/ui/Field'
+import { Icon } from '@/components/ui/Icon'
+import { FilterField, filterClass } from '@/components/ui/Field'
 import { PageHeader } from '@/components/ui/Layout'
 import { useOptions } from '@/hooks/useOptions'
 import { formatDate, formatMoney } from '@/lib/format'
@@ -52,16 +53,20 @@ export default function ContractListPage() {
   const [filters, setFilters] = useState<Record<string, string>>({})
   const set = (key: string, value: string) => setFilters((f) => ({ ...f, [key]: value }))
   const principals = options.companies.filter((c) => c.type !== 'company')
-  const select = `h-9 ${inputClass} w-auto!`
+  const select = filterClass
 
   return (
     <>
       <PageHeader
         title="Contracts"
         description="Seafarer employment contracts with salary, allowances and lifecycle."
-        actions={<Button onClick={() => void navigate('/contracts/new')}>New contract</Button>}
+        actions={
+          <Button icon={<Icon name="plus" />} onClick={() => void navigate('/contracts/new')}>
+            New contract
+          </Button>
+        }
       />
-      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
+      <div className="filter-bar mb-3" role="group" aria-label="Filters">
         <select aria-label="Status" className={select} value={filters.status ?? ''} onChange={(e) => set('status', e.target.value)}>
           {statuses.map((s) => (
             <option key={s.value} value={s.value}>
@@ -93,26 +98,24 @@ export default function ContractListPage() {
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-1.5 text-sm whitespace-nowrap text-slate-600">
-          Sign-on from
-          <input type="date" className={select} value={filters.sign_on_from ?? ''} onChange={(e) => set('sign_on_from', e.target.value)} />
-        </label>
-        <label className="flex items-center gap-1.5 text-sm whitespace-nowrap text-slate-600">
-          to
-          <input type="date" className={select} value={filters.sign_on_to ?? ''} onChange={(e) => set('sign_on_to', e.target.value)} />
-        </label>
-        <label className="flex items-center gap-1.5 text-sm whitespace-nowrap text-slate-600">
-          Sign-off within
-          <input
-            type="number"
-            min={0}
-            max={3650}
-            className={`h-9 ${inputClass} w-20!`}
-            value={filters.sign_off_within_days ?? ''}
-            onChange={(e) => set('sign_off_within_days', e.target.value)}
-          />
-          days
-        </label>
+        <div data-span="full" className="grid grid-cols-2 gap-2 max-sm:*:last:col-span-2 sm:contents">
+          <FilterField label="Sign-on from">
+            <input type="date" className={select} value={filters.sign_on_from ?? ''} onChange={(e) => set('sign_on_from', e.target.value)} />
+          </FilterField>
+          <FilterField label="Sign-on to" shortLabel="to">
+            <input type="date" className={select} value={filters.sign_on_to ?? ''} onChange={(e) => set('sign_on_to', e.target.value)} />
+          </FilterField>
+          <FilterField label="Sign-off within (days)" shortLabel="Sign-off within" suffix="days">
+            <input
+              type="number"
+              min={0}
+              max={3650}
+              className={`${select} sm:w-20!`}
+              value={filters.sign_off_within_days ?? ''}
+              onChange={(e) => set('sign_off_within_days', e.target.value)}
+            />
+          </FilterField>
+        </div>
       </div>
       <DataGrid<Contract>
         id="contracts"

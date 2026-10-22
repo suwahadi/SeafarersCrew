@@ -72,7 +72,7 @@ function StageMoveForm({ applicantName, from, to, loading, error, onConfirm, onC
           </p>
         ) : null}
       </div>
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 max-sm:*:flex-1">
         <Button variant="secondary" onClick={onClose} disabled={loading}>
           Cancel
         </Button>

@@ -134,3 +134,22 @@ export const CheckboxField = forwardRef<HTMLInputElement, { label: string; hint?
 })
 
 export const inputClass = control
+
+export const filterClass = `${control} h-9 sm:w-auto!`
+
+export function FilterField({ label, shortLabel, suffix, children }: { label: string; shortLabel?: string; suffix?: string; children: ReactNode }) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-500 sm:flex-row sm:items-center sm:gap-1.5 sm:text-sm sm:font-normal sm:whitespace-nowrap sm:text-slate-600">
+      {shortLabel ? (
+        <>
+          <span className="sm:hidden">{label}</span>
+          <span className="max-sm:hidden">{shortLabel}</span>
+        </>
+      ) : (
+        <span>{label}</span>
+      )}
+      {children}
+      {suffix ? <span className="max-sm:hidden">{suffix}</span> : null}
+    </label>
+  )
+}

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { rotationApi, type ReliefPlan } from '@/api/contracts'
 import { DataGrid } from '@/components/datagrid/DataGrid'
-import { inputClass } from '@/components/ui/Field'
+import { filterClass } from '@/components/ui/Field'
 import { formatDate } from '@/lib/format'
 import { StatusBadge } from '../contracts/ContractStatusBadge'
 
@@ -38,7 +38,7 @@ export function ReliefPlanList({ onOpen }: { onOpen: (plan: ReliefPlan) => void 
   const [status, setStatus] = useState('')
   return (
     <div className="space-y-3">
-      <select aria-label="Status" className={`h-9 ${inputClass} w-auto!`} value={status} onChange={(e) => setStatus(e.target.value)}>
+      <select aria-label="Status" data-span="full" className={filterClass} value={status} onChange={(e) => setStatus(e.target.value)}>
         <option value="">All statuses</option>
         <option value="planned">Planned</option>
         <option value="confirmed">Confirmed</option>

@@ -7,6 +7,7 @@ import { DocumentHistory } from '@/components/documents/DocumentHistory'
 import { EmailSendDialog, type EmailAttachment } from '@/components/email/EmailSendDialog'
 import { RelatedEmailLog } from '@/components/email/RelatedEmailLog'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { TextAreaField, TextField } from '@/components/ui/Field'
 import { Card } from '@/components/ui/Layout'
 import { ConfirmDialog, Modal } from '@/components/ui/Modal'
@@ -81,24 +82,25 @@ export function ContractActions({ contract }: { contract: Contract }) {
   return (
     <aside className="space-y-6">
       <Card title="Actions">
-        <div className="flex flex-wrap gap-2">
-          {contract.status === 'draft' ? <Button onClick={() => open('activate')}>Activate</Button> : null}
-          {contract.status === 'active' ? <Button onClick={() => open('complete')}>Complete</Button> : null}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          {contract.status === 'draft' ? <Button icon={<Icon name="check" />} onClick={() => open('activate')}>Activate</Button> : null}
+          {contract.status === 'active' ? <Button icon={<Icon name="check" />} onClick={() => open('complete')}>Complete</Button> : null}
           {contract.status === 'active' ? (
-            <Button variant="danger" onClick={() => open('terminate')}>
+            <Button variant="danger" icon={<Icon name="ban" />} onClick={() => open('terminate')}>
               Terminate
             </Button>
           ) : null}
           {contract.status === 'draft' ? (
-            <Button variant="danger" onClick={() => open('delete')}>
+            <Button variant="danger" icon={<Icon name="trash" />} onClick={() => open('delete')}>
               Delete draft
             </Button>
           ) : null}
-          <Button variant="secondary" onClick={() => void navigate(`/documents/new?kind=sea&related_id=${contract.id}`)}>
+          <Button variant="secondary" icon={<Icon name="file" />} onClick={() => void navigate(`/documents/new?kind=sea&related_id=${contract.id}`)}>
             Generate SEA
           </Button>
           <Button
             variant="secondary"
+            icon={<Icon name="mail" />}
             onClick={() => {
               setAttachments([])
               open('email')

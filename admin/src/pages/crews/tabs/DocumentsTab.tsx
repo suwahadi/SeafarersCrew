@@ -126,7 +126,7 @@ function DocumentForm({ crewId, kind, row, onDone }: FormProps) {
           />
         )}
       />
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-2 max-sm:*:flex-1">
         <Button variant="secondary" onClick={onDone}>
           Cancel
         </Button>

@@ -2,9 +2,9 @@ import type { ReactNode } from 'react'
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 className="text-xl font-semibold text-navy-800">{title}</h1>
+    <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+      <div className="min-w-0">
+        <h1 className="text-xl font-semibold break-words text-navy-800">{title}</h1>
         {description ? <p className="mt-1 text-sm text-slate-600">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
@@ -14,14 +14,14 @@ export function PageHeader({ title, description, actions }: { title: string; des
 
 export function Card({ title, actions, children, className = '' }: { title?: string; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-lg bg-white shadow-sm ring-1 ring-slate-200 ${className}`}>
+    <section className={`min-w-0 rounded-lg bg-white shadow-sm ring-1 ring-slate-200 ${className}`}>
       {title || actions ? (
-        <header className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
+        <header className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-2">
           {title ? <h2 className="text-sm font-semibold text-slate-800">{title}</h2> : <span />}
           {actions}
         </header>
       ) : null}
-      <div className="p-4">{children}</div>
+      <div className="p-3 sm:p-4">{children}</div>
     </section>
   )
 }
@@ -60,7 +60,7 @@ export function ExpiryBadge({ badge, daysLeft }: { badge: string; daysLeft?: num
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center">
+    <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center sm:p-8">
       <p className="text-sm font-medium text-slate-700">{title}</p>
       {children ? <div className="mt-2 text-sm text-slate-500">{children}</div> : null}
     </div>
