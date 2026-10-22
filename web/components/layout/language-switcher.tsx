@@ -152,7 +152,7 @@ export function LanguageSwitcher({ languages, sourceCode, initialCode }: Languag
         onClick={() => {
           setOpen((value) => !value)
         }}
-        className="inline-flex h-11 items-center justify-center gap-1.5 border border-line px-2.5 text-primary transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text"
+        className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-line px-2.5 text-primary transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text"
       >
         <Flag language={active} />
         <Icon name="chevron-down" className="size-4" />
