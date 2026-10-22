@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { crewKeys, crewsApi, type Experience, type ExperienceInput } from '@/api/crews'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { SelectField, TextAreaField, TextField } from '@/components/ui/Field'
 import { Badge, Card } from '@/components/ui/Layout'
 import { ConfirmDialog, Modal } from '@/components/ui/Modal'
@@ -176,10 +177,10 @@ export function ExperiencesTab({ crewId }: { crewId: string }) {
         actions={(r) =>
           r.source === 'manual' ? (
             <>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(r)}>
+              <Button variant="ghost" size="sm" collapse icon={<Icon name="edit" />} onClick={() => setEditing(r)}>
                 Edit
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => del.ask(r)}>
+              <Button variant="ghost" size="sm" collapse icon={<Icon name="trash" />} onClick={() => del.ask(r)}>
                 Delete
               </Button>
             </>

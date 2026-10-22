@@ -274,7 +274,7 @@ export function VacancyForm({ vacancy }: { vacancy: Vacancy | undefined }) {
                 </Button>
               ) : null}
               {dirty ? <span className="col-span-2 text-xs text-slate-500 sm:col-span-1">Save your changes to use the quick status actions.</span> : null}
-              <Button variant="danger" className="sm:ml-auto" icon={<Icon name="trash" />} onClick={() => setDeleting(true)}>
+              <Button variant="danger" className="max-sm:col-span-2 sm:ml-auto" icon={<Icon name="trash" />} onClick={() => setDeleting(true)}>
                 Delete
               </Button>
             </>

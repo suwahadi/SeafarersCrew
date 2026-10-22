@@ -26,7 +26,7 @@ export function RowTable<T>({ rows, columns, rowKey, actions, empty, loading, ca
     )
   }
   return (
-    <div className="overflow-x-auto rounded-md ring-1 ring-slate-200">
+    <div className="relative overflow-x-auto rounded-md ring-1 ring-slate-200">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-slate-50">
@@ -37,7 +37,7 @@ export function RowTable<T>({ rows, columns, rowKey, actions, empty, loading, ca
               </th>
             ))}
             {actions ? (
-              <th scope="col" className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+              <th scope="col" className="px-3 py-2 text-right text-xs max-sm:sticky max-sm:right-0 max-sm:bg-slate-50 max-sm:shadow-[-1px_0_0_var(--color-slate-200)] font-semibold tracking-wide text-slate-600 uppercase">
                 Actions
               </th>
             ) : null}
@@ -58,7 +58,7 @@ export function RowTable<T>({ rows, columns, rowKey, actions, empty, loading, ca
                     {c.cell(r)}
                   </td>
                 ))}
-                {actions ? <td className="px-3 py-2 text-right whitespace-nowrap">{actions(r)}</td> : null}
+                {actions ? <td className="px-3 py-2 text-right whitespace-nowrap max-sm:sticky max-sm:right-0 max-sm:bg-white max-sm:shadow-[-1px_0_0_var(--color-slate-200)]">{actions(r)}</td> : null}
               </tr>
             ))
           )}

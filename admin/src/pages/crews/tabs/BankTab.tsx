@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { crewKeys, crewsApi, type BankAccount, type BankAccountInput } from '@/api/crews'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { CheckboxField, SelectField, TextField } from '@/components/ui/Field'
 import { Badge } from '@/components/ui/Layout'
 import { ConfirmDialog, Modal } from '@/components/ui/Modal'
@@ -105,10 +106,10 @@ export function BankTab({ crewId }: { crewId: string }) {
         ]}
         actions={(r) => (
           <>
-            <Button variant="ghost" size="sm" onClick={() => setEditing(r)}>
+            <Button variant="ghost" size="sm" collapse icon={<Icon name="edit" />} onClick={() => setEditing(r)}>
               Edit
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => del.ask(r)}>
+            <Button variant="ghost" size="sm" collapse icon={<Icon name="trash" />} onClick={() => del.ask(r)}>
               Delete
             </Button>
           </>

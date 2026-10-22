@@ -8,6 +8,7 @@ import { crewKeys, crewsApi, type CrewDocument, type CrewDocumentInput, type Doc
 import { openFile } from '@/api/files'
 import { FileField } from '@/components/forms/FileField'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { SelectField, TextField } from '@/components/ui/Field'
 import { ExpiryBadge } from '@/components/ui/Layout'
 import { ConfirmDialog, Modal } from '@/components/ui/Modal'
@@ -183,14 +184,14 @@ export function DocumentsTab({ crewId, kind }: { crewId: string; kind: DocumentK
         actions={(r) => (
           <>
             {r.file_id ? (
-              <Button variant="ghost" size="sm" onClick={() => view.mutate(r.file_id ?? '')}>
+              <Button variant="ghost" size="sm" collapse icon={<Icon name="eye" />} onClick={() => view.mutate(r.file_id ?? '')}>
                 View
               </Button>
             ) : null}
-            <Button variant="ghost" size="sm" onClick={() => setEditing(r)}>
+            <Button variant="ghost" size="sm" collapse icon={<Icon name="edit" />} onClick={() => setEditing(r)}>
               Edit
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => del.ask(r)}>
+            <Button variant="ghost" size="sm" collapse icon={<Icon name="trash" />} onClick={() => del.ask(r)}>
               Delete
             </Button>
           </>
