@@ -98,9 +98,9 @@ export function Footer({ site }: { site: Site }) {
         </div>
       </Container>
       <div className="border-t border-white/15">
-        <Container className="py-5 text-sm text-white/70">
+        <Container className="py-5 text-center text-sm text-white/70">
           <p>
-            &copy; {new Date().getFullYear()} <span translate="no">{site.name}</span>. All rights reserved.
+            Copyright &copy; {new Date().getFullYear()} <span translate="no">{site.name}</span>. All rights reserved.
           </p>
         </Container>
       </div>
