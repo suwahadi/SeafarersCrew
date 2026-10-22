@@ -109,18 +109,20 @@ export function DataGrid<T>({
   let lastGroup: string | undefined
 
   return (
-    <div className="rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+    <div className="min-w-0 rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 p-3">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label="Search"
-          className="h-9 w-full max-w-xs rounded-md border-0 px-3 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500"
-        />
-        {query.isFetching ? <Spinner size="sm" label="Updating" /> : null}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 basis-full items-center gap-2 sm:basis-auto sm:flex-1">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label="Search"
+            className="h-9 min-w-0 flex-1 rounded-md border-0 px-3 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500 sm:max-w-xs"
+          />
+          {query.isFetching ? <Spinner size="sm" label="Updating" /> : null}
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
           {toolbar}
           <ColumnChooser table={table} />
         </div>
@@ -130,7 +132,7 @@ export function DataGrid<T>({
           {errorMessage(query.error)}
         </p>
       ) : null}
-      <div className="overflow-x-auto">
+      <div className="max-w-full overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50">
             {table.getHeaderGroups().map((hg) => (

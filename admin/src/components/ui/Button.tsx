@@ -21,19 +21,24 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size
   loading?: boolean
   icon?: ReactNode
+  collapse?: boolean
 }
 
-export function Button({ variant = 'primary', size = 'md', loading = false, icon, children, className = '', disabled, type = 'button', ...rest }: ButtonProps) {
+export function Button({ variant = 'primary', size = 'md', loading = false, icon, collapse = false, children, className = '', disabled, type = 'button', ...rest }: ButtonProps) {
+  const collapsed = collapse && icon !== undefined
+  const label = typeof children === 'string' ? children : undefined
   return (
     <button
       type={type}
       disabled={disabled ?? loading}
       aria-busy={loading || undefined}
-      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 ease-out disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      aria-label={collapsed ? (rest['aria-label'] ?? label) : rest['aria-label']}
+      title={collapsed ? (rest.title ?? label) : rest.title}
+      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 ease-out disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${collapsed ? 'max-sm:size-9 max-sm:shrink-0 max-sm:px-0' : ''} ${className}`}
       {...rest}
     >
       {loading ? <Spinner size="sm" /> : icon}
-      {children}
+      {collapsed ? <span className="max-sm:sr-only">{children}</span> : children}
     </button>
   )
 }
