@@ -30,27 +30,30 @@ function listReply(rows: unknown[]) {
 describe('reordering a list', () => {
   const rows = [stat('s1', 'Seafarers Deployed'), stat('s2', 'Vessels Served'), stat('s3', 'Countries')]
 
-  it('shows the list formatted and sends ids in the new order when a row moves down', async () => {
+  it('shows the list formatted and sends ids in the new order when a row is moved down with the keyboard', async () => {
     const calls = mockApi((c) => (c.method === 'GET' ? listReply(rows) : { status: 204 }))
     renderApp(<CmsListPage config={statConfig} />)
     expect(await screen.findByText('1,200+ Seafarers Deployed')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Move Seafarers Deployed down' }))
+    screen.getByRole('button', { name: /^Reorder Seafarers Deployed\./ }).focus()
+    await userEvent.keyboard('{ArrowDown}')
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true))
     const patch = calls.find((c) => c.method === 'PATCH')
     expect(patch?.path).toBe('/stats/reorder')
     expect(patch?.body).toEqual({ ids: ['s2', 's1', 's3'] })
   })
 
-  it('sends the new order when a row is dragged onto another', async () => {
+  it('sends the new order when a row handle is dragged onto another', async () => {
     const calls = mockApi((c) => (c.method === 'GET' ? listReply(rows) : { status: 204 }))
     renderApp(<CmsListPage config={statConfig} />)
     await screen.findByText('1,200+ Seafarers Deployed')
     const items = screen.getAllByRole('listitem')
-    const handle = items[0]?.querySelector('[draggable="true"]')
-    if (!handle || !items[2]) throw new Error('missing row')
-    fireEvent.dragStart(handle)
-    fireEvent.dragOver(items[2])
-    fireEvent.drop(items[2])
+    const handle = screen.getByRole('button', { name: /^Reorder Seafarers Deployed\./ })
+    if (!items[2]) throw new Error('missing row')
+    Object.assign(handle, { setPointerCapture: () => undefined, releasePointerCapture: () => undefined })
+    document.elementsFromPoint = () => [items[2] as Element]
+    fireEvent.pointerDown(handle, { pointerId: 1, button: 0, pointerType: 'touch' })
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 10, clientY: 200 })
+    fireEvent.pointerUp(handle, { pointerId: 1, clientX: 10, clientY: 200 })
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true))
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ ids: ['s2', 's3', 's1'] })
   })
@@ -62,7 +65,8 @@ describe('reordering a list', () => {
     })
     renderApp(<CmsListPage config={statConfig} />)
     await screen.findByText('1,200+ Seafarers Deployed')
-    await userEvent.click(screen.getByRole('button', { name: 'Move Seafarers Deployed down' }))
+    screen.getByRole('button', { name: /^Reorder Seafarers Deployed\./ }).focus()
+    await userEvent.keyboard('{ArrowDown}')
     expect(await screen.findByText('Could not save the order.')).toBeInTheDocument()
     await waitFor(() => {
       const first = screen.getAllByRole('listitem')[0]

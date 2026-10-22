@@ -3,13 +3,15 @@ import { useMemo, useState, type ComponentType, type ReactNode } from 'react'
 import { ApiError, errorMessage } from '@/api/client'
 import { cmsApi, cmsKey, fetchAllCms, type CmsBase, type CmsSegment } from '@/api/cms'
 import { Button } from '@/components/ui/Button'
+import { DragHandle } from '@/components/ui/DragHandle'
+import { Icon } from '@/components/ui/Icon'
 import { EmptyState, PageHeader } from '@/components/ui/Layout'
 import { ConfirmDialog, Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/Toast'
-import { useDragSort } from '@/hooks/useDragSort'
-import { moveByIdWithinSubset, stepById } from '@/lib/reorder'
+import { useSortable } from '@/hooks/useSortable'
+import { moveByIdWithinSubset } from '@/lib/reorder'
 
 export interface CmsFormProps<T> {
   row: T | null
@@ -91,8 +93,10 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
     onError: (err) => setDeleteError(err instanceof ApiError ? err.message : errorMessage(err)),
   })
 
-  const drag = useDragSort((from, to) => reorder.mutate(moveByIdWithinSubset(all, visibleIds, from, to)))
-  const step = (id: string, delta: -1 | 1) => reorder.mutate(stepById(all, visibleIds, id, delta))
+  const sort = useSortable(
+    visible.map((r) => r.id),
+    (from, to) => reorder.mutate(moveByIdWithinSubset(all, visibleIds, from, to)),
+  )
 
   const closeForm = () => {
     setCreating(false)
@@ -114,7 +118,7 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
         actions={
           <>
             {headerActions}
-            <Button onClick={() => setCreating(true)}>New {config.singular.toLowerCase()}</Button>
+            <Button icon={<Icon name="plus" />} collapse onClick={() => setCreating(true)}>New {config.singular.toLowerCase()}</Button>
           </>
         }
       />
@@ -139,65 +143,76 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
           aria-label={config.title}
           className={grid ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'divide-y divide-slate-100 rounded-lg bg-white ring-1 ring-slate-200'}
         >
-          {visible.map((row, i) => {
+          {visible.map((row) => {
             const lock = config.lockedReason?.(row) ?? null
             const label = config.label(row)
-            const dragging = drag.dragging === row.id
-            const handle = (
-              <span {...drag.handleProps(row.id)} title="Drag to reorder" aria-hidden className="cursor-grab select-none px-1 text-slate-400 hover:text-slate-600">
-                ⋮⋮
-              </span>
+            const handle = <DragHandle label={label} {...sort.handleProps(row.id)} />
+            const controls = (
+              <>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={row.is_active}
+                  aria-label={`${label}: active`}
+                  disabled={lock?.active !== undefined || toggle.isPending}
+                  title={lock?.active}
+                  onClick={() => toggle.mutate(row)}
+                  className={`inline-flex h-6 w-10 shrink-0 items-center rounded-full p-0.5 transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none ${row.is_active ? 'bg-green-600' : 'bg-slate-300'}`}
+                >
+                  <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform duration-150 ease-out motion-reduce:transition-none ${row.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
+                </button>
+                <span aria-hidden className="hidden w-14 text-xs text-slate-600 sm:inline">
+                  {row.is_active ? 'Active' : 'Inactive'}
+                </span>
+              </>
+            )
+            const actions = (
+              <>
+                <Button size="sm" variant="ghost" icon={<Icon name="edit" />} collapse aria-label={`Edit ${label}`} onClick={() => setEditing(row)}>
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={<Icon name="trash" />}
+                  collapse
+                  aria-label={`Delete ${label}`}
+                  disabled={lock?.remove !== undefined}
+                  title={lock?.remove}
+                  onClick={() => {
+                    setDeleteError(null)
+                    setDeleting(row)
+                  }}
+                >
+                  Delete
+                </Button>
+              </>
             )
             return (
               <li
                 key={row.id}
-                {...drag.targetProps(row.id)}
-                className={`flex gap-3 p-3 transition-opacity duration-150 ease-out motion-reduce:transition-none ${dragging ? 'opacity-50' : 'opacity-100'} ${
-                  grid ? 'flex-col rounded-lg bg-white shadow-sm ring-1 ring-slate-200' : 'flex-wrap items-center'
-                }`}
+                {...sort.rowProps(row.id)}
+                className={`transition-opacity duration-150 ease-out motion-reduce:transition-none ${grid ? 'flex min-w-0 flex-col gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200' : 'flex flex-wrap items-center gap-x-2 gap-y-1 p-2 sm:gap-x-3 sm:p-3'}`}
               >
-                <div className={`flex min-w-0 flex-1 gap-3 ${grid ? 'items-start' : 'items-center'}`}>
-                  {grid ? null : handle}
-                  <div className="min-w-0 flex-1">{config.summary(row)}</div>
-                </div>
-                <div className={`flex flex-wrap items-center gap-1 ${grid ? 'border-t border-slate-100 pt-2' : ''}`}>
-                  {grid ? handle : null}
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={row.is_active}
-                    aria-label={`${label}: active`}
-                    disabled={lock?.active !== undefined || toggle.isPending}
-                    title={lock?.active}
-                    onClick={() => toggle.mutate(row)}
-                    className={`inline-flex h-6 w-10 items-center rounded-full p-0.5 transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none ${row.is_active ? 'bg-green-600' : 'bg-slate-300'}`}
-                  >
-                    <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform duration-150 ease-out motion-reduce:transition-none ${row.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
-                  </button>
-                  <span className="mr-auto w-14 text-xs text-slate-600">{row.is_active ? 'Active' : 'Inactive'}</span>
-                  <Button size="sm" variant="ghost" aria-label={`Move ${label} up`} disabled={i === 0 || reorder.isPending} onClick={() => step(row.id, -1)}>
-                    ↑
-                  </Button>
-                  <Button size="sm" variant="ghost" aria-label={`Move ${label} down`} disabled={i === visible.length - 1 || reorder.isPending} onClick={() => step(row.id, 1)}>
-                    ↓
-                  </Button>
-                  <Button size="sm" variant="ghost" aria-label={`Edit ${label}`} onClick={() => setEditing(row)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Delete ${label}`}
-                    disabled={lock?.remove !== undefined}
-                    title={lock?.remove}
-                    onClick={() => {
-                      setDeleteError(null)
-                      setDeleting(row)
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
+                {grid ? (
+                  <>
+                    <div className="min-w-0 flex-1">{config.summary(row)}</div>
+                    <div className="flex items-center gap-1 border-t border-slate-100 pt-2">
+                      {handle}
+                      <div className="mr-auto flex items-center gap-2 pl-1">{controls}</div>
+                      {actions}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {handle}
+                    <div className="min-w-0 flex-1 basis-48 sm:basis-36">{config.summary(row)}</div>
+                    <div className="ml-auto flex items-center gap-1">
+                      <div className="mr-1 flex items-center gap-2">{controls}</div>
+                      {actions}
+                    </div>
+                  </>
+                )}
               </li>
             )
           })}

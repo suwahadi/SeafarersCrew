@@ -40,11 +40,13 @@ describe('menu tree editor', () => {
     expect(screen.getByRole('button', { name: 'Indent Company' })).toBeDisabled()
   })
 
-  it('moves items with the up and down buttons', async () => {
+  it('moves an item with the arrow keys on its drag handle and has no arrow buttons', async () => {
     render(<Harness initial={[link('A'), link('B')]} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Move B up' }))
+    screen.getByRole('button', { name: /Reorder B/ }).focus()
+    await userEvent.keyboard('{ArrowUp}')
     const inputs = screen.getAllByLabelText('Label')
     expect(inputs.map((i) => (i as HTMLInputElement).value)).toEqual(['B', 'A'])
+    expect(screen.queryByRole('button', { name: /Move .* (up|down)/ })).not.toBeInTheDocument()
   })
 
   it('shows a draft warning for draft pages and server errors on the right row', () => {
