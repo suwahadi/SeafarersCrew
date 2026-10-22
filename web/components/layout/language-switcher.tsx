@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Icon } from '@/components/ui/icons'
 import { flagSrc } from '@/lib/flags'
 import { expiredTranslateCookies, isSourceLanguage, translateCookie } from '@/lib/language'
 import type { Language } from '@/lib/types'
@@ -151,9 +152,10 @@ export function LanguageSwitcher({ languages, sourceCode, initialCode }: Languag
         onClick={() => {
           setOpen((value) => !value)
         }}
-        className="inline-flex size-11 items-center justify-center rounded-md border border-line transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text"
+        className="inline-flex h-11 items-center justify-center gap-1.5 border border-line px-2.5 text-primary transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text"
       >
         <Flag language={active} />
+        <Icon name="chevron-down" className="size-4" />
       </button>
       <ul
         id="language-menu"
