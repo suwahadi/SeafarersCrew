@@ -1,13 +1,15 @@
 import { useFieldArray, useFormContext } from 'react-hook-form'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { MAX_CARDS, emptyCard } from '@/lib/pageBlocks'
 import type { PageFormValues } from '@/lib/pagePayload'
-import { BlockImage, BlockSelect, BlockText, BlockTextArea, COLUMN_OPTIONS, ItemRow, ListError, useFieldError, type BlockEditorProps } from './fields'
+import { BlockImage, BlockSelect, BlockText, BlockTextArea, COLUMN_OPTIONS, ItemRow, ListError, useItemSort, useFieldError, type BlockEditorProps } from './fields'
 
 export function CardGridBlockEditor({ index, media }: BlockEditorProps) {
   const base = `blocks.${index}.settings` as const
   const { control } = useFormContext<PageFormValues>()
   const { fields, append, remove, move } = useFieldArray({ control, name: `${base}.cards`, keyName: 'key' })
+  const sort = useItemSort(fields.map((f) => f.key), move)
   const listError = useFieldError(`${base}.cards`)
 
   return (
@@ -17,7 +19,7 @@ export function CardGridBlockEditor({ index, media }: BlockEditorProps) {
       </div>
       <ul className="space-y-3">
         {fields.map((field, i) => (
-          <ItemRow key={field.key} label="Card" index={i} count={fields.length} onMove={(to) => move(i, to)} onRemove={() => remove(i)}>
+          <ItemRow key={field.key} label="Card" index={i} itemKey={field.key} sort={sort} onRemove={() => remove(i)}>
             <div className="grid gap-3 md:grid-cols-2">
               <BlockText name={`${base}.cards.${i}.title`} label="Title" required />
               <BlockText name={`${base}.cards.${i}.link`} label="Link" hint="A path like /career, or an https:// address." />
@@ -36,7 +38,7 @@ export function CardGridBlockEditor({ index, media }: BlockEditorProps) {
         ))}
       </ul>
       <ListError message={listError} />
-      <Button size="sm" variant="secondary" disabled={fields.length >= MAX_CARDS} onClick={() => append(emptyCard())}>
+      <Button size="sm" variant="secondary" icon={<Icon name="plus" />} collapse disabled={fields.length >= MAX_CARDS} onClick={() => append(emptyCard())}>
         Add card
       </Button>
     </div>

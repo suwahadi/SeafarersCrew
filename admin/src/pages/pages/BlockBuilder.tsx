@@ -1,7 +1,9 @@
-import { useState, type DragEvent } from 'react'
+import { useState } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 import type { PageMedia } from '@/api/pages'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
+import { useSortable } from '@/hooks/useSortable'
 import { EmptyState } from '@/components/ui/Layout'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { BLOCK_TYPES, MAX_BLOCKS, blockLabel, createBlock, duplicateBlock, type BlockType } from '@/lib/pageBlocks'
@@ -14,8 +16,6 @@ export function BlockBuilder({ media }: { media: PageMedia }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [openIds, setOpenIds] = useState<ReadonlySet<string>>(new Set())
   const [pendingDelete, setPendingDelete] = useState<number | null>(null)
-  const [dragFrom, setDragFrom] = useState<number | null>(null)
-  const [dragOver, setDragOver] = useState<number | null>(null)
   const [announcement, setAnnouncement] = useState('')
 
   const setOpen = (id: string, open: boolean) =>
@@ -53,32 +53,13 @@ export function BlockBuilder({ media }: { media: PageMedia }) {
     setPendingDelete(null)
   }
 
-  const endDrag = () => {
-    setDragFrom(null)
-    setDragOver(null)
-  }
-
-  const onDragStart = (e: DragEvent<HTMLSpanElement>, index: number, id: string) => {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', id)
-    const card = e.currentTarget.closest('li')
-    if (card) e.dataTransfer.setDragImage(card, 16, 16)
-    setDragFrom(index)
-  }
-
-  const onDragOver = (e: DragEvent<HTMLLIElement>, index: number) => {
-    if (dragFrom === null) return
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    if (dragOver !== index) setDragOver(index)
-  }
-
-  const onDrop = (e: DragEvent<HTMLLIElement>, index: number) => {
-    if (dragFrom === null) return
-    e.preventDefault()
-    if (dragFrom !== index) moveBlock(dragFrom, index)
-    endDrag()
-  }
+  const sort = useSortable(
+    fields.map((f) => f.id),
+    (from, to) => {
+      const ids = fields.map((f) => f.id)
+      moveBlock(ids.indexOf(from), ids.indexOf(to))
+    },
+  )
 
   return (
     <div className="space-y-3">
@@ -96,29 +77,24 @@ export function BlockBuilder({ media }: { media: PageMedia }) {
                 key={field.key}
                 index={index}
                 type={field.type}
-                count={fields.length}
                 media={media}
                 open={openIds.has(field.id) || hasErrors}
-                isDropTarget={dragFrom !== null && dragOver === index && dragFrom !== index}
+                rowProps={sort.rowProps(field.id)}
+                handleProps={sort.handleProps(field.id)}
                 onToggle={() => setOpen(field.id, !openIds.has(field.id))}
-                onMove={(to) => moveBlock(index, to)}
                 onDuplicate={() => duplicate(index)}
                 onDelete={() => setPendingDelete(index)}
-                onDragStart={(e) => onDragStart(e, index, field.id)}
-                onDragEnd={endDrag}
-                onDragOver={(e) => onDragOver(e, index)}
-                onDrop={(e) => onDrop(e, index)}
               />
             )
           })}
         </ol>
       )}
       <div className="relative inline-block" onKeyDown={(e) => e.key === 'Escape' && setMenuOpen(false)}>
-        <Button variant="secondary" aria-expanded={menuOpen} aria-controls="add-block-menu" disabled={fields.length >= MAX_BLOCKS} onClick={() => setMenuOpen((o) => !o)}>
+        <Button variant="secondary" icon={<Icon name="plus" />} collapse aria-expanded={menuOpen} aria-controls="add-block-menu" disabled={fields.length >= MAX_BLOCKS} onClick={() => setMenuOpen((o) => !o)}>
           Add block
         </Button>
         {menuOpen ? (
-          <ul id="add-block-menu" aria-label="Block types" className="absolute left-0 z-20 mt-1 w-72 rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-200">
+          <ul id="add-block-menu" aria-label="Block types" className="absolute left-0 z-20 mt-1 w-72 max-w-[calc(100vw-2rem)] rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-200">
             {BLOCK_TYPES.map((b) => (
               <li key={b.type}>
                 <button type="button" onClick={() => add(b.type)} className="block w-full rounded-md px-3 py-2 text-left hover:bg-slate-100 focus-visible:bg-slate-100">

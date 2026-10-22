@@ -1,7 +1,9 @@
-import type { DragEvent } from 'react'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import type { BlockType, PageMedia } from '@/api/pages'
 import { Button } from '@/components/ui/Button'
+import { DragHandle } from '@/components/ui/DragHandle'
+import { Icon } from '@/components/ui/Icon'
+import type { SortableHandleProps } from '@/hooks/useSortable'
 import { blockLabel, blockSummary, type FormBlock } from '@/lib/pageBlocks'
 import type { PageFormValues } from '@/lib/pagePayload'
 import { BlockEditor } from './blocks/BlockEditor'
@@ -9,21 +11,16 @@ import { BlockEditor } from './blocks/BlockEditor'
 interface BlockCardProps {
   index: number
   type: BlockType
-  count: number
   media: PageMedia
   open: boolean
-  isDropTarget: boolean
+  rowProps: object
+  handleProps: SortableHandleProps
   onToggle: () => void
-  onMove: (to: number) => void
   onDuplicate: () => void
   onDelete: () => void
-  onDragStart: (e: DragEvent<HTMLSpanElement>) => void
-  onDragEnd: () => void
-  onDragOver: (e: DragEvent<HTMLLIElement>) => void
-  onDrop: (e: DragEvent<HTMLLIElement>) => void
 }
 
-export function BlockCard({ index, type, count, media, open, isDropTarget, onToggle, onMove, onDuplicate, onDelete, onDragStart, onDragEnd, onDragOver, onDrop }: BlockCardProps) {
+export function BlockCard({ index, type, media, open, rowProps, handleProps, onToggle, onDuplicate, onDelete }: BlockCardProps) {
   const { control } = useFormContext<PageFormValues>()
   const block = useWatch({ control, name: `blocks.${index}` }) as FormBlock | undefined
   const hidden = block?.hidden === true
@@ -34,16 +31,13 @@ export function BlockCard({ index, type, count, media, open, isDropTarget, onTog
     <li
       aria-label={`Block ${position}: ${label}`}
       role="group"
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      className={`rounded-lg bg-white ring-1 transition-opacity duration-200 ease-out motion-reduce:transition-none ${isDropTarget ? 'ring-2 ring-navy-500' : 'ring-slate-200'} ${hidden ? 'opacity-60' : ''}`}
+      {...rowProps}
+      className={`rounded-lg bg-white ring-1 ring-slate-200 transition-opacity duration-200 ease-out motion-reduce:transition-none ${hidden ? 'opacity-60' : ''}`}
       data-hidden={hidden || undefined}
     >
-      <div className="flex flex-wrap items-center gap-2 px-3 py-2">
-        <span draggable onDragStart={onDragStart} onDragEnd={onDragEnd} title="Drag to reorder" aria-hidden className="cursor-grab select-none px-1 text-slate-400 active:cursor-grabbing">
-          ⠿
-        </span>
-        <button type="button" onClick={onToggle} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-2 text-left" aria-label={`${open ? 'Collapse' : 'Expand'} block ${position}: ${label}`}>
+      <div className="flex flex-wrap items-center gap-1 px-2 py-2 sm:gap-2 sm:px-3">
+        <DragHandle label={`block ${position}`} {...handleProps} />
+        <button type="button" onClick={onToggle} aria-expanded={open} className="flex min-h-9 min-w-0 flex-1 basis-32 items-center gap-2 text-left" aria-label={`${open ? 'Collapse' : 'Expand'} block ${position}: ${label}`}>
           <span aria-hidden className="inline-block text-xs text-slate-500 transition-transform duration-150 ease-out motion-reduce:transition-none" style={{ transform: open ? 'rotate(90deg)' : 'none' }}>
             ▶
           </span>
@@ -51,26 +45,28 @@ export function BlockCard({ index, type, count, media, open, isDropTarget, onTog
           <span className="truncate text-sm text-slate-600">{block ? blockSummary(block) : ''}</span>
           {hidden ? <span className="shrink-0 rounded bg-slate-200 px-1.5 py-0.5 text-xs text-slate-700">Hidden</span> : null}
         </button>
-        <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" disabled={index === 0} aria-label={`Move block ${position} up`} onClick={() => onMove(index - 1)}>
-            ↑
-          </Button>
-          <Button size="sm" variant="ghost" disabled={index === count - 1} aria-label={`Move block ${position} down`} onClick={() => onMove(index + 1)}>
-            ↓
-          </Button>
-          <Button size="sm" variant="ghost" aria-label={`Duplicate block ${position}`} onClick={onDuplicate}>
+        <div className="ml-auto flex items-center gap-1">
+          <Button size="sm" variant="ghost" icon={<Icon name="copy" />} collapse aria-label={`Duplicate block ${position}`} onClick={onDuplicate}>
             Duplicate
           </Button>
           <Controller
             control={control}
             name={`blocks.${index}.hidden`}
             render={({ field }) => (
-              <Button size="sm" variant="ghost" aria-pressed={field.value} aria-label={`${field.value ? 'Show' : 'Hide'} block ${position}`} onClick={() => field.onChange(!field.value)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={<Icon name={field.value ? 'eye' : 'eyeOff'} />}
+                collapse
+                aria-pressed={field.value}
+                aria-label={`${field.value ? 'Show' : 'Hide'} block ${position}`}
+                onClick={() => field.onChange(!field.value)}
+              >
                 {field.value ? 'Show' : 'Hide'}
               </Button>
             )}
           />
-          <Button size="sm" variant="ghost" aria-label={`Delete block ${position}`} onClick={onDelete}>
+          <Button size="sm" variant="ghost" icon={<Icon name="trash" />} collapse aria-label={`Delete block ${position}`} onClick={onDelete}>
             Delete
           </Button>
         </div>

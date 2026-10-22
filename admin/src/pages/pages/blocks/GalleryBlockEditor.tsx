@@ -3,8 +3,10 @@ import { Controller, useFormContext } from 'react-hook-form'
 import { errorMessage } from '@/api/client'
 import type { AdminImage } from '@/api/cmsMedia'
 import { galleryOptionsApi, type GalleryOption } from '@/api/galleryOptions'
-import { Button } from '@/components/ui/Button'
+import { DragHandle } from '@/components/ui/DragHandle'
+import { IconButton } from '@/components/ui/IconButton'
 import { Spinner } from '@/components/ui/Spinner'
+import { useSortable } from '@/hooks/useSortable'
 import { MAX_GALLERY_IMAGES, moveItem } from '@/lib/pageBlocks'
 import type { PageFormValues } from '@/lib/pagePayload'
 import { BlockCheckbox, BlockSelect, COLUMN_OPTIONS, ListError, useFieldError, type BlockEditorProps } from './fields'
@@ -27,6 +29,28 @@ function Thumb({ option }: { option: GalleryOption | undefined }) {
 
 function optionName(option: GalleryOption | undefined): string {
   return option ? option.caption || option.alt_text : 'Image no longer available'
+}
+
+function SelectedImages({ selected, byId, onChange, onRemove }: { selected: string[]; byId: Map<string, GalleryOption>; onChange: (ids: string[]) => void; onRemove: (id: string) => void }) {
+  const sort = useSortable(selected, (from, to) => onChange(moveItem(selected, selected.indexOf(from), selected.indexOf(to))))
+  return (
+    <ol className="space-y-1">
+      {selected.map((id, i) => {
+        const option = byId.get(id)
+        const name = optionName(option)
+        return (
+          <li key={id} {...sort.rowProps(id)} className="flex items-center gap-1 rounded-md bg-slate-50 p-1.5 ring-1 ring-slate-200 sm:gap-2">
+            <DragHandle label={name} {...sort.handleProps(id)} />
+            <Thumb option={option} />
+            <span className="min-w-0 flex-1 truncate text-sm text-slate-800">
+              {i + 1}. {name}
+            </span>
+            <IconButton icon="trash" tone="danger" label={`Remove ${name}`} onClick={() => onRemove(id)} />
+          </li>
+        )
+      })}
+    </ol>
+  )
 }
 
 export function GalleryBlockEditor({ index }: BlockEditorProps) {
@@ -98,28 +122,7 @@ export function GalleryBlockEditor({ index }: BlockEditorProps) {
                 {selected.length === 0 ? (
                   <p className="text-sm text-slate-500">Nothing selected yet. The order here is the order on the page.</p>
                 ) : (
-                  <ol className="space-y-1">
-                    {selected.map((id, i) => {
-                      const option = byId.get(id)
-                      return (
-                        <li key={id} className="flex items-center gap-2 rounded-md bg-slate-50 p-1.5 ring-1 ring-slate-200">
-                          <Thumb option={option} />
-                          <span className="min-w-0 flex-1 truncate text-sm text-slate-800">
-                            {i + 1}. {optionName(option)}
-                          </span>
-                          <Button size="sm" variant="ghost" disabled={i === 0} aria-label={`Move ${optionName(option)} up`} onClick={() => field.onChange(moveItem(selected, i, i - 1))}>
-                            ↑
-                          </Button>
-                          <Button size="sm" variant="ghost" disabled={i === selected.length - 1} aria-label={`Move ${optionName(option)} down`} onClick={() => field.onChange(moveItem(selected, i, i + 1))}>
-                            ↓
-                          </Button>
-                          <Button size="sm" variant="ghost" aria-label={`Remove ${optionName(option)}`} onClick={() => toggle(id)}>
-                            Remove
-                          </Button>
-                        </li>
-                      )
-                    })}
-                  </ol>
+                  <SelectedImages selected={selected} byId={byId} onChange={field.onChange} onRemove={toggle} />
                 )}
               </div>
             </div>

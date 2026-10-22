@@ -4,7 +4,10 @@ import type { PageMedia } from '@/api/pages'
 import { ImageField } from '@/components/cms/ImageField'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { Button } from '@/components/ui/Button'
+import { DragHandle } from '@/components/ui/DragHandle'
+import { IconButton } from '@/components/ui/IconButton'
 import { CheckboxField, SelectField, TextAreaField, TextField, inputClass, type Option } from '@/components/ui/Field'
+import { useSortable } from '@/hooks/useSortable'
 import type { PageFormValues } from '@/lib/pagePayload'
 
 export type FieldName = FieldPath<PageFormValues>
@@ -123,7 +126,7 @@ export function BlockColor({ name, label }: { name: FieldName; label: string }) 
             <label htmlFor={id} className="block text-sm font-medium text-slate-700">
               {label}
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <input
                 type="color"
                 aria-label={`${label} picker`}
@@ -140,7 +143,7 @@ export function BlockColor({ name, label }: { name: FieldName; label: string }) 
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? `${id}-error` : undefined}
                 onChange={(e) => field.onChange(e.target.value)}
-                className={`w-32 ${inputClass}`}
+                className={`w-32 max-w-full ${inputClass}`}
               />
               {value === '' ? null : (
                 <Button size="sm" variant="ghost" onClick={() => field.onChange('')}>
@@ -166,33 +169,31 @@ export const COLUMN_OPTIONS: Option[] = [
   { value: '4', label: '4 columns' },
 ]
 
+export function useItemSort(keys: readonly string[], move: (from: number, to: number) => void) {
+  return useSortable(keys, (from, to) => move(keys.indexOf(from), keys.indexOf(to)))
+}
+
+export type ItemSort = ReturnType<typeof useItemSort>
+
 interface ItemRowProps {
   label: string
   index: number
-  count: number
-  onMove: (to: number) => void
+  itemKey: string
+  sort: ItemSort
   onRemove: () => void
   children: ReactNode
 }
 
-export function ItemRow({ label, index, count, onMove, onRemove, children }: ItemRowProps) {
+export function ItemRow({ label, index, itemKey, sort, onRemove, children }: ItemRowProps) {
+  const title = `${label} ${index + 1}`
   return (
-    <li className="rounded-md bg-slate-50 p-3 ring-1 ring-slate-200">
+    <li {...sort.rowProps(itemKey)} className="rounded-md bg-slate-50 p-3 ring-1 ring-slate-200">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-          {label} {index + 1}
-        </span>
-        <div className="flex gap-1">
-          <Button size="sm" variant="ghost" disabled={index === 0} aria-label={`Move ${label.toLowerCase()} ${index + 1} up`} onClick={() => onMove(index - 1)}>
-            ↑
-          </Button>
-          <Button size="sm" variant="ghost" disabled={index === count - 1} aria-label={`Move ${label.toLowerCase()} ${index + 1} down`} onClick={() => onMove(index + 1)}>
-            ↓
-          </Button>
-          <Button size="sm" variant="ghost" aria-label={`Remove ${label.toLowerCase()} ${index + 1}`} onClick={onRemove}>
-            Remove
-          </Button>
+        <div className="flex min-w-0 items-center gap-1">
+          <DragHandle label={title} {...sort.handleProps(itemKey)} />
+          <span className="truncate text-xs font-semibold uppercase tracking-wide text-slate-600">{title}</span>
         </div>
+        <IconButton icon="trash" tone="danger" label={`Remove ${title.toLowerCase()}`} onClick={onRemove} />
       </div>
       <div className="space-y-3">{children}</div>
     </li>
