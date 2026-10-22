@@ -5,6 +5,8 @@ import { Card, EmptyState } from '@/components/ui/Layout'
 const DEPARTMENT_COLORS: Record<string, string> = { deck: '#0B2545', engine: '#13A89E', catering_other: '#D97706' }
 const DEPARTMENT_LABELS: Record<string, string> = { deck: 'Deck', engine: 'Engine', catering_other: 'Catering/Other' }
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const TICK = { fontSize: 12, fill: '#475569' }
+const LEGEND = { fontSize: 12, paddingTop: 8 }
 
 export function monthLabel(month: string): string {
   const [y, m] = month.split('-')
@@ -35,7 +37,7 @@ export function StatusDonut({ data }: { data: CountByKey[] }) {
       <PieChart>
         <Pie data={slices} dataKey="count" nameKey="label" innerRadius={60} outerRadius={95} paddingAngle={1} isAnimationActive={false} />
         <Tooltip />
-        <Legend height={36} />
+        <Legend wrapperStyle={LEGEND} />
       </PieChart>
     </ChartFrame>
   )
@@ -53,10 +55,10 @@ export function RankBars({ data }: { data: CountByKey[] }) {
     <ChartFrame title="Crew by rank" height={Math.max(220, rows.length * 26)} empty={rows.length === 0}>
       <BarChart data={rows} layout="vertical" margin={{ left: 24, right: 16 }}>
         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-        <XAxis type="number" allowDecimals={false} />
-        <YAxis type="category" dataKey="label" width={110} tick={{ fontSize: 12 }} />
+        <XAxis type="number" allowDecimals={false} tick={TICK} />
+        <YAxis type="category" dataKey="label" width={110} tick={TICK} interval={0} />
         <Tooltip />
-        <Legend />
+        <Legend wrapperStyle={LEGEND} />
         {Object.entries(DEPARTMENT_LABELS).map(([key, name]) => (
           <Bar key={key} dataKey={key} name={name} stackId="rank" fill={DEPARTMENT_COLORS[key]} isAnimationActive={false} />
         ))}
@@ -67,13 +69,13 @@ export function RankBars({ data }: { data: CountByKey[] }) {
 
 export function PrincipalBars({ data }: { data: CountByKey[] }) {
   return (
-    <ChartFrame title="Crew on board by principal" height={260} empty={data.length === 0}>
-      <BarChart data={data} margin={{ left: 0, right: 16 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="label" tick={{ fontSize: 12 }} interval={0} />
-        <YAxis allowDecimals={false} />
+    <ChartFrame title="Crew on board by principal" height={Math.max(220, data.length * 44)} empty={data.length === 0}>
+      <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+        <XAxis type="number" allowDecimals={false} tick={TICK} />
+        <YAxis type="category" dataKey="label" width={180} tick={TICK} interval={0} />
         <Tooltip />
-        <Bar dataKey="count" name="On board" fill="#0B2545" isAnimationActive={false} />
+        <Bar dataKey="count" name="On board" fill="#0B2545" barSize={24} isAnimationActive={false} />
       </BarChart>
     </ChartFrame>
   )
@@ -85,10 +87,10 @@ export function MovementLines({ data }: { data: MonthlyMovement[] }) {
     <ChartFrame title="Sign-ons and sign-offs, last 12 months" height={260} empty={rows.length === 0}>
       <LineChart data={rows} margin={{ left: 0, right: 16 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-        <YAxis allowDecimals={false} />
+        <XAxis dataKey="label" tick={TICK} />
+        <YAxis allowDecimals={false} tick={TICK} />
         <Tooltip />
-        <Legend />
+        <Legend wrapperStyle={LEGEND} />
         <Line type="monotone" dataKey="sign_ons" name="Sign-ons" stroke="#0B2545" strokeWidth={2} isAnimationActive={false} />
         <Line type="monotone" dataKey="sign_offs" name="Sign-offs" stroke="#13A89E" strokeWidth={2} isAnimationActive={false} />
       </LineChart>

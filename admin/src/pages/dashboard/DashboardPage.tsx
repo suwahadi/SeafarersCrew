@@ -11,11 +11,11 @@ function Kpi({ label, value, to, tone }: { label: string; value: number; to?: st
   const color = tone === 'darkred' ? 'text-red-800' : tone === 'red' ? 'text-red-600' : tone === 'orange' ? 'text-orange-600' : tone === 'yellow' ? 'text-yellow-700' : 'text-navy-800'
   const body = (
     <>
-      <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">{label}</p>
-      <p className={`mt-1 text-2xl font-semibold tabular-nums ${color}`}>{value.toLocaleString('en-US')}</p>
+      <p className="text-sm leading-snug text-slate-600">{label}</p>
+      <p className={`mt-2 text-2xl font-semibold tabular-nums ${color}`}>{value.toLocaleString('en-US')}</p>
     </>
   )
-  const cls = 'block rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200'
+  const cls = 'flex flex-col justify-between rounded-lg bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200'
   return to ? (
     <Link to={to} className={`${cls} transition-colors duration-150 hover:ring-navy-200`}>
       {body}
@@ -29,8 +29,8 @@ export function KpiCards({ s }: { s: DashboardSummary }) {
   const [t1, t2, t3] = s.thresholds
   const expiring = (k: 'expired' | 'within_1' | 'within_2' | 'within_3') => s.documents[k] + s.certificates[k]
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Total crew" value={s.total_crew} to="/crews" />
         {s.by_status.map((b) => (
           <Kpi key={b.key} label={b.label} value={b.count} to={`/crews?status=${encodeURIComponent(b.key)}`} />
@@ -38,11 +38,11 @@ export function KpiCards({ s }: { s: DashboardSummary }) {
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
         <Kpi label="Active contracts" value={s.active_contracts} to="/contracts?status=active" />
-        <Kpi label="Due for relief (30 d)" value={s.due_for_relief} to="/rotation" tone={s.due_for_relief > 0 ? 'orange' : undefined} />
+        <Kpi label="Due for relief in 30 days" value={s.due_for_relief} to="/rotation" tone={s.due_for_relief > 0 ? 'orange' : undefined} />
         <Kpi label="Expired items" value={expiring('expired')} to="/crews?doc_validity=expired" tone={expiring('expired') > 0 ? 'darkred' : undefined} />
-        <Kpi label={`Expiring ≤ ${t1} d`} value={expiring('within_1')} to={`/crews?doc_validity=expiring&doc_days=${t1}`} tone="red" />
-        <Kpi label={`Expiring ${t1 + 1}–${t2} d`} value={expiring('within_2')} to={`/crews?doc_validity=expiring&doc_days=${t2}`} tone="orange" />
-        <Kpi label={`Expiring ${t2 + 1}–${t3} d`} value={expiring('within_3')} to={`/crews?doc_validity=expiring&doc_days=${t3}`} tone="yellow" />
+        <Kpi label={`Expiring ≤ ${t1} days`} value={expiring('within_1')} to={`/crews?doc_validity=expiring&doc_days=${t1}`} tone="red" />
+        <Kpi label={`Expiring ${t1 + 1}–${t2} days`} value={expiring('within_2')} to={`/crews?doc_validity=expiring&doc_days=${t2}`} tone="orange" />
+        <Kpi label={`Expiring ${t2 + 1}–${t3} days`} value={expiring('within_3')} to={`/crews?doc_validity=expiring&doc_days=${t3}`} tone="yellow" />
         <Kpi label="New applicants" value={s.new_applicants} />
         <Kpi label="Unread messages" value={s.unread_messages} />
       </div>
@@ -58,9 +58,9 @@ export function KpiCards({ s }: { s: DashboardSummary }) {
 export function ExpiringTable({ items }: { items: ExpiringItem[] }) {
   if (items.length === 0) return <EmptyState title="Nothing expires within the alert window." />
   return (
-    <div className="overflow-x-auto">
+    <div className="max-h-[30rem] overflow-auto rounded-md ring-1 ring-slate-200">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-50 text-left text-xs font-semibold text-slate-600 uppercase">
+        <thead className="sticky top-0 z-[1] bg-slate-50 text-left text-xs font-semibold tracking-wide whitespace-nowrap text-slate-600 uppercase">
           <tr>
             <th scope="col" className="px-3 py-2">Crew</th>
             <th scope="col" className="px-3 py-2">Rank</th>
@@ -73,17 +73,17 @@ export function ExpiringTable({ items }: { items: ExpiringItem[] }) {
         <tbody className="divide-y divide-slate-100">
           {items.map((it) => (
             <tr key={`${it.crew_id}-${it.kind}-${it.type_name}-${it.number}`}>
-              <td className="px-3 py-2">
+              <td className="px-3 py-2 whitespace-nowrap">
                 <Link to={`/crews/${it.crew_id}`} className="font-medium text-navy-700 hover:underline">
                   {it.crew_name}
                 </Link>
-                <span className="ml-1 text-xs text-slate-500">{it.crew_id}</span>
+                <span className="ml-1.5 text-xs text-slate-500">{it.crew_id}</span>
               </td>
-              <td className="px-3 py-2">{it.rank_name || '—'}</td>
+              <td className="px-3 py-2 whitespace-nowrap">{it.rank_name || '—'}</td>
               <td className="px-3 py-2">
                 {it.type_name} <span className="text-xs text-slate-500">({it.kind})</span>
               </td>
-              <td className="px-3 py-2">{it.number}</td>
+              <td className="px-3 py-2 whitespace-nowrap">{it.number}</td>
               <td className="px-3 py-2 whitespace-nowrap">{formatDate(it.expired_date)}</td>
               <td className="px-3 py-2">
                 <ExpiryBadge badge={it.badge} daysLeft={it.days_left} />
@@ -102,9 +102,9 @@ const reliefLabel = { overdue: 'Overdue', due_soon: 'Due soon', planned: 'Relief
 export function ReliefsTable({ items }: { items: UpcomingRelief[] }) {
   if (items.length === 0) return <EmptyState title="No reliefs due in the next 30 days." />
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-md ring-1 ring-slate-200">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-50 text-left text-xs font-semibold text-slate-600 uppercase">
+        <thead className="bg-slate-50 text-left text-xs font-semibold tracking-wide whitespace-nowrap text-slate-600 uppercase">
           <tr>
             <th scope="col" className="px-3 py-2">Due</th>
             <th scope="col" className="px-3 py-2">Crew</th>
@@ -166,15 +166,13 @@ export default function DashboardPage() {
       {summary.data && charts.data && expiring.data && reliefs.data ? (
         <div className="space-y-6">
           <KpiCards s={summary.data} />
+          <Card title={`Upcoming reliefs (${reliefs.data.length})`}>
+            <ReliefsTable items={reliefs.data} />
+          </Card>
+          <Card title={`Expiring documents and certificates (${expiring.data.length})`}>
+            <ExpiringTable items={expiring.data} />
+          </Card>
           <AllCharts charts={charts.data} />
-          <div className="grid gap-4 xl:grid-cols-2">
-            <Card title="Expiring documents and certificates">
-              <ExpiringTable items={expiring.data} />
-            </Card>
-            <Card title="Upcoming reliefs">
-              <ReliefsTable items={reliefs.data} />
-            </Card>
-          </div>
         </div>
       ) : failed ? null : (
         <div className="flex justify-center p-16 text-navy-800">

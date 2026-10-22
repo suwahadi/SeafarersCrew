@@ -25,8 +25,8 @@ describe('Dashboard', () => {
   it('adds documents and certificates per threshold and links to filtered crew lists', () => {
     render(<KpiCards s={summary} />, { wrapper: MemoryRouter })
     expect(screen.getByRole('link', { name: /Expired items 3/ })).toHaveAttribute('href', '/crews?doc_validity=expired')
-    expect(screen.getByRole('link', { name: /Expiring ≤ 30 d 3/ })).toHaveAttribute('href', '/crews?doc_validity=expiring&doc_days=30')
-    expect(screen.getByRole('link', { name: /Expiring 61–90 d 4/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Expiring ≤ 30 days 3/ })).toHaveAttribute('href', '/crews?doc_validity=expiring&doc_days=30')
+    expect(screen.getByRole('link', { name: /Expiring 61–90 days 4/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /On Board 15/ })).toHaveAttribute('href', '/crews?status=on_board')
     expect(screen.getByRole('alert')).toHaveTextContent('The last database backup failed')
   })
