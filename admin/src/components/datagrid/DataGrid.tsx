@@ -145,9 +145,11 @@ export function DataGrid<T>({
                       className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase whitespace-nowrap"
                     >
                       {h.isPlaceholder ? null : h.column.getCanSort() ? (
-                        <button type="button" onClick={h.column.getToggleSortingHandler()} className="inline-flex items-center gap-1 hover:text-slate-900">
+                        <button type="button" onClick={h.column.getToggleSortingHandler()} className="inline-flex items-center gap-1 tracking-wide uppercase hover:text-slate-900">
                           {flexRender(h.column.columnDef.header, h.getContext())}
-                          <span aria-hidden>{sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : '↕'}</span>
+                          <span aria-hidden className={sorted ? 'text-navy-700' : 'text-slate-400'}>
+                            {sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : '↕'}
+                          </span>
                         </button>
                       ) : (
                         flexRender(h.column.columnDef.header, h.getContext())

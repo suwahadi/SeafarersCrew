@@ -1,5 +1,8 @@
 export const PAGE_SIZES = [10, 20, 30, 50, 100]
 
+const pagerButton =
+  'h-8 rounded-md bg-white px-3 text-slate-700 ring-1 ring-inset ring-slate-300 transition-colors duration-150 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400 disabled:ring-slate-200 disabled:hover:bg-white'
+
 interface PaginationProps {
   page: number
   perPage: number
@@ -13,14 +16,14 @@ export function Pagination({ page, perPage, total, onPage, onPerPage }: Paginati
   const from = total === 0 ? 0 : (page - 1) * perPage + 1
   const to = Math.min(total, page * perPage)
   return (
-    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-3 py-2 text-sm text-slate-600">
-      <span>
+    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-3 py-2.5 text-sm text-slate-600">
+      <span className="tabular-nums">
         {from}–{to} of {total.toLocaleString('en-US')}
       </span>
-      <div className="flex items-center gap-2">
-        <label className="flex items-center gap-1">
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2">
           Rows
-          <select value={perPage} onChange={(e) => onPerPage(Number(e.target.value))} className="h-8 rounded-md border-0 text-sm ring-1 ring-slate-300">
+          <select value={perPage} onChange={(e) => onPerPage(Number(e.target.value))} className="h-8 rounded-md border-0 bg-white text-sm text-slate-900 ring-1 ring-inset ring-slate-300">
             {PAGE_SIZES.map((n) => (
               <option key={n} value={n}>
                 {n}
@@ -28,15 +31,17 @@ export function Pagination({ page, perPage, total, onPage, onPerPage }: Paginati
             ))}
           </select>
         </label>
-        <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className="rounded px-2 py-1 hover:bg-slate-100 disabled:opacity-40">
-          Previous
-        </button>
-        <span>
-          {page} / {pages}
-        </span>
-        <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} className="rounded px-2 py-1 hover:bg-slate-100 disabled:opacity-40">
-          Next
-        </button>
+        <div className="flex items-center gap-1">
+          <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className={pagerButton}>
+            Previous
+          </button>
+          <span className="px-2 tabular-nums">
+            {page} / {pages}
+          </span>
+          <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} className={pagerButton}>
+            Next
+          </button>
+        </div>
       </div>
     </nav>
   )

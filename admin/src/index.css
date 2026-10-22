@@ -4,7 +4,10 @@
   --color-navy-50: #eef3f9;
   --color-navy-100: #d6e1ef;
   --color-navy-200: #aec3df;
+  --color-navy-300: #86a5cc;
+  --color-navy-400: #5b82b0;
   --color-navy-500: #2f5d8f;
+  --color-navy-600: #1f4a78;
   --color-navy-700: #13365f;
   --color-navy-800: #0b2545;
   --color-navy-900: #071a33;
@@ -17,8 +20,22 @@
   html {
     color-scheme: light;
   }
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate-300) transparent;
+  }
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
+  }
+  * {
+    scrollbar-width: thin;
+  }
+  select {
+    padding-inline: 0.75rem 0.5rem;
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-navy-800);
   }
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-navy-500;

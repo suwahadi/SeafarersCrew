@@ -29,7 +29,7 @@ export function VariablePicker({ groups, onInsert, label = 'Insert variable' }: 
       onChange={(e) => {
         if (e.target.value !== '') onInsert(tagText(e.target.value))
       }}
-      className="h-8 max-w-48 rounded-md border-0 bg-white text-sm ring-1 ring-inset ring-slate-300"
+      className="h-8 max-w-56 rounded-md border-0 bg-white text-sm text-slate-700 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500"
     >
       <option value="">{label}…</option>
       {groups.map((g) => (

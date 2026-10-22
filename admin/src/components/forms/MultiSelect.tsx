@@ -7,9 +7,10 @@ interface MultiSelectProps {
   value: string[]
   onChange: (value: string[]) => void
   placeholder?: string
+  hideLabel?: boolean
 }
 
-export function MultiSelect({ label, options, value, onChange, placeholder = 'Any' }: MultiSelectProps) {
+export function MultiSelect({ label, options, value, onChange, placeholder = 'Any', hideLabel = false }: MultiSelectProps) {
   const [open, setOpen] = useState(false)
   const id = useId()
   const root = useRef<HTMLDivElement>(null)
@@ -29,8 +30,8 @@ export function MultiSelect({ label, options, value, onChange, placeholder = 'An
   const toggle = (v: string) => onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v])
 
   return (
-    <div ref={root} className="relative space-y-1">
-      <span id={`${id}-label`} className="block text-sm font-medium text-slate-700">
+    <div ref={root} className={`relative ${hideLabel ? 'min-w-40' : 'space-y-1'}`}>
+      <span id={`${id}-label`} className={hideLabel ? 'sr-only' : 'block text-sm font-medium text-slate-700'}>
         {label}
       </span>
       <button
@@ -42,9 +43,9 @@ export function MultiSelect({ label, options, value, onChange, placeholder = 'An
         onKeyDown={(e) => {
           if (e.key === 'Escape') setOpen(false)
         }}
-        className="flex h-[34px] w-full items-center justify-between rounded-md bg-white px-3 text-left text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500"
+        className={`flex ${hideLabel ? 'h-9' : 'h-[34px]'} w-full items-center justify-between gap-2 rounded-md bg-white px-3 text-left text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500`}
       >
-        <span className={selected.length === 0 ? 'text-slate-400' : 'truncate text-slate-900'}>{summary}</span>
+        <span className={selected.length === 0 ? 'text-slate-500' : 'truncate text-slate-900'}>{summary}</span>
         <span aria-hidden className="text-slate-400">
           ▾
         </span>

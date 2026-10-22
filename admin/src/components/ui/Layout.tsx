@@ -71,9 +71,9 @@ export function DescriptionList({ items }: { items: { label: string; value: Reac
   return (
     <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((it) => (
-        <div key={it.label}>
+        <div key={it.label} className="min-w-0">
           <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{it.label}</dt>
-          <dd className="mt-0.5 text-sm text-slate-900">{it.value === '' || it.value === null || it.value === undefined ? '—' : it.value}</dd>
+          <dd className="mt-0.5 text-sm break-words text-slate-900">{it.value === '' || it.value === null || it.value === undefined ? '—' : it.value}</dd>
         </div>
       ))}
     </dl>

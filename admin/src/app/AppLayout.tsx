@@ -33,15 +33,16 @@ export function AppLayout() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-2">
         Skip to content
       </a>
-      <aside className={`${menuOpen ? 'block' : 'hidden'} w-full shrink-0 bg-navy-800 text-navy-100 lg:sticky lg:top-0 lg:block lg:h-screen lg:w-64 lg:overflow-y-auto`}>
-        <div className="flex items-center gap-2 px-5 py-4 text-white">
-          <img src="/favicon.svg" alt="" width={28} height={28} />
-          <span className="text-base font-semibold">Seafarers Crew</span>
+      <aside
+        className={`${menuOpen ? 'block' : 'hidden'} w-full shrink-0 bg-navy-800 text-navy-100 [scrollbar-color:var(--color-navy-600)_transparent] lg:sticky lg:top-0 lg:block lg:h-screen lg:w-64 lg:overflow-y-auto`}
+      >
+        <div className="border-b border-navy-700 px-5 py-4">
+          <span className="text-lg font-semibold tracking-tight text-white">Seafarers Crew</span>
         </div>
-        <nav aria-label="Main" className="space-y-5 px-3 pb-6">
+        <nav aria-label="Main" className="space-y-5 px-3 pt-4 pb-6">
           {navigation.map((group) => (
             <div key={group.label}>
-              <p className="px-2 text-xs font-semibold tracking-wider text-navy-200 uppercase">{group.label}</p>
+              <p className="px-2 text-xs font-semibold tracking-wide text-navy-200 uppercase">{group.label}</p>
               <ul className="mt-1 space-y-0.5">
                 {group.items.map((item) => (
                   <li key={item.to}>
@@ -70,11 +71,10 @@ export function AppLayout() {
       </aside>
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 py-2 lg:px-8">
-          <button type="button" className="rounded-md px-2 py-1 text-sm ring-1 ring-slate-300 lg:hidden" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
+          <button type="button" className="h-10 rounded-md px-3 text-sm ring-1 ring-slate-300 lg:hidden" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
             Menu
           </button>
-          <span className="hidden text-sm text-slate-500 lg:block">Administration</span>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="ml-auto flex items-center gap-3 text-sm">
             <NavLink to="/account" className="text-slate-700 hover:text-navy-800">
               {admin?.name}
             </NavLink>

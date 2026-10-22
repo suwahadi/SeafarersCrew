@@ -38,7 +38,7 @@ function ToolButton({ label, active, disabled, onClick, children }: { label: str
       disabled={disabled}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`h-8 min-w-8 rounded px-2 text-sm transition-colors duration-150 disabled:opacity-40 ${active ? 'bg-navy-100 text-navy-900' : 'text-slate-700 hover:bg-slate-100'}`}
+      className={`h-8 min-w-8 rounded px-2 text-sm transition-colors duration-150 disabled:opacity-40 ${active ? 'bg-navy-100 text-navy-900' : 'text-slate-700 hover:bg-slate-200/70'}`}
     >
       {children}
     </button>
@@ -74,7 +74,7 @@ function UrlBar({ mode, onApply, onCancel }: { mode: Exclude<UrlMode, null>; onA
           if (e.key === 'Escape') onCancel()
         }}
         placeholder="https://"
-        className="h-8 min-w-64 flex-1 rounded-md border-0 text-sm ring-1 ring-inset ring-slate-300"
+        className="h-8 min-w-64 flex-1 rounded-md border-0 bg-white px-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500"
       />
       <button type="button" onClick={apply} className="h-8 rounded-md bg-navy-800 px-3 text-sm text-white hover:bg-navy-700">
         {mode === 'link' && url.trim() === '' ? 'Remove link' : 'Apply'}
@@ -106,7 +106,7 @@ function Toolbar({ editor, groups, withLayout }: { editor: Editor; groups: Varia
   }
 
   return (
-    <div className="rounded-t-md border-b border-slate-200 bg-white">
+    <div className="border-b border-slate-200 bg-slate-50">
       <div role="toolbar" aria-label="Formatting" className="flex flex-wrap items-center gap-0.5 p-1">
         <ToolButton label="Heading 2" active={editor.isActive('heading', { level: 2 })} onClick={() => chain().toggleHeading({ level: 2 }).run()}>
           H2
@@ -201,7 +201,9 @@ export function RichTextEditor({ label, value, onChange, groups = [], error, hin
       <label htmlFor={id} className="block text-sm font-medium text-slate-700">
         {label}
       </label>
-      <div className={`rounded-md bg-white ring-1 ring-inset ${error ? 'ring-red-500' : 'ring-slate-300'} focus-within:ring-2 focus-within:ring-navy-500`}>
+      <div
+        className={`overflow-hidden rounded-md border bg-white ${error ? 'border-red-500' : 'border-slate-300'} focus-within:border-navy-500 focus-within:ring-1 focus-within:ring-navy-500`}
+      >
         <Toolbar editor={editor} groups={groups} withLayout={withLayout} />
         <EditorContent editor={editor} />
       </div>
