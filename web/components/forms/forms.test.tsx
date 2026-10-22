@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApplicationForm } from '@/components/forms/ApplicationForm'
 import { ContactForm } from '@/components/forms/ContactForm'
-import { MapFacade } from '@/components/ui/map-facade'
+import { MapEmbed } from '@/components/ui/map-embed'
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
@@ -240,17 +240,13 @@ describe('ContactForm', () => {
   })
 })
 
-describe('MapFacade', () => {
-  it('renders no iframe until the button is clicked', async () => {
-    const user = userEvent.setup()
-    render(<MapFacade coordinates={{ lat: -6.2, lng: 106.8 }} address="Jl. Example 1" />)
-    expect(document.querySelector('iframe')).toBeNull()
-    expect(screen.getByText('Jl. Example 1')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'View larger map' })).toHaveAttribute('href', expect.stringContaining('mlat=-6.200000&mlon=106.800000'))
-    await user.click(screen.getByRole('button', { name: 'Open map' }))
+describe('MapEmbed', () => {
+  it('shows the map right away with a link to the larger map', () => {
+    render(<MapEmbed coordinates={{ lat: -6.2, lng: 106.8 }} />)
     const frame = document.querySelector('iframe')
     expect(frame).toHaveAttribute('loading', 'lazy')
     expect(frame?.getAttribute('src')).toContain('openstreetmap.org/export/embed.html?bbox=')
     expect(frame?.getAttribute('src')).toContain('marker=-6.200000%2C106.800000')
+    expect(screen.getByRole('link', { name: 'View larger map' })).toHaveAttribute('href', expect.stringContaining('mlat=-6.200000&mlon=106.800000'))
   })
 })

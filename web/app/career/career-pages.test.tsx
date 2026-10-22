@@ -152,19 +152,18 @@ describe('vacancy page', () => {
 })
 
 describe('contact page', () => {
-  it('shows office details with tel, mailto and whatsapp links and the map facade', async () => {
+  it('shows office details with tel, mailto and whatsapp links and the embedded map', async () => {
     render(await ContactPage())
     expect(screen.getByRole('link', { name: '+62 21 0000' })).toHaveAttribute('href', 'tel:+62210000')
     expect(screen.getByRole('link', { name: 'info@example.com' })).toHaveAttribute('href', 'mailto:info@example.com')
     expect(screen.getByRole('link', { name: 'Chat on WhatsApp' })).toHaveAttribute('href', 'https://wa.me/1')
-    expect(screen.getByRole('button', { name: 'Open map' })).toBeInTheDocument()
-    expect(document.querySelector('iframe')).toBeNull()
+    expect(document.querySelector('iframe')).not.toBeNull()
     expect(screen.getByRole('form', { name: 'Contact form' })).toBeInTheDocument()
   })
 
   it('omits the map block when coordinates are missing', async () => {
     api.getSite.mockResolvedValue({ ...SITE, contact: { ...SITE.contact, coordinates: null } })
     render(await ContactPage())
-    expect(screen.queryByRole('button', { name: 'Open map' })).not.toBeInTheDocument()
+    expect(document.querySelector('iframe')).toBeNull()
   })
 })

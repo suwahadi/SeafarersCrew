@@ -32,7 +32,7 @@ export function CopyLinkButton({ url, className }: { url: string; className?: st
   return (
     <button type="button" onClick={() => void copy()} className={className}>
       <Icon name={copied ? 'check' : 'link'} className="size-4" />
-      <span aria-live="polite">{copied ? 'Link copied' : 'Copy link'}</span>
+      <span aria-live="polite" className="max-sm:sr-only">{copied ? 'Link copied' : 'Copy link'}</span>
     </button>
   )
 }

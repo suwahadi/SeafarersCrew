@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { ContactForm } from '@/components/forms/ContactForm'
 import { Container } from '@/components/ui/container'
 import { Icon } from '@/components/ui/icons'
-import { MapFacade } from '@/components/ui/map-facade'
+import { MapEmbed } from '@/components/ui/map-embed'
 import { PageHeader } from '@/components/ui/page-header'
 import { findPage, getSite } from '@/lib/api'
 import { appUrl, publicApiUrl } from '@/lib/env'
@@ -81,7 +81,7 @@ export default async function ContactPage() {
               ) : null}
               {whatsappHref ? (
                 <p className="flex items-center gap-3">
-                  <Icon name="whatsapp" className="size-5 shrink-0 text-accent-text" />
+                  <Icon name="whatsapp" className="size-5 shrink-0 text-[#25D366]" />
                   <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={DETAIL_LINK}>
                     Chat on WhatsApp
                   </a>
@@ -89,7 +89,7 @@ export default async function ContactPage() {
               ) : null}
             </address>
           </section>
-          {coordinates ? <MapFacade coordinates={coordinates} address={address} /> : null}
+          {coordinates ? <MapEmbed coordinates={coordinates} /> : null}
         </div>
         <section aria-labelledby="message-heading" className="min-w-0">
           <h2 id="message-heading" className="mb-2 text-2xl font-bold text-primary">
