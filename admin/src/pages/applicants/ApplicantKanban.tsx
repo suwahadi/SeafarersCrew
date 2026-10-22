@@ -48,7 +48,7 @@ export function ApplicantKanban({ filters }: { filters: Query }) {
           {errorMessage(error)}
         </p>
       ) : null}
-      <div className="grid gap-3 overflow-x-auto pb-2 lg:grid-cols-5" role="group" aria-label="Applicant pipeline">
+      <div className="grid gap-3 overflow-x-auto pb-2 lg:grid-cols-[repeat(5,minmax(13rem,1fr))]" role="group" aria-label="Applicant pipeline">
         {STAGES.map((stage, i) => {
           const result = columns[i]
           const items = groupByStage(result?.data?.data ?? [])[stage]
@@ -65,7 +65,7 @@ export function ApplicantKanban({ filters }: { filters: Query }) {
               }}
               onDragLeave={() => setOver((o) => (o === stage ? null : o))}
               onDrop={(e) => onDrop(e, stage)}
-              className={`flex min-h-48 min-w-64 flex-col rounded-lg p-2 ring-1 transition-colors duration-150 ease-out ${over === stage ? 'bg-navy-50 ring-navy-400' : 'bg-slate-50 ring-slate-200'}`}
+              className={`flex min-h-48 min-w-0 flex-col rounded-lg p-2 ring-1 transition-colors duration-150 ease-out ${over === stage ? 'bg-navy-50 ring-navy-400' : 'bg-slate-50 ring-slate-200'}`}
             >
               <header className="mb-2 flex items-center justify-between px-1">
                 <h2 id={`col-${stage}`} className="text-sm font-semibold text-slate-800">

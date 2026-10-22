@@ -104,6 +104,7 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
     : null
 
   const Form = config.Form
+  const grid = config.layout === 'grid'
 
   return (
     <div>
@@ -136,27 +137,31 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
       ) : (
         <ol
           aria-label={config.title}
-          className={config.layout === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'divide-y divide-slate-100 rounded-lg bg-white ring-1 ring-slate-200'}
+          className={grid ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'divide-y divide-slate-100 rounded-lg bg-white ring-1 ring-slate-200'}
         >
           {visible.map((row, i) => {
             const lock = config.lockedReason?.(row) ?? null
             const label = config.label(row)
             const dragging = drag.dragging === row.id
+            const handle = (
+              <span {...drag.handleProps(row.id)} title="Drag to reorder" aria-hidden className="cursor-grab select-none px-1 text-slate-400 hover:text-slate-600">
+                ⋮⋮
+              </span>
+            )
             return (
               <li
                 key={row.id}
                 {...drag.targetProps(row.id)}
                 className={`flex gap-3 p-3 transition-opacity duration-150 ease-out motion-reduce:transition-none ${dragging ? 'opacity-50' : 'opacity-100'} ${
-                  config.layout === 'grid' ? 'flex-col rounded-lg bg-white shadow-sm ring-1 ring-slate-200' : 'flex-wrap items-center'
+                  grid ? 'flex-col rounded-lg bg-white shadow-sm ring-1 ring-slate-200' : 'flex-wrap items-center'
                 }`}
               >
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <span {...drag.handleProps(row.id)} title="Drag to reorder" aria-hidden className="cursor-grab select-none px-1 text-slate-400">
-                    ⋮⋮
-                  </span>
+                <div className={`flex min-w-0 flex-1 gap-3 ${grid ? 'items-start' : 'items-center'}`}>
+                  {grid ? null : handle}
                   <div className="min-w-0 flex-1">{config.summary(row)}</div>
                 </div>
-                <div className="flex flex-wrap items-center gap-1">
+                <div className={`flex flex-wrap items-center gap-1 ${grid ? 'border-t border-slate-100 pt-2' : ''}`}>
+                  {grid ? handle : null}
                   <button
                     type="button"
                     role="switch"
@@ -169,7 +174,7 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
                   >
                     <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform duration-150 ease-out motion-reduce:transition-none ${row.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
                   </button>
-                  <span className="mr-1 w-14 text-xs text-slate-500">{row.is_active ? 'Active' : 'Inactive'}</span>
+                  <span className="mr-auto w-14 text-xs text-slate-600">{row.is_active ? 'Active' : 'Inactive'}</span>
                   <Button size="sm" variant="ghost" aria-label={`Move ${label} up`} disabled={i === 0 || reorder.isPending} onClick={() => step(row.id, -1)}>
                     ↑
                   </Button>

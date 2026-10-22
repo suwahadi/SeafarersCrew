@@ -64,7 +64,7 @@ export const galleryConfig: CmsConfig<GalleryItem> = {
   label: (r) => r.alt_text || r.caption || 'Photo',
   summary: (r) => (
     <div className="flex flex-col gap-2">
-      <Thumb image={r.image} width={200} height={150} alt={r.alt_text} fit="cover" />
+      <Thumb image={r.image} width={200} height={150} alt={r.alt_text} fit="cover" fluid />
       <div className="min-w-0">
         <p className="truncate text-sm text-slate-900">{r.caption || r.alt_text}</p>
         <p className="mt-1 flex gap-1">{r.show_on_home ? <Badge tone="blue">Home</Badge> : null}</p>

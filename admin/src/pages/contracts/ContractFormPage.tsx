@@ -7,7 +7,7 @@ import { contractsApi, type Contract } from '@/api/contracts'
 import { ApiError, errorMessage } from '@/api/client'
 import { CrewPicker } from '@/components/forms/CrewPicker'
 import { Button } from '@/components/ui/Button'
-import { SelectField, TextAreaField, TextField } from '@/components/ui/Field'
+import { inputClass, SelectField, TextAreaField, TextField } from '@/components/ui/Field'
 import { Card, PageHeader } from '@/components/ui/Layout'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
@@ -244,7 +244,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
             <table className="mt-4 min-w-full text-sm">
               <caption className="sr-only">Allowances</caption>
               <thead>
-                <tr className="text-left text-xs text-slate-500 uppercase">
+                <tr className="text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   <th className="py-1 pr-2">Allowance</th>
                   <th className="py-1 pr-2">Basis</th>
                   <th className="py-1 pr-2">Value</th>
@@ -262,7 +262,7 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
                         <select
                           aria-label={`Allowance ${i + 1} type`}
                           disabled={!editable('allowances')}
-                          className="h-9 w-full rounded-md border-0 px-2 text-sm ring-1 ring-slate-300"
+                          className={inputClass}
                           {...register(`allowances.${i}.allowance_type_id`)}
                         >
                           <option value="">Select…</option>
@@ -276,18 +276,18 @@ function ContractForm({ contract }: { contract: Contract | undefined }) {
                           <p className="text-xs text-red-600">{formState.errors.allowances[i].allowance_type_id.message}</p>
                         ) : null}
                       </td>
-                      <td className="py-1 pr-2 text-slate-600">{basis === 'fixed_day' ? 'Per day × 30' : basis === 'percent_basic' ? '% of basic' : 'Per month'}</td>
+                      <td className="py-1 pr-2 leading-8 text-slate-600">{basis === 'fixed_day' ? 'Per day × 30' : basis === 'percent_basic' ? '% of basic' : 'Per month'}</td>
                       <td className="py-1 pr-2">
                         <input
                           aria-label={`Allowance ${i + 1} value`}
                           inputMode="decimal"
                           disabled={!editable('allowances')}
-                          className="h-9 w-32 rounded-md border-0 px-2 text-sm ring-1 ring-slate-300"
+                          className={`${inputClass} w-36!`}
                           {...register(`allowances.${i}.value`)}
                         />
                         {formState.errors.allowances?.[i]?.value ? <p className="text-xs text-red-600">{formState.errors.allowances[i].value.message}</p> : null}
                       </td>
-                      <td className="py-1 pr-2 text-right tabular-nums">{formatMoney(monthlyAllowance(basis, row?.value ?? '', basic, decimals), currency, decimals)}</td>
+                      <td className="py-1 pr-2 text-right leading-8 tabular-nums">{formatMoney(monthlyAllowance(basis, row?.value ?? '', basic, decimals), currency, decimals)}</td>
                       <td className="py-1 text-right">
                         {editable('allowances') ? (
                           <Button variant="ghost" size="sm" onClick={() => allowances.remove(i)} aria-label={`Remove allowance ${i + 1}`}>

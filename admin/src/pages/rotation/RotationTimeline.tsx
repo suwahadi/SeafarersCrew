@@ -45,7 +45,7 @@ export function RotationTimeline({ timeline, onSelectBar, onSelectPlan }: Props)
               {ticks.map((t) => (
                 <span key={t.label} aria-hidden className="absolute inset-y-0 border-l border-slate-100" style={{ left: `${t.left}%` }} />
               ))}
-              {todayLeft !== null ? <span aria-hidden className="absolute inset-y-0 z-10 border-l-2 border-navy-800" style={{ left: `${todayLeft}%` }} /> : null}
+              {todayLeft !== null ? <span aria-hidden className="absolute inset-y-0 border-l-2 border-navy-800" style={{ left: `${todayLeft}%` }} /> : null}
               {lane.bars.length === 0 ? <p className="px-2 py-1 text-xs text-slate-400">No contracts in this range.</p> : null}
               {lane.bars.map((bar) => {
                 const pos = barPosition(bar.sign_on_date, bar.planned_sign_off_date, from, to)

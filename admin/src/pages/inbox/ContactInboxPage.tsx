@@ -6,7 +6,7 @@ import { errorMessage } from '@/api/client'
 import { DataGrid } from '@/components/datagrid/DataGrid'
 import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/Toast'
-import { PageHeader } from '@/components/ui/Layout'
+import { EmptyState, PageHeader } from '@/components/ui/Layout'
 import { formatDateTime } from '@/lib/format'
 import { openPatch } from '@/lib/inbox'
 import { InboxMessagePanel } from './InboxMessagePanel'
@@ -89,7 +89,7 @@ export default function ContactInboxPage() {
           }}
         />
       </div>
-      <div className="grid gap-4 xl:grid-cols-[1fr_26rem]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <DataGrid<ContactMessage>
           id="contact-messages"
           columns={columns}
@@ -110,7 +110,11 @@ export default function ContactInboxPage() {
             onPatch={(body) => patch.mutate({ id: selected.id, body })}
             onClose={() => setSelected(null)}
           />
-        ) : null}
+        ) : (
+          <div className="hidden xl:block">
+            <EmptyState title="No message selected">Select a message in the list to read it here and reply by email.</EmptyState>
+          </div>
+        )}
       </div>
     </>
   )

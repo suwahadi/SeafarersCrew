@@ -103,6 +103,7 @@ export default function ApplicantListPage() {
         {kanban ? null : (
           <MultiSelect
             label="Stage"
+            hideLabel
             placeholder="All stages"
             options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
             value={split(filters.stage)}
@@ -111,6 +112,7 @@ export default function ApplicantListPage() {
         )}
         <MultiSelect
           label="Rank"
+          hideLabel
           placeholder="All ranks"
           options={options.ranks.map((r) => ({ value: r.id, label: r.name }))}
           value={split(filters.rank_id)}

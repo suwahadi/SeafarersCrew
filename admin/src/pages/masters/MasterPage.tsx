@@ -174,7 +174,7 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
   return (
     <label className="flex items-center gap-1 text-sm text-slate-600">
       <span className="sr-only">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="h-9 rounded-md border-0 text-sm ring-1 ring-inset ring-slate-300">
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="h-9 rounded-md border-0 bg-white text-sm text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500">
         <option value="">All {label.toLowerCase()}</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>

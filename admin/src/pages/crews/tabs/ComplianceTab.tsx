@@ -57,7 +57,7 @@ export function ComplianceTab({ crewId }: { crewId: string }) {
                 </span>
                 <span className="flex items-center gap-2">
                   {it.expired_date ? <span className="text-slate-600">{formatDate(it.expired_date)}</span> : null}
-                  {it.status !== 'missing' && it.badge ? <ExpiryBadge badge={it.badge} daysLeft={it.days_left} /> : null}
+                  {it.status !== 'missing' && it.badge && it.badge !== 'green' && it.badge !== 'expired' ? <ExpiryBadge badge={it.badge} daysLeft={it.days_left} /> : null}
                   <ComplianceStatusBadge status={it.status} />
                 </span>
               </li>
