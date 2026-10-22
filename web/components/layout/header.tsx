@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import { MobileMenu } from '@/components/layout/mobile-menu'
-import { ButtonLink } from '@/components/ui/button'
 import { Container } from '@/components/ui/container'
 import { Icon } from '@/components/ui/icons'
 import { SiteImage } from '@/components/ui/site-image'
@@ -101,9 +100,6 @@ export function Header({ site, activeLanguage }: HeaderProps) {
         </nav>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <LanguageSwitcher languages={[...languages]} sourceCode={source} initialCode={activeLanguage} />
-          <ButtonLink href="/career" variant="accent" className="whitespace-nowrap px-3 py-2.5 text-xs sm:px-4 sm:text-sm">
-            Apply Now
-          </ButtonLink>
           <MobileMenu>
             <nav aria-label="Mobile">
               <ul className="divide-y divide-line">
