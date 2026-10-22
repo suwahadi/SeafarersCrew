@@ -93,16 +93,9 @@ export const heroSlideConfig: CmsConfig<HeroSlide> = {
   singular: 'Slide',
   description: 'Slides shown at the top of the home page, in this order.',
   layout: 'list',
+  compact: true,
   label: (r) => r.heading || 'Untitled slide',
-  summary: (r) => (
-    <div className="flex items-center gap-3">
-      <Thumb image={r.image} width={96} height={54} alt="" fit="cover" />
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-slate-900">{r.heading || 'Untitled slide'}</p>
-        {r.subheading ? <p className="truncate text-xs text-slate-500">{r.subheading}</p> : null}
-      </div>
-    </div>
-  ),
+  summary: (r) => <Thumb image={r.image} width={96} height={54} alt={r.heading} fit="cover" />,
   toPayload: (r, isActive) => ({
     image_file_id: r.image?.file_id ?? '',
     mobile_image_file_id: r.mobile_image?.file_id ?? null,

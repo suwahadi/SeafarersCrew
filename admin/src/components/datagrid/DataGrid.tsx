@@ -111,7 +111,7 @@ export function DataGrid<T>({
   return (
     <div className="min-w-0 rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 p-3">
-        <div className="flex min-w-0 basis-full items-center gap-2 sm:basis-auto sm:flex-1">
+        <div className={`flex min-w-0 flex-1 items-center gap-2 ${toolbar ? 'basis-full sm:basis-auto' : ''}`}>
           <input
             type="search"
             value={search}
@@ -122,8 +122,8 @@ export function DataGrid<T>({
           />
           {query.isFetching ? <Spinner size="sm" label="Updating" /> : null}
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-          {toolbar}
+        {toolbar ? <div className="flex flex-wrap items-center gap-2">{toolbar}</div> : null}
+        <div className="ml-auto">
           <ColumnChooser table={table} />
         </div>
       </div>

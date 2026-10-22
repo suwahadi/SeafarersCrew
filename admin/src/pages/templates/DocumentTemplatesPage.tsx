@@ -79,10 +79,9 @@ export default function DocumentTemplatesPage() {
                             to={`/document-templates/${t.id}`}
                             aria-label={`Edit ${t.name}`}
                             title={`Edit ${t.name}`}
-                            className="relative inline-flex h-8 items-center justify-center gap-2 rounded px-3 text-navy-700 hover:bg-slate-100 max-sm:size-9 max-sm:px-0"
+                            className="inline-flex size-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                           >
-                            <Icon name="edit" />
-                            <span className="max-sm:sr-only">Edit</span>
+                            <Icon name="edit" className="size-[1.125rem]" />
                           </Link>
                           <Button
                             size="sm"

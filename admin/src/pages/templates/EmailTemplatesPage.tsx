@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 import { errorMessage } from '@/api/client'
 import { EMAIL_TEMPLATES_KEY, emailTemplatesApi } from '@/api/templates'
+import { Icon } from '@/components/ui/Icon'
 import { EmptyState, PageHeader } from '@/components/ui/Layout'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDateTime } from '@/lib/format'
@@ -40,8 +41,13 @@ export default function EmailTemplatesPage() {
                   <td className="px-4 py-2 text-slate-600">{t.subject}</td>
                   <td className="px-4 py-2 text-slate-600">{formatDateTime(t.updated_at)}</td>
                   <td className="px-4 py-2 text-right">
-                    <Link to={`/email-templates/${t.code}`} className="text-navy-700 hover:underline" aria-label={`Edit ${t.name}`}>
-                      Edit
+                    <Link
+                      to={`/email-templates/${t.code}`}
+                      aria-label={`Edit ${t.name}`}
+                      title={`Edit ${t.name}`}
+                      className="inline-flex size-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    >
+                      <Icon name="edit" className="size-[1.125rem]" />
                     </Link>
                   </td>
                 </tr>

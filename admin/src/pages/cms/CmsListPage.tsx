@@ -30,6 +30,7 @@ export interface CmsConfig<T extends CmsBase> {
   singular: string
   description: string
   layout: 'list' | 'grid'
+  compact?: boolean
   label: (row: T) => string
   summary: (row: T) => ReactNode
   toPayload: (row: T, isActive: boolean) => Record<string, unknown>
@@ -109,6 +110,7 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
 
   const Form = config.Form
   const grid = config.layout === 'grid'
+  const compact = config.compact === true
 
   return (
     <div>
@@ -161,7 +163,7 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
                 >
                   <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform duration-150 ease-out motion-reduce:transition-none ${row.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
                 </button>
-                <span aria-hidden className="hidden w-14 text-xs text-slate-600 sm:inline">
+                <span aria-hidden className={`hidden w-14 text-xs text-slate-600 ${compact ? '' : 'sm:inline'}`}>
                   {row.is_active ? 'Active' : 'Inactive'}
                 </span>
               </>
@@ -192,7 +194,7 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
               <li
                 key={row.id}
                 {...sort.rowProps(row.id)}
-                className={`transition-opacity duration-150 ease-out motion-reduce:transition-none ${grid ? 'flex min-w-0 flex-col gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200' : 'flex flex-wrap items-center gap-x-2 gap-y-1 p-2 sm:gap-x-3 sm:p-3'}`}
+                className={`transition-opacity duration-150 ease-out motion-reduce:transition-none ${grid ? 'flex min-w-0 flex-col gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200' : compact ? 'flex items-center gap-2 p-2 sm:gap-3 sm:p-3' : 'flex flex-wrap items-center gap-x-2 gap-y-1 p-2 sm:gap-x-3 sm:p-3'}`}
               >
                 {grid ? (
                   <>
@@ -206,8 +208,8 @@ export function CmsListPage<T extends CmsBase>({ config, headerActions }: CmsLis
                 ) : (
                   <>
                     {handle}
-                    <div className="min-w-0 flex-1 basis-48 sm:basis-36">{config.summary(row)}</div>
-                    <div className="ml-auto flex items-center gap-1">
+                    <div className={`min-w-0 flex-1 ${compact ? '' : 'basis-48 sm:basis-36'}`}>{config.summary(row)}</div>
+                    <div className="ml-auto flex shrink-0 items-center gap-1">
                       <div className="mr-1 flex items-center gap-2">{controls}</div>
                       {actions}
                     </div>

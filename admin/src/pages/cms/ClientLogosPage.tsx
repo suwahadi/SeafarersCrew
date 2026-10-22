@@ -58,17 +58,10 @@ export const clientLogoConfig: CmsConfig<ClientLogo> = {
   title: 'Client logos',
   singular: 'Logo',
   description: 'Logos of clients and principals shown on the website.',
-  layout: 'grid',
+  layout: 'list',
+  compact: true,
   label: (r) => r.name,
-  summary: (r) => (
-    <div className="flex items-center gap-3">
-      <Thumb image={r.logo} width={96} height={64} alt={r.name} />
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-slate-900">{r.name}</p>
-        {r.url ? <p className="truncate text-xs text-slate-500">{r.url}</p> : null}
-      </div>
-    </div>
-  ),
+  summary: (r) => <Thumb image={r.logo} width={96} height={64} alt={r.name} />,
   toPayload: (r, isActive) => ({ name: r.name, logo_file_id: r.logo?.file_id ?? '', url: r.url, is_active: isActive }),
   Form: ClientLogoForm,
   emptyHint: 'Add a client logo.',
