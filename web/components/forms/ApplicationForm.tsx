@@ -31,12 +31,15 @@ export interface RankOption {
   name: string
 }
 
-interface ApplicationFormProps {
+export type ApplicationStatus = 'editing' | 'sending' | 'sent'
+
+export interface ApplicationFormProps {
   vacancySlug: string
   ranks: readonly RankOption[]
   defaultRankId: string
   turnstileSiteKey: string
   apiUrl: string
+  onStatusChange?: (status: ApplicationStatus) => void
 }
 
 const ID_PREFIX = 'application'
@@ -65,7 +68,7 @@ function focusField(name: string): void {
   document.getElementById(fieldId(ID_PREFIX, name))?.focus()
 }
 
-export function ApplicationForm({ vacancySlug, ranks, defaultRankId, turnstileSiteKey, apiUrl }: ApplicationFormProps) {
+export function ApplicationForm({ vacancySlug, ranks, defaultRankId, turnstileSiteKey, apiUrl, onStatusChange }: ApplicationFormProps) {
   const [values, setValues] = useState<ApplicationValues>({ ...BLANK_VALUES, rank_applied_id: defaultRankId })
   const [cv, setCv] = useState<File | null>(null)
   const [documents, setDocuments] = useState<File[]>([])
@@ -156,12 +159,14 @@ export function ApplicationForm({ vacancySlug, ranks, defaultRankId, turnstileSi
       return
     }
     setSending(true)
+    onStatusChange?.('sending')
     const result = await submitRequest<{ application_id: string }>(
       `${apiUrl}/api/public/v1/applications`,
       { body: buildApplicationFormData(vacancySlug, values, { cv, documents }, token) },
       SERVER_FIELDS,
     )
     setSending(false)
+    onStatusChange?.(result.ok ? 'sent' : 'editing')
     if (result.ok) {
       setApplicationId(result.data.application_id)
       requestAnimationFrame(() => {
@@ -190,7 +195,7 @@ export function ApplicationForm({ vacancySlug, ranks, defaultRankId, turnstileSi
         role="status"
         className="rounded-lg border border-accent-text bg-surface p-6 text-center sm:p-10"
       >
-        <h2 className="text-2xl font-bold text-primary">Thank you, your application has been received</h2>
+        <h3 className="text-2xl font-bold text-primary">Thank you, your application has been received</h3>
         <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-muted">Your Application ID</p>
         <p translate="no" className="mt-1 text-4xl font-bold tracking-widest text-primary" data-testid="application-id">
           {applicationId}

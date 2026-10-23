@@ -15,6 +15,20 @@ Object.defineProperty(window, 'matchMedia', {
 
 Element.prototype.scrollIntoView = vi.fn()
 
+// jsdom has no modal dialog API; mirror the parts the site relies on (open attribute and the close event).
+if (typeof HTMLDialogElement.prototype.showModal !== 'function') {
+  HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  }
+  HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    if (!this.hasAttribute('open')) {
+      return
+    }
+    this.removeAttribute('open')
+    this.dispatchEvent(new Event('close'))
+  }
+}
+
 afterEach(() => {
   cleanup()
 })

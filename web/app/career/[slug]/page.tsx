@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ApplicationForm } from '@/components/forms/ApplicationForm'
-import { ButtonLink } from '@/components/ui/button'
+import { ApplyButton, ApplyProvider } from '@/components/forms/ApplyDialog'
 import { Container } from '@/components/ui/container'
 import { JsonLd } from '@/components/ui/json-ld'
 import { PageHeader } from '@/components/ui/page-header'
@@ -42,6 +41,10 @@ function summaryRows(vacancy: VacancyDetail): { label: string; value: string }[]
   return rows.filter((row) => row.value !== '')
 }
 
+function closingText(vacancy: VacancyDetail): string {
+  return vacancy.closing_date ? `Applications close on ${formatDate(vacancy.closing_date)}` : 'Open until filled'
+}
+
 export async function generateMetadata({ params }: VacancyPageProps): Promise<Metadata> {
   const { slug } = await params
   const [site, vacancy] = await Promise.all([getSite(), findVacancy(slug)])
@@ -66,7 +69,7 @@ export default async function VacancyPage({ params }: VacancyPageProps) {
   }
   const documents = list(vacancy.required_documents)
 
-  return (
+  const page = (
     <>
       <PageHeader
         title={vacancy.title}
@@ -76,20 +79,18 @@ export default async function VacancyPage({ params }: VacancyPageProps) {
           { name: vacancy.title, path: `/career/${vacancy.slug}` },
         ]}
       >
-        <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
           {vacancy.is_open ? (
-            <ButtonLink href="#apply" variant="accent">
-              Apply now
-            </ButtonLink>
+            <>
+              <ApplyButton />
+              <p className="text-sm opacity-90">{closingText(vacancy)}</p>
+            </>
           ) : (
             <p className="rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold">Closed</p>
           )}
-          <p translate="no" className="text-sm font-semibold uppercase tracking-wider opacity-90">
-            {vacancy.id}
-          </p>
         </div>
       </PageHeader>
-      <Container className="grid gap-10 py-10 sm:py-14 lg:grid-cols-[1fr_20rem]">
+      <Container className="grid gap-10 py-10 sm:py-14 lg:grid-cols-[1fr_20rem] lg:gap-12">
         <div className="min-w-0 space-y-10">
           {vacancy.is_open ? null : (
             <div role="status" className="rounded-lg border border-amber-400 bg-amber-50 px-5 py-4 text-amber-950">
@@ -130,16 +131,28 @@ export default async function VacancyPage({ params }: VacancyPageProps) {
               </ul>
             </section>
           ) : null}
+          {vacancy.is_open ? (
+            <section aria-labelledby="vacancy-apply" className="rounded-lg border border-line bg-surface p-6 sm:p-8">
+              <h2 id="vacancy-apply" className="text-xl font-bold text-primary">
+                Apply for this position
+              </h2>
+              <p className="mt-2 text-muted">Have your CV ready. Certificates and other supporting documents are optional.</p>
+              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+                <ApplyButton />
+                <p className="text-sm text-muted">{closingText(vacancy)}</p>
+              </div>
+            </section>
+          ) : null}
         </div>
-        <aside aria-labelledby="vacancy-summary" className="h-fit rounded-lg border border-line bg-surface p-5 lg:sticky lg:top-24">
+        <aside aria-labelledby="vacancy-summary" className="h-fit rounded-lg border border-line bg-white p-5 lg:sticky lg:top-24">
           <h2 id="vacancy-summary" className="mb-4 text-lg font-bold text-primary">
             Job summary
           </h2>
-          <dl className="space-y-3 text-sm">
+          <dl className="divide-y divide-line text-sm">
             {summaryRows(vacancy).map((row) => (
-              <div key={row.label}>
+              <div key={row.label} className="py-2.5 first:pt-0 last:pb-0">
                 <dt className="text-muted">{row.label}</dt>
-                <dd translate={row.label === 'Vacancy ID' ? 'no' : undefined} className="font-semibold text-ink">
+                <dd translate={row.label === 'Vacancy ID' ? 'no' : undefined} className="mt-0.5 font-semibold text-ink">
                   {row.value}
                 </dd>
               </div>
@@ -147,28 +160,29 @@ export default async function VacancyPage({ params }: VacancyPageProps) {
           </dl>
         </aside>
       </Container>
-      {vacancy.is_open ? (
-        <section id="apply" aria-labelledby="apply-heading" className="border-t border-line bg-white">
-          <Container className="py-10 sm:py-14">
-            <h2 id="apply-heading" className="mb-2 text-2xl font-bold text-primary">
-              Apply for this position
-            </h2>
-            <p className="mb-8 max-w-2xl text-muted">
-              Fields marked with an asterisk are required. Your details are used only to process your application.
-            </p>
-            <div className="max-w-3xl">
-              <ApplicationForm
-                vacancySlug={vacancy.slug}
-                ranks={rankOptions(vacancy, filters.ranks)}
-                defaultRankId={vacancy.rank.id}
-                turnstileSiteKey={site.turnstile_site_key}
-                apiUrl={publicApiUrl()}
-              />
-            </div>
-          </Container>
-        </section>
-      ) : null}
-      {vacancy.is_open ? <JsonLd node={jobPostingJsonLd(vacancy, site, appUrl())} /> : null}
+    </>
+  )
+
+  if (!vacancy.is_open) {
+    return page
+  }
+
+  return (
+    <>
+      <ApplyProvider
+        vacancyTitle={vacancy.title}
+        vacancyId={vacancy.id}
+        form={{
+          vacancySlug: vacancy.slug,
+          ranks: rankOptions(vacancy, filters.ranks),
+          defaultRankId: vacancy.rank.id,
+          turnstileSiteKey: site.turnstile_site_key,
+          apiUrl: publicApiUrl(),
+        }}
+      >
+        {page}
+      </ApplyProvider>
+      <JsonLd node={jobPostingJsonLd(vacancy, site, appUrl())} />
     </>
   )
 }

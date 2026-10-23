@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { VacancyDetail } from '@/lib/api'
@@ -122,12 +123,17 @@ describe('career page', () => {
 })
 
 describe('vacancy page', () => {
-  it('renders details, the required documents and the application form when open', async () => {
+  it('renders details and the required documents, and opens the application form from an Apply Now button', async () => {
     api.findVacancy.mockResolvedValue(DETAIL)
+    const user = userEvent.setup()
     const { container } = render(await VacancyPage({ params: Promise.resolve({ slug: 'master-ahts' }) }))
     expect(screen.getByRole('heading', { level: 1, name: 'Master AHTS' })).toBeInTheDocument()
     expect(screen.getByText('Passport')).toBeInTheDocument()
     expect(screen.getByText('Needs COC')).toBeInTheDocument()
+    const applyButtons = screen.getAllByRole('button', { name: 'Apply Now' })
+    expect(applyButtons).toHaveLength(2)
+    expect(screen.queryByRole('form', { name: 'Job application' })).not.toBeInTheDocument()
+    await user.click(applyButtons[1]!)
     expect(screen.getByRole('form', { name: 'Job application' })).toBeInTheDocument()
     expect(container.innerHTML).toContain('"@type":"JobPosting"')
     expect(container.innerHTML).toContain('validThrough')
@@ -137,6 +143,7 @@ describe('vacancy page', () => {
     api.findVacancy.mockResolvedValue({ ...DETAIL, is_open: false })
     const { container } = render(await VacancyPage({ params: Promise.resolve({ slug: 'master-ahts' }) }))
     expect(screen.getByText('This vacancy is closed')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Apply Now' })).not.toBeInTheDocument()
     expect(screen.queryByRole('form', { name: 'Job application' })).not.toBeInTheDocument()
     expect(container.innerHTML).not.toContain('JobPosting')
   })

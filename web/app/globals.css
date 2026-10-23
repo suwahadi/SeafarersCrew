@@ -217,6 +217,28 @@
   .count-value {
     font-variant-numeric: tabular-nums;
   }
+
+  html:has(.apply-dialog[open]) {
+    overflow: hidden;
+  }
+
+  .apply-dialog[open],
+  .apply-dialog[open]::backdrop {
+    transition:
+      opacity 200ms ease-out,
+      transform 200ms ease-out;
+  }
+
+  @starting-style {
+    .apply-dialog[open] {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+
+    .apply-dialog[open]::backdrop {
+      opacity: 0;
+    }
+  }
 }
 
 @layer utilities {
