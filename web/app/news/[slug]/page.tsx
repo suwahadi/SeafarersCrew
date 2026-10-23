@@ -62,17 +62,17 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </p>
       </PageHeader>
       <Container className="py-12 sm:py-16">
-        <article className="mx-auto max-w-3xl">
+        <article>
           {article.thumbnail ? (
             <SiteImage
               image={article.thumbnail}
-              sizes="(min-width: 768px) 768px, 100vw"
+              sizes="(min-width: 1152px) 1088px, 100vw"
               priority
               alt={firstNonEmpty(article.thumbnail.alt, article.title)}
-              className="mb-8 w-full rounded-lg object-cover"
+              className="mb-8 aspect-[2/1] w-full rounded-lg object-cover"
             />
           ) : null}
-          <RichHtml html={article.body_html} className="prose-wide" />
+          <RichHtml html={article.body_html} />
           <div className="mt-10 border-t border-line pt-6">
             <ShareButtons url={url} title={article.title} />
           </div>

@@ -48,7 +48,7 @@ export function FaqAccordion({ items }: { items: readonly FaqEntry[] }) {
             </h2>
             <div id={panelId} role="region" aria-labelledby={buttonId} data-open={open} className="faq-panel">
               <div inert={!open}>
-                <RichHtml html={item.answerHtml} className="prose-wide px-5 pb-5" />
+                <RichHtml html={item.answerHtml} className="px-5 pb-5" />
               </div>
             </div>
           </div>

@@ -212,14 +212,9 @@
 
 @layer utilities {
   .prose-site {
-    max-width: 68ch;
     font-size: 1.0625rem;
     line-height: 1.75;
     color: var(--color-ink);
-  }
-
-  .prose-site.prose-wide {
-    max-width: none;
   }
 
   .prose-site > :first-child {

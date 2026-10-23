@@ -7,9 +7,5 @@ export function FaqBlock({ settings }: { settings: FaqSettings }) {
   if (items.length === 0) {
     return null
   }
-  return (
-    <div className="mx-auto max-w-3xl">
-      <FaqAccordion items={items} />
-    </div>
-  )
+  return <FaqAccordion items={items} />
 }
