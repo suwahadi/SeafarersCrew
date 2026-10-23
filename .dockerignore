@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+**/node_modules
+**/.next
+admin/dist
+backend/bin
+**/coverage.out
+**/*.tsbuildinfo
+.lighthouseci
