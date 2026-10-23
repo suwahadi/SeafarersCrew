@@ -40,6 +40,14 @@
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-navy-500;
   }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab']:not([aria-disabled='true']),
+  a[href],
+  summary,
+  input[type='file']:not(:disabled)::file-selector-button {
+    cursor: pointer;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
