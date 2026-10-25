@@ -29,6 +29,14 @@ docker compose exec api /app/seafarers admin:create --name="Your Name" --email=y
 
 Use `docker compose --profile s3 up -d` to run the bundled S3-compatible store (SeaweedFS) instead of an external S3 bucket. MinIO no longer publishes free container images, so SeaweedFS replaces it.
 
+## Redeploy
+
+After pushing to `main`, log in to the production server over SSH and run:
+
+```bash
+seafarers-deploy
+```
+
 ## CLI
 
 | Command | Purpose |
