@@ -163,8 +163,10 @@ func (r *ReliefPlan) Validate() map[string]string {
 	Trim(&r.ContractID, &r.RelieverCrewID, &r.PlannedReliefDate, &r.JoiningPort, &r.Status, &r.Notes)
 	r.ContractID, r.RelieverCrewID = strings.ToUpper(r.ContractID), strings.ToUpper(r.RelieverCrewID)
 	e := Errors{}
-	e.Required("reliever_crew_id", r.RelieverCrewID, 9)
-	r.date = e.RequiredDate("planned_relief_date", r.PlannedReliefDate)
+	if r.Status != model.ReliefCancelled {
+		e.Required("reliever_crew_id", r.RelieverCrewID, 9)
+		r.date = e.RequiredDate("planned_relief_date", r.PlannedReliefDate)
+	}
 	e.MaxLen("joining_port", r.JoiningPort, 100)
 	e.MaxLen("notes", r.Notes, 2000)
 	e.OneOf("status", r.Status, model.ReliefPlanned, model.ReliefConfirmed, model.ReliefCancelled)

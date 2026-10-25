@@ -152,7 +152,7 @@ func (s *BackupService) Handle(ctx context.Context, j model.Job) (any, error) {
 	if err != nil {
 		return nil, job.Permanent{Err: err}
 	}
-	return map[string]any{"backup_id": b.ID, "storage_key": b.StorageKey, "size_bytes": b.SizeBytes}, nil
+	return map[string]any{"backup_id": b.ID, "size_bytes": b.SizeBytes}, nil
 }
 
 // RunNow performs a backup in the calling process, for the command line.
