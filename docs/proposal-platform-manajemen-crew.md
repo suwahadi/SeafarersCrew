@@ -48,20 +48,7 @@ Hasilnya, data tidak lagi tersebar di banyak file Excel, folder, dan chat. Semua
 
 ## 3. Solusi dalam Satu Gambaran
 
-```
- Calon pelamar            Tim Anda (admin)                 Principal / Klien
-      |                          |                                 |
- Website perusahaan  ->  Seleksi pelamar  ->  Data crew lengkap    |
- (lowongan, form)        (papan tahapan)      (dokumen, sertifikat) |
-                                                   |                |
-                                          Kontrak & penempatan      |
-                                                   |                |
-                                          Rotasi & jadwal relief    |
-                                                   |                |
-                                  Dokumen PDF (kontrak, CV, quotation)
-                                                   |                |
-                                          Kirim email langsung  ---->
-```
+![Satu data crew dipakai di semua tahap](images/alur-data-crew.svg)
 
 Satu data crew dipakai di semua tahap. Data tidak perlu diketik ulang.
 
@@ -197,29 +184,7 @@ Website ini tampil untuk publik dan seluruh isinya dikelola dari panel admin.
 
 ## 6. Alur Kerja dari Awal sampai Akhir
 
-```
-1. Lowongan dipublikasikan di website
-        |
-2. Pelamar mengisi formulir dan mengunggah CV
-        |  (tim mendapat notifikasi email, pelamar mendapat konfirmasi)
-3. Seleksi di papan pelamar: tahap 1 -> 5, dengan catatan
-        |
-4. Pelamar diterima -> dijadikan data crew (status Available)
-        |
-5. Lengkapi dokumen dan sertifikat -> sistem menilai kepatuhan
-        |
-6. Penempatan: buat kontrak (Draft) -> cetak SEA PDF -> kirim email
-        |
-7. Sign-on: kontrak Aktif -> status crew On Board
-        |
-8. Pantau dari dashboard dan timeline rotasi
-        |  (peringatan 30 hari sebelum relief dan dokumen habis)
-9. Rencanakan relief: sistem menyarankan pengganti yang patuh
-        |
-10. Sign-off: kontrak Selesai -> pengalaman tercatat otomatis
-        |
-11. Crew kembali Available dan siap ditempatkan lagi
-```
+![Alur kerja dari lowongan sampai crew kembali Available](images/alur-kerja-crew.svg)
 
 Di setiap langkah, sistem mengurus pekerjaan administratif yang biasanya dilakukan manual: pergantian status, perhitungan masa berlayar, pengisian dokumen, dan pengingat.
 
