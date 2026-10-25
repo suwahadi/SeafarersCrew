@@ -42,7 +42,7 @@ The script lives on the server at `/usr/local/bin/seafarers-deploy`, not in this
 1. Takes a lock so two deploys cannot run at once.
 2. Fetches from GitHub and resets the working tree to `origin/main`. Tracked files are overwritten; the untracked `.env` and server overrides are kept.
 3. Builds `api`, `web` and `proxy` one at a time to stay within the server's 2 GB of RAM.
-4. Starts the stack with `docker compose up -d --wait` (up to 300 seconds) and prunes unused images.
+4. Starts the stack with `docker compose up -d --wait` (up to 300 seconds), prunes unused images and trims the build cache to 2 GB so it does not fill the disk.
 5. Checks that the website answers HTTP 200 and prints the previous commit.
 
 Deploy a specific commit or roll back by passing a git ref:
