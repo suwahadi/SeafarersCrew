@@ -76,6 +76,8 @@ describe('delete message', () => {
 })
 
 describe('reorder', () => {
+  const rowOrder = () => Array.from(document.querySelectorAll<HTMLElement>('[data-sort-key]')).map((el) => el.dataset.sortKey)
+
   it('moveItem moves an element and ignores out of range moves', () => {
     expect(moveItem(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a'])
     expect(moveItem(['a', 'b', 'c'], 2, 0)).toEqual(['c', 'a', 'b'])
@@ -92,6 +94,9 @@ describe('reorder', () => {
     const user = userEvent.setup()
     ;(await screen.findByRole('button', { name: /^Reorder Rank 1\./ })).focus()
     await user.keyboard('{ArrowDown}')
+    // The handle regains focus in an animation frame; wait for the new order and that frame before moving on.
+    await waitFor(() => expect(rowOrder()).toEqual(['r2', 'r1', 'r3']))
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
     await waitFor(() => expect(screen.getByRole('button', { name: /^Reorder Rank 1\./ })).toHaveFocus())
     screen.getByRole('button', { name: /^Reorder Rank 3\./ }).focus()
     await user.keyboard('{ArrowUp}')
