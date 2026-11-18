@@ -131,41 +131,34 @@ func (p payrollSheet) cellType(key string, rowIndex int) excelize.CellType {
 
 func (p payrollSheet) literalAmount(row []string, rowIndex int) bool {
 	for _, key := range []string{"usd", "idr"} {
-		if p.raw(row, key) == "" {
-			continue
-		}
-		if formula, err := p.f.GetCellFormula(p.sheet, p.axis(key, rowIndex)); err == nil && formula == "" {
+		if p.raw(row, key) != "" && !p.hasFormula(key, rowIndex) {
 			return true
 		}
 	}
 	return false
 }
 
-func (p payrollSheet) amount(row []string, key string, rowIndex int) (*decimal.Decimal, bool) {
-	v := p.value(row, key, rowIndex)
-	if t := p.cellType(key, rowIndex); (t == excelize.CellTypeSharedString || t == excelize.CellTypeInlineString) && v != "" && !textAmount.MatchString(v) {
-		return nil, false
+func (p payrollSheet) amount(row []string, key, label string, rowIndex int) (*decimal.Decimal, string) {
+	v := p.raw(row, key)
+	if v == "" && p.hasFormula(key, rowIndex) {
+		return nil, label + " is a formula with no saved result. Open the file in Excel and save it again."
 	}
-	return parseAmount(v)
+	if t := p.cellType(key, rowIndex); (t == excelize.CellTypeSharedString || t == excelize.CellTypeInlineString) && v != "" && !textAmount.MatchString(v) {
+		return nil, label + " is not a number."
+	}
+	d, ok := parseAmount(v)
+	if !ok {
+		return nil, label + " is not a number."
+	}
+	return d, ""
 }
 
-func (p payrollSheet) value(row []string, key string, rowIndex int) string {
-	v := p.raw(row, key)
-	if v != "" {
-		return v
-	}
+func (p payrollSheet) hasFormula(key string, rowIndex int) bool {
 	if _, ok := p.cols[key]; !ok {
-		return ""
+		return false
 	}
-	axis := p.axis(key, rowIndex)
-	if formula, err := p.f.GetCellFormula(p.sheet, axis); err != nil || formula == "" {
-		return ""
-	}
-	calc, err := p.f.CalcCellValue(p.sheet, axis, excelize.Options{RawCellValue: true})
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(calc)
+	formula, err := p.f.GetCellFormula(p.sheet, p.axis(key, rowIndex))
+	return err == nil && formula != ""
 }
 
 func readPayrollRows(f *excelize.File, sheet string, rows [][]string, header int, cols map[string]int) ([]WorkbookRow, error) {
@@ -205,13 +198,14 @@ func (p payrollSheet) row(row []string, i int) WorkbookRow {
 		r.AccountNumber, r.AccountNumeric = plainNumber(r.AccountNumber), true
 	}
 	errs := map[string]string{}
+	var msg string
+	if r.USD, msg = p.amount(row, "usd", "USD", i); msg != "" {
+		errs["usd"] = msg
+	}
+	if r.IDR, msg = p.amount(row, "idr", "IDR", i); msg != "" {
+		errs["idr"] = msg
+	}
 	var ok bool
-	if r.USD, ok = p.amount(row, "usd", i); !ok {
-		errs["usd"] = "USD is not a number."
-	}
-	if r.IDR, ok = p.amount(row, "idr", i); !ok {
-		errs["idr"] = "IDR is not a number."
-	}
 	if r.Date, ok = parsePayrollDate(p.raw(row, "date")); !ok {
 		errs["date"] = "The date could not be read."
 	}

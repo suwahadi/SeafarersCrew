@@ -26,6 +26,11 @@ type wbRow struct {
 
 type wbFormula string
 
+type wbCached struct {
+	formula string
+	value   float64
+}
+
 type wbOptions struct {
 	hiddenFirst   bool
 	headerlessTab bool
@@ -40,6 +45,9 @@ func setWorkbookCell(t *testing.T, f *excelize.File, sheet, axis string, v any) 
 	case nil:
 	case wbFormula:
 		require.NoError(t, f.SetCellFormula(sheet, axis, string(x)))
+	case wbCached:
+		require.NoError(t, f.SetCellValue(sheet, axis, x.value))
+		require.NoError(t, f.SetCellFormula(sheet, axis, x.formula))
 	case string:
 		require.NoError(t, f.SetCellStr(sheet, axis, x))
 	default:
@@ -160,13 +168,14 @@ func TestParsePayrollWorkbook_IDROnlySplitRowAndBlankDate(t *testing.T) {
 	assert.Empty(t, rows[0].Errors)
 }
 
-func TestParsePayrollWorkbook_FormulaAndTextNumbers(t *testing.T) {
+func TestParsePayrollWorkbook_ReadsSavedFormulaResults(t *testing.T) {
 	data := buildPayrollWorkbook(t, wbOptions{},
-		wbRow{emp: 900101, bank: "BNI", holder: "A", account: "1", usd: wbFormula("1000+800"), idr: "32,100,000", date: "20-Oct-2026"},
+		wbRow{emp: 900101, bank: "BNI", holder: "A", account: "1", usd: wbCached{formula: "1000+800", value: 1800}, idr: "32,100,000", date: "20-Oct-2026"},
 	)
 	rows, err := ParsePayrollWorkbook(data)
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
+	assert.Empty(t, rows[0].Errors)
 	require.NotNil(t, rows[0].USD)
 	assert.Equal(t, "1800", rows[0].USD.String())
 	assert.Equal(t, "32100000", rows[0].IDR.String())
@@ -252,4 +261,15 @@ func TestParsePayrollWorkbook_KeepsKeylessRowsWithAmounts(t *testing.T) {
 	assert.Equal(t, 11, rows[1].Line)
 	assert.Empty(t, rows[1].EmployeeNo)
 	assert.Equal(t, "5000", rows[1].IDR.String())
+}
+
+func TestParsePayrollWorkbook_NeverEvaluatesUploadedFormulas(t *testing.T) {
+	data := buildPayrollWorkbook(t, wbOptions{},
+		wbRow{emp: 900101, bank: "BNI", holder: "A", account: "1", usd: wbFormula("1000+800"), idr: 1},
+	)
+	rows, err := ParsePayrollWorkbook(data)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	assert.Nil(t, rows[0].USD, "a formula without a saved result must not be calculated")
+	assert.Equal(t, "USD is a formula with no saved result. Open the file in Excel and save it again.", rows[0].Errors["usd"])
 }
