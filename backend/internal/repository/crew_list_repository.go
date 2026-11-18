@@ -81,9 +81,10 @@ func crewWhere(f model.CrewFilter) (*Where, func() string) {
 		w.Add(`c.id IN (
 			SELECT id FROM crews WHERE full_name ILIKE %s
 			UNION SELECT id FROM crews WHERE public_id = %s
+			UNION SELECT id FROM crews WHERE employee_no <> '' AND deleted_at IS NULL AND upper(ltrim(employee_no, '0')) = %s
 			UNION SELECT td.crew_id FROM travel_documents td JOIN document_types dt ON dt.id = td.document_type_id
 			WHERE dt.code IN ('passport', 'seaman_book', 'buku_pelaut') AND td.number ILIKE %s)`,
-			like, strings.ToUpper(f.Q), like)
+			like, strings.ToUpper(f.Q), model.NormalizeEmployeeNo(f.Q), like)
 	}
 	if len(f.StatusCodes) > 0 {
 		w.Add("s.code = ANY(%s)", f.StatusCodes)

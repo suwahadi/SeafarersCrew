@@ -26,14 +26,15 @@ type Context string
 
 // Upload contexts from PRD table 10.2.
 const (
-	ContextPhoto        Context = "photo"
-	ContextCMSImage     Context = "cms_image"
-	ContextLogo         Context = "logo"
-	ContextFlag         Context = "flag"
-	ContextCrewDocument Context = "crew_document"
-	ContextCrewCV       Context = "crew_cv"
-	ContextApplicant    Context = "applicant"
-	ContextCSVImport    Context = "csv_import"
+	ContextPhoto         Context = "photo"
+	ContextCMSImage      Context = "cms_image"
+	ContextLogo          Context = "logo"
+	ContextFlag          Context = "flag"
+	ContextCrewDocument  Context = "crew_document"
+	ContextCrewCV        Context = "crew_cv"
+	ContextApplicant     Context = "applicant"
+	ContextCSVImport     Context = "csv_import"
+	ContextPayrollImport Context = "payroll_import"
 )
 
 // Kind is the detected content family of a file.
@@ -46,6 +47,7 @@ const (
 	KindDOC   Kind = "doc"
 	KindDOCX  Kind = "docx"
 	KindSVG   Kind = "svg"
+	KindXLSX  Kind = "xlsx"
 	KindCSV   Kind = "csv"
 )
 
@@ -62,14 +64,15 @@ var (
 )
 
 var allowed = map[Context][]string{
-	ContextPhoto:        imageExts,
-	ContextCMSImage:     imageExts,
-	ContextLogo:         append(slices.Clone(imageExts), "svg"),
-	ContextFlag:         {"svg"},
-	ContextCrewDocument: documentExts,
-	ContextCrewCV:       officeExts,
-	ContextApplicant:    officeExts,
-	ContextCSVImport:    {"csv"},
+	ContextPhoto:         imageExts,
+	ContextCMSImage:      imageExts,
+	ContextLogo:          append(slices.Clone(imageExts), "svg"),
+	ContextFlag:          {"svg"},
+	ContextCrewDocument:  documentExts,
+	ContextCrewCV:        officeExts,
+	ContextApplicant:     officeExts,
+	ContextCSVImport:     {"csv"},
+	ContextPayrollImport: {"xlsx"},
 }
 
 var publicContexts = map[Context]bool{ContextCMSImage: true, ContextLogo: true, ContextFlag: true}
@@ -174,6 +177,7 @@ var sniffed = map[string][]string{
 	"pdf":  {"application/pdf"},
 	"doc":  {"application/octet-stream"},
 	"docx": {"application/zip"},
+	"xlsx": {"application/zip"},
 	"svg":  {"text/xml; charset=utf-8", "text/plain; charset=utf-8"},
 	"csv":  {"text/plain; charset=utf-8"},
 }
@@ -185,6 +189,7 @@ var magic = map[string][]string{
 	"webp": {"webp"},
 	"pdf":  {"pdf"},
 	"docx": {"docx", "zip"},
+	"xlsx": {"xlsx", "zip"},
 }
 
 // Detect checks the magic bytes against the claimed extension and returns the content kind.
@@ -212,6 +217,8 @@ func Detect(data []byte, ext string) (Kind, error) {
 		return KindDOC, nil
 	case "docx":
 		return KindDOCX, nil
+	case "xlsx":
+		return KindXLSX, nil
 	case "svg":
 		return KindSVG, nil
 	default:

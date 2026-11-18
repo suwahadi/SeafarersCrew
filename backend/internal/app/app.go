@@ -61,6 +61,7 @@ type App struct {
 	Crews       *service.CrewService
 	CrewExport  *service.CrewExportService
 	CrewImport  *service.CrewImportService
+	payroll     *admin.PayrollHandler
 	Email       *service.EmailService
 	Documents   *service.DocumentService
 	Dashboard   *service.DashboardService
@@ -143,6 +144,7 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*App, err
 	a.wireSite()
 	a.wireCrew()
 	a.wireDocuments()
+	a.wirePayroll()
 	a.Dashboard = service.NewDashboardService(repository.NewDashboardRepository(a.DB), repository.NewCacheRepository(a.Redis), a.Settings, time.Now)
 	a.wireEmail()
 	a.wireOperations()
@@ -291,6 +293,7 @@ func (a *App) Router() http.Handler {
 		Files:         admin.NewFileHandler(a.Files),
 		Email:         a.emailHandler(),
 		Contracts:     a.contractRoutes(),
+		Payroll:       a.payroll,
 		Dashboard:     admin.NewDashboardHandler(a.Dashboard),
 		AfterWrite:    a.invalidateDashboard,
 		Documents:     a.documentHandlers(),

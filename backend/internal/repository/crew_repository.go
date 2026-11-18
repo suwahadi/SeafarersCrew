@@ -26,7 +26,7 @@ func NewCrewRepository(pool *pgxpool.Pool) *CrewRepository {
 const crewSelect = `SELECT c.id, c.public_id, c.full_name, c.place_of_birth, c.date_of_birth, c.gender, c.nationality, c.religion,
 	c.marital_status, c.height_cm, c.weight_kg, c.shoe_size, c.coverall_size, c.applied_rank_id, c.crew_status_id, c.status_reason,
 	c.photo_file_id, c.cv_file_id, c.address, c.city, c.province, c.country, c.postal_code, c.home_phone, c.mobile_phone,
-	c.email, c.nearest_airport, c.created_at, c.updated_at,
+	c.email, c.nearest_airport, c.employee_no, c.created_at, c.updated_at,
 	coalesce(r.name, ''), coalesce(s.code, ''), s.name, s.color
 FROM crews c
 JOIN crew_statuses s ON s.id = c.crew_status_id
@@ -37,7 +37,7 @@ func scanCrew(row pgx.Row) (model.Crew, error) {
 	err := row.Scan(&c.ID, &c.PublicID, &c.FullName, &c.PlaceOfBirth, &c.DateOfBirth, &c.Gender, &c.Nationality, &c.Religion,
 		&c.MaritalStatus, &c.HeightCM, &c.WeightKG, &c.ShoeSize, &c.CoverallSize, &c.AppliedRankID, &c.CrewStatusID, &c.StatusReason,
 		&c.PhotoFileID, &c.CVFileID, &c.Address, &c.City, &c.Province, &c.Country, &c.PostalCode, &c.HomePhone, &c.MobilePhone,
-		&c.Email, &c.NearestAirport, &c.CreatedAt, &c.UpdatedAt,
+		&c.Email, &c.NearestAirport, &c.EmployeeNo, &c.CreatedAt, &c.UpdatedAt,
 		&c.AppliedRankName, &c.StatusCode, &c.StatusName, &c.StatusColor)
 	return c, notFound(err)
 }
@@ -47,13 +47,13 @@ func (r *CrewRepository) Create(ctx context.Context, c model.Crew, publicID, sta
 	var id uuid.UUID
 	err := r.pool.QueryRow(ctx, `INSERT INTO crews (public_id, full_name, place_of_birth, date_of_birth, gender, nationality, religion,
 		marital_status, height_cm, weight_kg, shoe_size, coverall_size, applied_rank_id, crew_status_id, photo_file_id, cv_file_id,
-		address, city, province, country, postal_code, home_phone, mobile_phone, email, nearest_airport)
-		SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, s.id, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+		address, city, province, country, postal_code, home_phone, mobile_phone, email, nearest_airport, employee_no)
+		SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, s.id, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26
 		FROM crew_statuses s WHERE s.code = $14
 		RETURNING id`,
 		publicID, c.FullName, c.PlaceOfBirth, c.DateOfBirth, c.Gender, c.Nationality, c.Religion, c.MaritalStatus, c.HeightCM,
 		c.WeightKG, c.ShoeSize, c.CoverallSize, c.AppliedRankID, statusCode, c.PhotoFileID, c.CVFileID, c.Address, c.City,
-		c.Province, c.Country, c.PostalCode, c.HomePhone, c.MobilePhone, c.Email, c.NearestAirport).Scan(&id)
+		c.Province, c.Country, c.PostalCode, c.HomePhone, c.MobilePhone, c.Email, c.NearestAirport, c.EmployeeNo).Scan(&id)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("insert crew: %w", notFound(err))
 	}
@@ -65,11 +65,11 @@ func (r *CrewRepository) Update(ctx context.Context, id uuid.UUID, c model.Crew)
 	tag, err := r.pool.Exec(ctx, `UPDATE crews SET full_name = $2, place_of_birth = $3, date_of_birth = $4, gender = $5,
 		nationality = $6, religion = $7, marital_status = $8, height_cm = $9, weight_kg = $10, shoe_size = $11, coverall_size = $12,
 		applied_rank_id = $13, photo_file_id = $14, cv_file_id = $15, address = $16, city = $17, province = $18, country = $19,
-		postal_code = $20, home_phone = $21, mobile_phone = $22, email = $23, nearest_airport = $24
+		postal_code = $20, home_phone = $21, mobile_phone = $22, email = $23, nearest_airport = $24, employee_no = $25
 		WHERE id = $1 AND deleted_at IS NULL`,
 		id, c.FullName, c.PlaceOfBirth, c.DateOfBirth, c.Gender, c.Nationality, c.Religion, c.MaritalStatus, c.HeightCM, c.WeightKG,
 		c.ShoeSize, c.CoverallSize, c.AppliedRankID, c.PhotoFileID, c.CVFileID, c.Address, c.City, c.Province, c.Country,
-		c.PostalCode, c.HomePhone, c.MobilePhone, c.Email, c.NearestAirport)
+		c.PostalCode, c.HomePhone, c.MobilePhone, c.Email, c.NearestAirport, c.EmployeeNo)
 	if err != nil {
 		return fmt.Errorf("update crew: %w", err)
 	}

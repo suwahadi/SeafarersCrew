@@ -35,6 +35,7 @@ const crew: Crew = {
   mobile_phone: '+628111111111',
   email: '',
   nearest_airport: '',
+  employee_no: '900101',
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
 }
@@ -112,5 +113,21 @@ describe('CrewDetailPage tabs', () => {
     expect(update.mock.calls[0]?.[1]).toMatchObject({ full_name: 'Budi Hartono', mobile_phone: '+628111111111' })
     await waitFor(() => expect(personalTab.querySelector('[aria-label="unsaved changes"]')).toBeNull())
     expect(contactTab.querySelector('[aria-label="unsaved changes"]')).not.toBeNull()
+  })
+
+  it('shows and submits the Employee ID', async () => {
+    update.mockImplementation((_id: string, input: { employee_no: string }) => Promise.resolve({ ...crew, employee_no: input.employee_no }))
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByRole('heading', { name: 'Budi Santoso' })
+    const field = screen.getByLabelText('Employee ID')
+    expect(field).toHaveValue('900101')
+    await user.clear(field)
+    await user.type(field, '00412')
+    await user.click(screen.getByRole('button', { name: 'Save personal data' }))
+
+    await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
+    expect(update.mock.calls[0]?.[1]).toMatchObject({ employee_no: '00412' })
   })
 })

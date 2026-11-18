@@ -38,6 +38,14 @@ func List(w http.ResponseWriter, data any, meta Meta) {
 	write(w, http.StatusOK, envelope{Data: data, Meta: &meta})
 }
 
+// ListWithTotals writes {"data": data, "meta": meta, "totals": totals}.
+func ListWithTotals(w http.ResponseWriter, data any, meta Meta, totals any) {
+	write(w, http.StatusOK, struct {
+		envelope
+		Totals any `json:"totals"`
+	}{envelope{Data: data, Meta: &meta}, totals})
+}
+
 // NoContent writes 204.
 func NoContent(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNoContent)

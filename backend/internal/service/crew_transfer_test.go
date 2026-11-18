@@ -4,17 +4,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xuri/excelize/v2"
 
 	"github.com/suwahadi/seafarerscrew/backend/internal/model"
 	"github.com/suwahadi/seafarerscrew/backend/internal/repository"
+	"github.com/suwahadi/seafarerscrew/backend/internal/support/apperr"
 )
 
 func TestSafeCellNeutralisesFormulas(t *testing.T) {
@@ -95,9 +98,20 @@ func TestExportExcludesBlacklistedUnlessAskedFor(t *testing.T) {
 }
 
 type fakeImportStore struct {
-	lookups  repository.ImportLookups
-	existing map[string]bool
-	imported []repository.ImportCrew
+	lookups   repository.ImportLookups
+	existing  map[string]bool
+	employees map[string]bool
+	imported  []repository.ImportCrew
+}
+
+func (f *fakeImportStore) ExistingEmployeeNumbers(_ context.Context, normalized []string) (map[string]bool, error) {
+	out := map[string]bool{}
+	for _, n := range normalized {
+		if f.employees[n] {
+			out[n] = true
+		}
+	}
+	return out, nil
 }
 
 func (f *fakeImportStore) ImportLookups(context.Context) (repository.ImportLookups, error) {
@@ -216,4 +230,43 @@ func TestImportCommitRunsStagedRowsAndReports(t *testing.T) {
 
 	_, err = svc.Commit(ctx, preview.Token)
 	requireAppErr(t, err, "import_expired")
+}
+
+func TestCrewImport_EmployeeIDColumn(t *testing.T) {
+	svc, store, _, _ := newImportFixture()
+	store.employees = map[string]bool{"777": true}
+	assert.True(t, strings.HasSuffix(strings.SplitN(string(svc.Template()), "\n", 2)[0], ",employee_id"))
+
+	csvData := "full_name,applied_rank,employee_id\n" +
+		"New Hand,CO,900101\n" +
+		"Taken,CO,00777\n" +
+		"Twice,CO,0900101\n"
+	preview, err := svc.Validate(context.Background(), []byte(csvData))
+	require.NoError(t, err)
+	byLine := map[int]ImportPreviewRow{}
+	for _, r := range preview.Rows {
+		byLine[r.Line] = r
+	}
+	assert.Equal(t, RowValid, byLine[2].Status)
+	assert.Equal(t, RowInvalid, byLine[3].Status)
+	assert.Equal(t, "Another crew member already has this Employee ID.", byLine[3].Errors["employee_id"])
+	assert.Equal(t, RowInvalid, byLine[4].Status)
+	assert.Contains(t, byLine[4].Errors["employee_id"], "line 2")
+
+	_, err = svc.Commit(context.Background(), preview.Token)
+	require.NoError(t, err)
+	var staged stagedImport
+	raw, ok, err := svc.cache.Get(context.Background(), importKey(preview.Token))
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.NoError(t, json.Unmarshal(raw, &staged))
+	require.Len(t, staged.Rows, 1)
+	assert.Equal(t, "900101", staged.Rows[0].Crew.EmployeeNo)
+}
+
+func TestCrewWriteError_EmployeeNoDuplicate(t *testing.T) {
+	err := crewWriteError(fmt.Errorf("insert crew: %w", &pgconn.PgError{Code: "23505", ConstraintName: "crews_employee_no_key"}))
+	var appErr *apperr.Error
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, "Another crew member already has this Employee ID.", appErr.Fields["employee_no"])
 }

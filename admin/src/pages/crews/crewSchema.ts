@@ -14,6 +14,7 @@ const optionalRange = (min: number, max: number) =>
 
 export const personalSchema = z.object({
   full_name: z.string().trim().min(1, 'The full name is required.').max(150, 'At most 150 characters.'),
+  employee_no: z.string().trim().max(40, 'At most 40 characters.'),
   place_of_birth: z.string().trim().max(100),
   date_of_birth: optionalDate,
   gender: z.enum(['', 'male', 'female']),
@@ -52,6 +53,7 @@ export const CONTACT_FIELDS = Object.keys(contactSchema.shape) as (keyof Contact
 
 export const EMPTY_PERSONAL: PersonalValues = {
   full_name: '',
+  employee_no: '',
   place_of_birth: '',
   date_of_birth: '',
   gender: '',
@@ -82,6 +84,7 @@ export const EMPTY_CONTACT: ContactValues = {
 export function personalFromCrew(c: Crew): PersonalValues {
   return {
     full_name: c.full_name,
+    employee_no: c.employee_no,
     place_of_birth: c.place_of_birth,
     date_of_birth: c.date_of_birth ?? '',
     gender: c.gender ?? '',

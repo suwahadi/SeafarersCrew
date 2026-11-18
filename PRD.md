@@ -59,6 +59,7 @@ Version 1 ships Parts A, B and C with one administrator account; audit log, 2FA 
 - Document builder for Seafarer Employment Agreement, Quotation (daily rate and lump sum) and Crew CV, with PDF export.
 - Email dispatch of generated PDFs through the Brevo API.
 - Advanced datagrid, CSV/Excel export and CSV import.
+- Payroll transfer register: monthly periods of bank-transfer rows tied to crew records, Excel import and export in the bank-sheet layout, server-side filters with totals.
 - Website CMS: page builder, news, hero slider, gallery, testimonials, client logos, stats counter, job vacancies, applicant pipeline, contact inbox, language list.
 - Public website on Next.js with SSR, career portal, contact form, Cloudflare Turnstile, Google Translate switcher, full SEO.
 - File pipeline: validation, WebP and PDF compression, DOC/DOCX to PDF conversion, random renaming, private S3 storage.
@@ -72,9 +73,9 @@ Version 1 ships Parts A, B and C with one administrator account; audit log, 2FA 
 - Audit log of data changes.
 - Two-factor authentication.
 - Email or WhatsApp alerts for expiring documents (alerts are visual, in-app only).
-- Currency conversion and exchange rates.
+- Currency conversion and exchange rates (payroll rows carry the USD and IDR amounts as entered).
 - Antivirus scanning of uploads.
-- Payroll processing, deductions and allotments.
+- Payroll calculation, deductions and allotments (the payroll register records amounts; it does not compute them).
 - Crew self-service portal and applicant login.
 - Converting applicants into crew records.
 - Native mobile apps.

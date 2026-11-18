@@ -72,4 +72,10 @@ describe('DataGrid', () => {
     setup([])
     expect(await screen.findByText('No records found.')).toBeInTheDocument()
   })
+
+  it('renders the page summary', async () => {
+    const fetchPage = vi.fn((): Promise<GridPage<Row>> => Promise.resolve({ rows: [{ id: '1', name: 'Budi', rank: 'Master' }], total: 1, summary: <p>Total IDR 1</p> }))
+    render(<DataGrid id="summary" columns={columns} fetchPage={fetchPage} rowKey={(r) => r.id} />, { wrapper })
+    expect(await screen.findByText('Total IDR 1')).toBeInTheDocument()
+  })
 })

@@ -39,6 +39,7 @@ export interface Crew {
   mobile_phone: string
   email: string
   nearest_airport: string
+  employee_no: string
   created_at: string
   updated_at: string
 }
@@ -67,6 +68,7 @@ export interface CrewInput {
   mobile_phone: string
   email: string
   nearest_airport: string
+  employee_no: string
 }
 
 export interface CrewRow {
@@ -354,6 +356,7 @@ export function crewToInput(c: Crew): CrewInput {
     mobile_phone: c.mobile_phone,
     email: c.email,
     nearest_airport: c.nearest_airport,
+    employee_no: c.employee_no,
   }
 }
 

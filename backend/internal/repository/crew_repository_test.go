@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/suwahadi/seafarerscrew/backend/internal/model"
+	"github.com/suwahadi/seafarerscrew/backend/internal/platform/postgres"
 	"github.com/suwahadi/seafarerscrew/backend/internal/repository"
 )
 
@@ -271,4 +272,38 @@ func TestImportCrewsIsolatesFailedRows(t *testing.T) {
 	var count int
 	require.NoError(t, testDB.QueryRow(ctx, `SELECT count(*) FROM crews`).Scan(&count))
 	assert.Equal(t, 2, count)
+}
+
+func TestCrewEmployeeNo_UniqueIgnoringCaseAndLeadingZeros(t *testing.T) {
+	setupCrewWorld(t)
+	repo := repository.NewCrewRepository(testDB)
+	ctx := context.Background()
+	first, err := repo.Create(ctx, model.Crew{FullName: "First", EmployeeNo: "00412"}, "EMPAAAAA2", "available")
+	require.NoError(t, err)
+
+	_, err = repo.Create(ctx, model.Crew{FullName: "Second", EmployeeNo: "412"}, "EMPBBBBB2", "available")
+	assert.True(t, postgres.IsUniqueViolation(err, "crews_employee_no_key"), "%v", err)
+
+	blankA, err := repo.Create(ctx, model.Crew{FullName: "Blank A"}, "EMPCCCCC2", "available")
+	require.NoError(t, err)
+	_, err = repo.Create(ctx, model.Crew{FullName: "Blank B"}, "EMPDDDDD2", "available")
+	require.NoError(t, err)
+
+	err = repo.Update(ctx, blankA, model.Crew{FullName: "Blank A", EmployeeNo: "0412"})
+	assert.True(t, postgres.IsUniqueViolation(err, "crews_employee_no_key"), "%v", err)
+
+	got, err := repo.GetByID(ctx, first)
+	require.NoError(t, err)
+	assert.Equal(t, "00412", got.EmployeeNo)
+}
+
+func TestCrewList_KeywordMatchesEmployeeNo(t *testing.T) {
+	w := setupCrewWorld(t)
+	repo := repository.NewCrewRepository(testDB)
+	_, err := repo.Create(context.Background(), model.Crew{FullName: "Budi Santoso", EmployeeNo: "900101"}, "EMPEEEEE2", "available")
+	require.NoError(t, err)
+	createCrew(t, repo, "EMPFFFFF2", "Someone Else", nil, nil, "")
+
+	assert.Equal(t, []string{"EMPEEEEE2"}, listIDs(t, repo, model.CrewFilter{Today: w.today, Q: "900101"}))
+	assert.Equal(t, []string{"EMPEEEEE2"}, listIDs(t, repo, model.CrewFilter{Today: w.today, Q: "0900101"}))
 }

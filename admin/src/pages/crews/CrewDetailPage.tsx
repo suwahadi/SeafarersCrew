@@ -77,6 +77,11 @@ function CrewHeader({ crew, rankName, compliant, onAction, onDelete }: HeaderPro
           <h1 className="text-xl font-semibold break-words text-navy-800">{crew.full_name}</h1>
           <p className="text-sm text-slate-600">
             Crew ID <span className="font-mono">{crew.id}</span>
+            {crew.employee_no ? (
+              <>
+                {' '}· Employee ID <span className="font-mono">{crew.employee_no}</span>
+              </>
+            ) : null}
             {rankName ? <> · {rankName}</> : null}
           </p>
           <div className="flex flex-wrap items-center gap-2">

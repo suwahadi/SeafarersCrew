@@ -315,6 +315,9 @@ var crewFieldByColumn = map[string]string{
 }
 
 func crewWriteError(err error) error {
+	if postgres.IsUniqueViolation(err, "crews_employee_no_key") {
+		return apperr.Validation(map[string]string{"employee_no": employeeNoTaken})
+	}
 	if col, ok := postgres.ForeignKeyColumn(err, "crews"); ok {
 		if field, known := crewFieldByColumn[col]; known {
 			return apperr.Validation(map[string]string{field: "The selected value does not exist."})

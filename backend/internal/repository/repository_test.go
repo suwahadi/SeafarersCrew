@@ -27,7 +27,7 @@ func TestMigrationsRollBackAndReapplyCleanly(t *testing.T) {
 	assert.Zero(t, n)
 	require.NoError(t, postgres.Migrate(testDSN, "up"))
 	require.NoError(t, testDB.QueryRow(context.Background(), `SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name <> 'schema_migrations'`).Scan(&n))
-	assert.Equal(t, 46, n)
+	assert.Equal(t, 48, n)
 }
 
 func TestPrimaryKeysAreUUIDv7(t *testing.T) {

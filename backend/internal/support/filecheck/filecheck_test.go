@@ -3,6 +3,7 @@ package filecheck
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xuri/excelize/v2"
 
 	"github.com/suwahadi/seafarerscrew/backend/internal/support/apperr"
 )
@@ -257,4 +259,81 @@ func TestSanitizeSVGRejectsNonSVG(t *testing.T) {
 	assert.Equal(t, CodeRejected, code(t, err))
 	_, err = SanitizeSVG([]byte(`<!DOCTYPE svg [<!ENTITY x "boom">]><svg>&x;</svg>`))
 	assert.Equal(t, CodeRejected, code(t, err))
+}
+
+func xlsxBytes(t *testing.T) []byte {
+	t.Helper()
+	f := excelize.NewFile()
+	require.NoError(t, f.SetCellValue("Sheet1", "A1", "Employee ID"))
+	buf, err := f.WriteToBuffer()
+	require.NoError(t, err)
+	return buf.Bytes()
+}
+
+func zipWithEntries(t *testing.T, n int) []byte {
+	t.Helper()
+	var b bytes.Buffer
+	zw := zip.NewWriter(&b)
+	for _, name := range []string{"[Content_Types].xml", "xl/workbook.xml"} {
+		w, err := zw.Create(name)
+		require.NoError(t, err)
+		_, err = w.Write([]byte("<x/>"))
+		require.NoError(t, err)
+	}
+	for i := range n {
+		_, err := zw.Create(fmt.Sprintf("xl/extra%d.xml", i))
+		require.NoError(t, err)
+	}
+	require.NoError(t, zw.Close())
+	return b.Bytes()
+}
+
+func zipDeclaringSize(t *testing.T, size uint64) []byte {
+	t.Helper()
+	var b bytes.Buffer
+	zw := zip.NewWriter(&b)
+	for _, name := range []string{"[Content_Types].xml", "xl/workbook.xml"} {
+		w, err := zw.Create(name)
+		require.NoError(t, err)
+		_, err = w.Write([]byte("<x/>"))
+		require.NoError(t, err)
+	}
+	w, err := zw.CreateRaw(&zip.FileHeader{Name: "xl/worksheets/sheet1.xml", Method: zip.Store, CompressedSize64: 4, UncompressedSize64: size})
+	require.NoError(t, err)
+	_, err = w.Write([]byte("<x/>"))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	return b.Bytes()
+}
+
+func TestCheckXLSX(t *testing.T) {
+	require.NoError(t, CheckXLSX(xlsxBytes(t)))
+
+	cases := map[string][]byte{
+		"word document":            docxBytes(t, map[string]string{"[Content_Types].xml": "<Types/>", "word/document.xml": "<w:document/>"}),
+		"no content types":         docxBytes(t, map[string]string{"xl/workbook.xml": "<workbook/>"}),
+		"plain text":               []byte("Employee ID,IDR\n900101,1000\n"),
+		"too many entries":         zipWithEntries(t, MaxXLSXEntries),
+		"declared size over limit": zipDeclaringSize(t, MaxXLSXUncompressed+1),
+		"macros": docxBytes(t, map[string]string{
+			"[Content_Types].xml": "<Types/>", "xl/workbook.xml": "<workbook/>", "xl/vbaProject.bin": "binary",
+		}),
+	}
+	for name, data := range cases {
+		err := CheckXLSX(data)
+		require.Error(t, err, name)
+		assert.Equal(t, CodeRejected, code(t, err), name)
+	}
+}
+
+func TestDetect_XLSX(t *testing.T) {
+	kind, err := Detect(xlsxBytes(t), "xlsx")
+	require.NoError(t, err)
+	assert.Equal(t, KindXLSX, kind)
+
+	_, err = Detect([]byte("Employee ID,IDR\n"), "xlsx")
+	assert.Equal(t, CodeInvalidType, code(t, err))
+	assert.ElementsMatch(t, []string{"xlsx"}, Allowed(ContextPayrollImport))
+	_, ok := ParseContext("payroll_import")
+	assert.True(t, ok)
 }

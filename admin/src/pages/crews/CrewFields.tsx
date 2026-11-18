@@ -30,6 +30,7 @@ export function PersonalFields({ register, control, errors, age, withFiles = tru
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <TextField label="Full name" required error={errors.full_name?.message} {...register('full_name')} />
+      <TextField label="Employee ID" error={errors.employee_no?.message} {...register('employee_no')} />
       <TextField label="Place of birth" error={errors.place_of_birth?.message} {...register('place_of_birth')} />
       <TextField
         label="Date of birth"

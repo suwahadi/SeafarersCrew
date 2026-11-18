@@ -19,6 +19,7 @@ export const navigation: NavGroup[] = [
       { to: '/crews', label: 'Crew' },
       { to: '/contracts', label: 'Contracts' },
       { to: '/rotation', label: 'Rotation Planning' },
+      { to: '/payroll', label: 'Payroll' },
       { to: '/quotations', label: 'Quotations' },
       { to: '/documents', label: 'Generated Documents' },
       { to: '/email-logs', label: 'Email Log' },

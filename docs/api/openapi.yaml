@@ -65,6 +65,7 @@ tags:
 - name: Crew import/export
 - name: Contracts
 - name: Rotation
+- name: Payroll
 - name: Document templates
 - name: Generated documents
 - name: Quotations
@@ -2019,7 +2020,7 @@ components:
         kind:
           type: string
           description: Job kind, for example `backup.run`, `site.revalidate`, `email_send`, `crew_import`,
-            `crew_export`.
+            `crew_export`, `payroll_import`, `payroll_export`.
         status:
           type: string
           enum:
@@ -6987,6 +6988,227 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/PublicContactReceived'
+    PayrollPeriod:
+      type: object
+      required: [id, title, period_start, period_end, transfer_date, line_count, total_usd, total_idr, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          description: 9-character public ID.
+          example: P4YR0LL2X
+        title:
+          type: string
+          maxLength: 120
+          example: Salary September 2026
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        transfer_date:
+          type: [string, 'null']
+          format: date
+          description: Default transfer date for lines without a date of their own.
+        line_count:
+          type: integer
+        total_usd:
+          type: string
+          description: Sum of USD over all lines, two decimals.
+          example: '245310.17'
+        total_idr:
+          type: string
+          description: Sum of IDR over all lines, two decimals.
+          example: '4371000000.00'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PayrollPeriodRequest:
+      type: object
+      required: [title, period_start, period_end]
+      properties:
+        title:
+          type: string
+          maxLength: 120
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+          description: Must be on or after period_start.
+        transfer_date:
+          type: string
+          format: date
+          description: Optional; empty string for none.
+    PayrollLine:
+      type: object
+      description: One bank transfer. Crew, rank, vessel and bank fields are snapshots copied when the line was saved or
+        imported, so the period keeps what was paid even after the crew record changes.
+      required: [id, line_no, crew, employee_no, crew_name, rank_code, vessel_name, bank_account_id, bank_name, account_name,
+        account_number, amount_usd, amount_idr, transfer_date, remark]
+      properties:
+        id:
+          type: string
+          format: uuid
+        line_no:
+          type: integer
+        crew:
+          type: object
+          required: [id, name]
+          properties:
+            id:
+              type: string
+              description: Crew public ID.
+            name:
+              type: string
+        employee_no:
+          type: string
+        crew_name:
+          type: string
+        rank_code:
+          type: string
+          description: Rank short code from the contract covering the period; empty when none covers it.
+        vessel_name:
+          type: string
+        bank_account_id:
+          type: [string, 'null']
+          format: uuid
+          description: Null when the crew bank account was deleted after the line was saved.
+        bank_name:
+          type: string
+        account_name:
+          type: string
+        account_number:
+          type: string
+          description: Text, so leading zeros are kept.
+        amount_usd:
+          type: [string, 'null']
+          example: '1800.00'
+        amount_idr:
+          type: string
+          example: '32100000.00'
+        transfer_date:
+          type: string
+          format: date
+        remark:
+          type: string
+          maxLength: 300
+    PayrollLineRequest:
+      type: object
+      required: [crew_id, bank_account_id, amount_idr]
+      properties:
+        crew_id:
+          type: string
+          description: Crew public ID.
+        bank_account_id:
+          type: string
+          format: uuid
+          description: Must be one of that crew member's bank accounts.
+        amount_usd:
+          type: [string, number, 'null']
+          description: Optional, at least 0, two decimals at most.
+        amount_idr:
+          type: [string, number]
+          description: At least 0, two decimals at most.
+        transfer_date:
+          type: string
+          format: date
+          description: Defaults to the period's transfer date; 422 when both are empty.
+        remark:
+          type: string
+          maxLength: 300
+    PayrollTotals:
+      type: object
+      required: [count, usd, idr]
+      properties:
+        count:
+          type: integer
+        usd:
+          type: string
+        idr:
+          type: string
+    PayrollFacets:
+      type: object
+      required: [banks, vessels, ranks]
+      properties:
+        banks:
+          type: array
+          items:
+            type: string
+        vessels:
+          type: array
+          items:
+            type: string
+        ranks:
+          type: array
+          items:
+            type: string
+    PayrollImportPreviewRow:
+      type: object
+      required: [line, status, employee_no, crew_name, bank_name, account_name, account_number, amount_usd, amount_idr,
+        transfer_date, remark]
+      properties:
+        line:
+          type: integer
+          description: Sheet row number.
+        status:
+          type: string
+          enum: [valid, new_account, error]
+        employee_no:
+          type: string
+        crew_name:
+          type: string
+        bank_name:
+          type: string
+        account_name:
+          type: string
+        account_number:
+          type: string
+        amount_usd:
+          type: [string, 'null']
+        amount_idr:
+          type: string
+        transfer_date:
+          type: string
+        remark:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Messages per column; they name the column, never the cell value.
+    PayrollImportPreview:
+      type: object
+      required: [token, total, valid, new_accounts, errors, with_warnings, will_replace, rows]
+      properties:
+        token:
+          type: string
+          description: Empty while any row has an error; commit is only possible with a token.
+        total:
+          type: integer
+        valid:
+          type: integer
+        new_accounts:
+          type: integer
+        errors:
+          type: integer
+        with_warnings:
+          type: integer
+        will_replace:
+          type: integer
+          description: Number of lines the period holds now; all of them are replaced on commit.
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayrollImportPreviewRow'
   responses:
     BadRequest:
       description: The request could not be understood (`bad_request`).
@@ -14921,6 +15143,627 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+  /api/admin/v1/payroll-periods:
+    get:
+      tags:
+      - Payroll
+      operationId: listPayrollPeriods
+      summary: List payroll periods
+      description: Newest period_start first. `q` matches the title.
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - name: q
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: One page of periods with line counts and totals.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PayrollPeriod'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+    post:
+      tags:
+      - Payroll
+      operationId: createPayrollPeriod
+      summary: Create a payroll period
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayrollPeriodRequest'
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PayrollPeriod'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+  /api/admin/v1/payroll-periods/{period}:
+    get:
+      tags:
+      - Payroll
+      operationId: getPayrollPeriod
+      summary: Get a payroll period
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      responses:
+        '200':
+          description: The period with its line count and totals.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PayrollPeriod'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+    put:
+      tags:
+      - Payroll
+      operationId: updatePayrollPeriod
+      summary: Update a payroll period
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayrollPeriodRequest'
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PayrollPeriod'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+    delete:
+      tags:
+      - Payroll
+      operationId: deletePayrollPeriod
+      summary: Delete a payroll period and all its lines
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      responses:
+        '204':
+          description: Deleted.
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+  /api/admin/v1/payroll-periods/{period}/lines:
+    get:
+      tags:
+      - Payroll
+      operationId: listPayrollLines
+      summary: List the lines of a payroll period
+      description: Filtered on the server. `totals` sums every line matching the filter, not only the page.
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - name: q
+        in: query
+        description: Matches crew name, Employee ID, account number and remark (case-insensitive).
+        schema:
+          type: string
+      - name: bank
+        in: query
+        description: Exact bank name; repeat the parameter for several (bank=A&bank=B). Values are never split on commas.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      - name: vessel
+        in: query
+        description: Exact vessel name; repeatable.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      - name: rank
+        in: query
+        description: Exact rank short code; repeatable.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      - name: has_remark
+        in: query
+        schema:
+          type: string
+          enum: ['1', 'true']
+      - name: no_usd
+        in: query
+        schema:
+          type: string
+          enum: ['1', 'true']
+      - name: sort
+        in: query
+        description: Unknown values return 422 on `sort`.
+        schema:
+          type: string
+          enum: [line_no, crew_name, employee_no, rank_code, vessel_name, bank_name, amount_usd, amount_idr, transfer_date]
+      - name: order
+        in: query
+        schema:
+          type: string
+          enum: [asc, desc]
+      responses:
+        '200':
+          description: One page of lines plus the totals of the filtered set.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, totals]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PayrollLine'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+                  totals:
+                    $ref: '#/components/schemas/PayrollTotals'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+    post:
+      tags:
+      - Payroll
+      operationId: createPayrollLine
+      summary: Add a line to a payroll period
+      description: Crew, rank, vessel and bank details are copied from the crew record on the server.
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayrollLineRequest'
+      responses:
+        '201':
+          description: Created at the end of the period.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PayrollLine'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+  /api/admin/v1/payroll-periods/{period}/facets:
+    get:
+      tags:
+      - Payroll
+      operationId: getPayrollFacets
+      summary: Distinct banks, vessels and rank codes used in a period
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      responses:
+        '200':
+          description: Filter options, sorted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PayrollFacets'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+  /api/admin/v1/payroll-periods/{period}/import/validate:
+    post:
+      tags:
+      - Payroll
+      operationId: validatePayrollImport
+      summary: Validate a payroll workbook
+      description: 'Upload the bank-transfer workbook (multipart field `file`, .xlsx). The first visible sheet with a header
+        row holding Employee ID, ACCOUNT NO and IDR is read; letterhead rows and the total row are skipped. Every row must
+        match a crew member by Employee ID (case and leading zeros ignored). An account number the crew member does not
+        have yet is marked new_account and is added to the crew profile on commit. Nothing changes here; a token is
+        returned only when no row has an error. Limits: 5000 rows and the upload size from Settings.'
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Row-by-row preview.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PayrollImportPreview'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+  /api/admin/v1/payroll-periods/{period}/import/commit:
+    post:
+      tags:
+      - Payroll
+      operationId: commitPayrollImport
+      summary: Replace the period's lines with a validated workbook
+      description: 'Queues a payroll_import job that, in one transaction, adds the new bank accounts, deletes every line of
+        the period and inserts the staged lines. 410 import_expired when the token is unknown, older than one hour, or
+        was staged for another period.'
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '202':
+          description: Job queued; poll GET /jobs/{id}.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '410':
+          description: The staged import expired (`import_expired`).
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+  /api/admin/v1/payroll-periods/{period}/export:
+    post:
+      tags:
+      - Payroll
+      operationId: exportPayrollPeriod
+      summary: Export a payroll period as a bank-transfer workbook
+      description: Queues a payroll_export job. Takes the same filter parameters as the lines list; the workbook holds the
+        matching lines in that order, under the company letterhead from Settings. The job result carries `file_id`; fetch
+        a download URL with GET /files/{id}/url.
+      parameters:
+      - name: period
+        in: path
+        required: true
+        description: Payroll period public ID (9 characters). Unknown IDs return 404 not_found.
+        schema:
+          type: string
+          minLength: 9
+          maxLength: 9
+      - name: q
+        in: query
+        description: Matches crew name, Employee ID, account number and remark (case-insensitive).
+        schema:
+          type: string
+      - name: bank
+        in: query
+        description: Exact bank name; repeat the parameter for several (bank=A&bank=B). Values are never split on commas.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      - name: vessel
+        in: query
+        description: Exact vessel name; repeatable.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      - name: rank
+        in: query
+        description: Exact rank short code; repeatable.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      - name: has_remark
+        in: query
+        schema:
+          type: string
+          enum: ['1', 'true']
+      - name: no_usd
+        in: query
+        schema:
+          type: string
+          enum: ['1', 'true']
+      - name: sort
+        in: query
+        description: Unknown values return 422 on `sort`.
+        schema:
+          type: string
+          enum: [line_no, crew_name, employee_no, rank_code, vessel_name, bank_name, amount_usd, amount_idr, transfer_date]
+      - name: order
+        in: query
+        schema:
+          type: string
+          enum: [asc, desc]
+      responses:
+        '202':
+          description: Job queued; poll GET /jobs/{id}.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+  /api/admin/v1/payroll-lines/{id}:
+    put:
+      tags:
+      - Payroll
+      operationId: updatePayrollLine
+      summary: Update a payroll line
+      description: Crew and bank snapshots refresh only when the crew member or the account changes.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayrollLineRequest'
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PayrollLine'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+    delete:
+      tags:
+      - Payroll
+      operationId: deletePayrollLine
+      summary: Delete a payroll line
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Deleted.
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
   /api/admin/v1/quotations:
     get:
       tags:

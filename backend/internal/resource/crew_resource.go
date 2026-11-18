@@ -64,6 +64,7 @@ type Crew struct {
 	MobilePhone     string     `json:"mobile_phone"`
 	Email           string     `json:"email"`
 	NearestAirport  string     `json:"nearest_airport"`
+	EmployeeNo      string     `json:"employee_no"`
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
 }
@@ -78,7 +79,7 @@ func NewCrew(c model.Crew, today time.Time) Crew {
 		Status: Status{Code: c.StatusCode, Name: c.StatusName, Color: c.StatusColor}, StatusReason: c.StatusReason,
 		PhotoFileID: c.PhotoFileID, CVFileID: c.CVFileID, Address: c.Address, City: c.City, Province: c.Province,
 		Country: c.Country, PostalCode: c.PostalCode, HomePhone: c.HomePhone, MobilePhone: c.MobilePhone,
-		Email: c.Email, NearestAirport: c.NearestAirport, CreatedAt: c.CreatedAt, UpdatedAt: c.UpdatedAt,
+		Email: c.Email, NearestAirport: c.NearestAirport, EmployeeNo: c.EmployeeNo, CreatedAt: c.CreatedAt, UpdatedAt: c.UpdatedAt,
 	}
 }
 

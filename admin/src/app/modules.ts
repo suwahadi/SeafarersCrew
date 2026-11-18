@@ -11,6 +11,7 @@ import { masterRoutes } from '@/pages/masters/routes'
 import { menuRoutes } from '@/pages/menus/routes'
 import { newsRoutes } from '@/pages/news/routes'
 import { pageRoutes } from '@/pages/pages/routes'
+import { payrollRoutes } from '@/pages/payroll/routes'
 import { quotationRoutes } from '@/pages/quotations/routes'
 import { rotationRoutes } from '@/pages/rotation/routes'
 import { settingsRoutes } from '@/pages/settings/routes'
@@ -22,6 +23,7 @@ export const moduleRoutes: RouteObject[] = [
   ...crewRoutes,
   ...contractRoutes,
   ...rotationRoutes,
+  ...payrollRoutes,
   ...quotationRoutes,
   ...documentRoutes,
   ...emailRoutes,

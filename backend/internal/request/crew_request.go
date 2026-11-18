@@ -33,6 +33,7 @@ type Crew struct {
 	MobilePhone    string `json:"mobile_phone"`
 	Email          string `json:"email"`
 	NearestAirport string `json:"nearest_airport"`
+	EmployeeNo     string `json:"employee_no"`
 
 	parsed model.Crew
 }
@@ -41,7 +42,7 @@ type Crew struct {
 func (r *Crew) Validate() map[string]string {
 	Trim(&r.FullName, &r.PlaceOfBirth, &r.DateOfBirth, &r.Gender, &r.Nationality, &r.Religion, &r.MaritalStatus,
 		&r.ShoeSize, &r.CoverallSize, &r.AppliedRankID, &r.PhotoFileID, &r.CVFileID, &r.Address, &r.City, &r.Province,
-		&r.Country, &r.PostalCode, &r.HomePhone, &r.MobilePhone, &r.Email, &r.NearestAirport)
+		&r.Country, &r.PostalCode, &r.HomePhone, &r.MobilePhone, &r.Email, &r.NearestAirport, &r.EmployeeNo)
 	r.Email = strings.ToLower(r.Email)
 	e := Errors{}
 	e.Required("full_name", r.FullName, 150)
@@ -52,6 +53,7 @@ func (r *Crew) Validate() map[string]string {
 		e.MaxLen(field, v, 100)
 	}
 	e.MaxLen("address", r.Address, 500)
+	e.MaxLen("employee_no", r.EmployeeNo, 40)
 	e.MaxLen("postal_code", r.PostalCode, 20)
 	e.MaxLen("shoe_size", r.ShoeSize, 10)
 	e.MaxLen("coverall_size", r.CoverallSize, 10)
@@ -67,7 +69,7 @@ func (r *Crew) Validate() map[string]string {
 		FullName: r.FullName, PlaceOfBirth: r.PlaceOfBirth, Nationality: r.Nationality, Religion: r.Religion,
 		ShoeSize: r.ShoeSize, CoverallSize: r.CoverallSize, Address: r.Address, City: r.City, Province: r.Province,
 		Country: r.Country, PostalCode: r.PostalCode, HomePhone: r.HomePhone, MobilePhone: r.MobilePhone,
-		Email: r.Email, NearestAirport: r.NearestAirport,
+		Email: r.Email, NearestAirport: r.NearestAirport, EmployeeNo: r.EmployeeNo,
 	}
 	c.DateOfBirth = e.Date("date_of_birth", r.DateOfBirth)
 	c.AppliedRankID = e.UUID("applied_rank_id", r.AppliedRankID)

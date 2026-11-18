@@ -10,6 +10,7 @@ import (
 type Crew struct {
 	ID             uuid.UUID
 	PublicID       string
+	EmployeeNo     string
 	FullName       string
 	PlaceOfBirth   string
 	DateOfBirth    *time.Time

@@ -71,6 +71,27 @@ func (r *CrewRepository) ExistingDocumentNumbers(ctx context.Context, typeID uui
 	return out, nil
 }
 
+// ExistingEmployeeNumbers reports which normalized Employee IDs already belong to a crew member.
+func (r *CrewRepository) ExistingEmployeeNumbers(ctx context.Context, normalized []string) (map[string]bool, error) {
+	out := map[string]bool{}
+	if len(normalized) == 0 {
+		return out, nil
+	}
+	rows, err := r.pool.Query(ctx, `SELECT upper(ltrim(employee_no, '0')) FROM crews
+		WHERE deleted_at IS NULL AND employee_no <> '' AND upper(ltrim(employee_no, '0')) = ANY($1)`, normalized)
+	if err != nil {
+		return nil, fmt.Errorf("find existing employee numbers: %w", err)
+	}
+	found, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, fmt.Errorf("scan existing employee numbers: %w", err)
+	}
+	for _, n := range found {
+		out[n] = true
+	}
+	return out, nil
+}
+
 // ImportDocument is a document created with an imported crew member.
 type ImportDocument struct {
 	TypeID      uuid.UUID
@@ -140,11 +161,11 @@ func insertImported(ctx context.Context, tx pgx.Tx, row ImportCrew, pid string) 
 	c := row.Crew
 	var id uuid.UUID
 	err := tx.QueryRow(ctx, `INSERT INTO crews (public_id, full_name, place_of_birth, date_of_birth, gender, nationality, religion,
-		marital_status, applied_rank_id, crew_status_id, address, city, province, country, postal_code, mobile_phone, email)
-		SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, s.id, $10, $11, $12, $13, $14, $15, $16
+		marital_status, applied_rank_id, crew_status_id, address, city, province, country, postal_code, mobile_phone, email, employee_no)
+		SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, s.id, $10, $11, $12, $13, $14, $15, $16, $17
 		FROM crew_statuses s WHERE s.code = 'available' RETURNING id`,
 		pid, c.FullName, c.PlaceOfBirth, c.DateOfBirth, c.Gender, c.Nationality, c.Religion, c.MaritalStatus, c.AppliedRankID,
-		c.Address, c.City, c.Province, c.Country, c.PostalCode, c.MobilePhone, c.Email).Scan(&id)
+		c.Address, c.City, c.Province, c.Country, c.PostalCode, c.MobilePhone, c.Email, c.EmployeeNo).Scan(&id)
 	if err != nil {
 		return err
 	}

@@ -37,13 +37,16 @@ const (
 var ImportColumns = []string{
 	"full_name", "date_of_birth", "place_of_birth", "gender", "nationality", "religion", "marital_status", "applied_rank",
 	"mobile_phone", "email", "address", "city", "province", "country", "postal_code",
-	"passport_number", "passport_expiry", "seaman_book_number", "seaman_book_expiry",
+	"passport_number", "passport_expiry", "seaman_book_number", "seaman_book_expiry", "employee_id",
 }
+
+const employeeNoTaken = "Another crew member already has this Employee ID."
 
 // ImportStore is the persistence the importer needs.
 type ImportStore interface {
 	ImportLookups(ctx context.Context) (repository.ImportLookups, error)
 	ExistingDocumentNumbers(ctx context.Context, typeID uuid.UUID, numbers []string) (map[string]bool, error)
+	ExistingEmployeeNumbers(ctx context.Context, normalized []string) (map[string]bool, error)
 	ImportCrews(ctx context.Context, rows []repository.ImportCrew, newID func() (string, error), attempts int) ([]repository.ImportOutcome, error)
 }
 
@@ -105,7 +108,7 @@ func (s *CrewImportService) Template() []byte {
 	_ = w.Write(ImportColumns)
 	_ = w.Write([]string{"Budi Santoso", "1988-04-12", "Surabaya", "male", "Indonesian", "Islam", "married", "CO",
 		"+6281234567890", "budi@example.com", "Jl. Pelabuhan 1", "Surabaya", "Jawa Timur", "Indonesia", "60165",
-		"X1234567", "2030-04-11", "F123456", "2029-01-31"})
+		"X1234567", "2030-04-11", "F123456", "2029-01-31", "900101"})
 	w.Flush()
 	return buf.Bytes()
 }
@@ -156,6 +159,9 @@ func (s *CrewImportService) Validate(ctx context.Context, data []byte) (ImportPr
 	if err := s.markDuplicates(ctx, rows, parsed, lookups); err != nil {
 		return ImportPreview{}, err
 	}
+	if err := s.markTakenEmployeeNumbers(ctx, rows, parsed); err != nil {
+		return ImportPreview{}, err
+	}
 	return s.stage(ctx, rows, parsed)
 }
 
@@ -197,6 +203,40 @@ func (s *CrewImportService) markDuplicates(ctx context.Context, rows []ImportPre
 		if rows[i].Status == RowDuplicate {
 			parsed[i] = nil
 		}
+	}
+	return nil
+}
+
+func (s *CrewImportService) markTakenEmployeeNumbers(ctx context.Context, rows []ImportPreviewRow, parsed []*repository.ImportCrew) error {
+	var numbers []string
+	for _, p := range parsed {
+		if p != nil && p.Crew.EmployeeNo != "" {
+			numbers = append(numbers, model.NormalizeEmployeeNo(p.Crew.EmployeeNo))
+		}
+	}
+	if len(numbers) == 0 {
+		return nil
+	}
+	taken, err := s.store.ExistingEmployeeNumbers(ctx, numbers)
+	if err != nil {
+		return err
+	}
+	seen := map[string]int{}
+	for i, p := range parsed {
+		if p == nil || p.Crew.EmployeeNo == "" {
+			continue
+		}
+		n := model.NormalizeEmployeeNo(p.Crew.EmployeeNo)
+		switch {
+		case taken[n]:
+			rows[i].Status, rows[i].Errors = RowInvalid, map[string]string{"employee_id": employeeNoTaken}
+		case seen[n] > 0:
+			rows[i].Status, rows[i].Errors = RowInvalid, map[string]string{"employee_id": fmt.Sprintf("Duplicate of line %d in this file.", seen[n])}
+		default:
+			seen[n] = rows[i].Line
+			continue
+		}
+		parsed[i] = nil
 	}
 	return nil
 }
@@ -330,6 +370,7 @@ func parseImportRow(v map[string]string, l repository.ImportLookups) (*repositor
 		Gender: strings.ToLower(v["gender"]), Nationality: v["nationality"], Religion: v["religion"],
 		MaritalStatus: strings.ToLower(v["marital_status"]), MobilePhone: v["mobile_phone"], Email: v["email"],
 		Address: v["address"], City: v["city"], Province: v["province"], Country: v["country"], PostalCode: v["postal_code"],
+		EmployeeNo: v["employee_id"],
 	}
 	errs := request.Errors{}
 	if rank := v["applied_rank"]; rank != "" {
@@ -341,6 +382,9 @@ func parseImportRow(v map[string]string, l repository.ImportLookups) (*repositor
 		}
 	}
 	for field, msg := range in.Validate() {
+		if field == "employee_no" {
+			field = "employee_id"
+		}
 		errs[field] = msg
 	}
 	crew := &repository.ImportCrew{Crew: in.Model()}

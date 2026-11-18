@@ -18,6 +18,7 @@ export interface GridPage<T> {
   rows: T[]
   total: number
   groups?: GridGroup[]
+  summary?: ReactNode
 }
 
 export interface GridParams {
@@ -127,6 +128,7 @@ export function DataGrid<T>({
           <ColumnChooser table={table} />
         </div>
       </div>
+      {query.data?.summary ? <div className="border-b border-slate-200 px-3 py-2 text-sm text-slate-700">{query.data.summary}</div> : null}
       {query.isError ? (
         <p role="alert" className="p-4 text-sm text-red-700">
           {errorMessage(query.error)}

@@ -30,6 +30,7 @@ type AdminDeps struct {
 	Files         *admin.FileHandler
 	Email         *admin.EmailHandler
 	Contracts     ContractRoutes
+	Payroll       *admin.PayrollHandler
 	Documents     DocumentHandlers
 	Dashboard     *admin.DashboardHandler
 	Career        CareerRoutes
@@ -91,6 +92,7 @@ func Admin(r chi.Router, d AdminDeps) {
 			Email(r, d.Email)
 
 			Contracts(r, d.Contracts)
+			Payroll(r, d.Payroll)
 			Career(r, d.Career)
 			r.Get("/backups", d.Backups.Index)
 			r.Post("/backups/run", d.Backups.Run)
