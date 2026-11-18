@@ -119,7 +119,7 @@ export function DataGrid<T>({
             onChange={(e) => setSearch(e.target.value)}
             placeholder={searchPlaceholder}
             aria-label="Search"
-            className="h-9 min-w-0 flex-1 rounded-md border-0 px-3 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500 sm:max-w-xs"
+            className="h-9 min-w-0 flex-1 rounded-md max-sm:h-10 border-0 px-3 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500 sm:max-w-xs"
           />
           {query.isFetching ? <Spinner size="sm" label="Updating" /> : null}
         </div>
@@ -149,7 +149,7 @@ export function DataGrid<T>({
                       className={`${index === 0 ? stickyFirst + ' bg-slate-50' : ''} px-3 py-2 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase whitespace-nowrap`}
                     >
                       {h.isPlaceholder ? null : h.column.getCanSort() ? (
-                        <button type="button" onClick={h.column.getToggleSortingHandler()} className="inline-flex items-center gap-1 tracking-wide uppercase hover:text-slate-900">
+                        <button type="button" onClick={h.column.getToggleSortingHandler()} className="inline-flex items-center gap-1 tracking-wide uppercase hover:text-slate-900 max-sm:-my-3 max-sm:min-h-10 max-sm:min-w-10">
                           {flexRender(h.column.columnDef.header, h.getContext())}
                           <span aria-hidden className={sorted ? 'text-navy-700' : 'text-slate-400'}>
                             {sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : '↕'}

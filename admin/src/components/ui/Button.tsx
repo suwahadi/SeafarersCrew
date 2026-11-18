@@ -12,8 +12,8 @@ const variants: Record<Variant, string> = {
 }
 
 const sizes: Record<Size, string> = {
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-9 px-4 text-sm',
+  sm: 'h-8 px-3 text-sm max-sm:h-10',
+  md: 'h-9 px-4 text-sm max-sm:h-10',
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -34,7 +34,7 @@ export function Button({ variant = 'primary', size = 'md', loading = false, icon
       aria-busy={loading || undefined}
       aria-label={collapsed ? (rest['aria-label'] ?? label) : rest['aria-label']}
       title={collapsed ? (rest.title ?? label) : rest.title}
-      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 ease-out disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${collapsed ? 'relative max-sm:size-9 max-sm:shrink-0 max-sm:px-0' : ''} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 ease-out disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${collapsed ? 'relative max-sm:size-10 max-sm:shrink-0 max-sm:px-0' : ''} ${className}`}
       {...rest}
     >
       {loading ? <Spinner size="sm" /> : icon}

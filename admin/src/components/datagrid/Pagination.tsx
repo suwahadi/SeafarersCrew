@@ -3,7 +3,7 @@ import { Icon } from '../ui/Icon'
 export const PAGE_SIZES = [10, 20, 30, 50, 100]
 
 const pagerButton =
-  'inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-md bg-white px-2 sm:px-3 text-slate-700 ring-1 ring-inset ring-slate-300 transition-colors duration-150 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400 disabled:ring-slate-200 disabled:hover:bg-white'
+  'inline-flex h-8 min-w-8 max-sm:h-10 max-sm:min-w-10 items-center justify-center gap-1 rounded-md bg-white px-2 sm:px-3 text-slate-700 ring-1 ring-inset ring-slate-300 transition-colors duration-150 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400 disabled:ring-slate-200 disabled:hover:bg-white'
 
 interface PaginationProps {
   page: number
@@ -25,7 +25,7 @@ export function Pagination({ page, perPage, total, onPage, onPerPage }: Paginati
       <div className="flex items-center gap-2 sm:gap-3">
         <label className="flex items-center gap-2">
           <span className="max-sm:sr-only">Rows</span>
-          <select value={perPage} onChange={(e) => onPerPage(Number(e.target.value))} className="h-8 rounded-md border-0 bg-white text-sm text-slate-900 ring-1 ring-inset ring-slate-300">
+          <select value={perPage} onChange={(e) => onPerPage(Number(e.target.value))} className="h-8 max-sm:h-10 rounded-md border-0 bg-white text-sm text-slate-900 ring-1 ring-inset ring-slate-300">
             {PAGE_SIZES.map((n) => (
               <option key={n} value={n}>
                 {n}

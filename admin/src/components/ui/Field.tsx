@@ -1,7 +1,7 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 
 const control =
-  'block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-navy-500 disabled:bg-slate-100 disabled:text-slate-500 aria-[invalid=true]:ring-red-500'
+  'block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm max-sm:min-h-10 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-navy-500 disabled:bg-slate-100 disabled:text-slate-500 aria-[invalid=true]:ring-red-500'
 
 interface FieldShellProps {
   id: string
@@ -135,7 +135,7 @@ export const CheckboxField = forwardRef<HTMLInputElement, { label: string; hint?
 
 export const inputClass = control
 
-export const filterClass = `${control} h-9 sm:w-auto!`
+export const filterClass = `${control} h-9 max-sm:h-10 sm:w-auto!`
 
 export function FilterField({ label, shortLabel, suffix, children }: { label: string; shortLabel?: string; suffix?: string; children: ReactNode }) {
   return (

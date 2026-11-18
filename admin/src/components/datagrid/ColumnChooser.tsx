@@ -25,7 +25,7 @@ export function ColumnChooser<T>({ table }: { table: Table<T> }) {
       {open ? (
         <div className="absolute right-0 z-20 mt-1 max-h-80 w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-md bg-white p-2 shadow-lg ring-1 ring-slate-200">
           {columns.map((c) => (
-            <label key={c.id} className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-slate-50">
+            <label key={c.id} className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-slate-50 max-sm:py-2.5">
               <input type="checkbox" checked={c.getIsVisible()} onChange={c.getToggleVisibilityHandler()} />
               {typeof c.columnDef.header === 'string' ? c.columnDef.header : c.id}
             </label>

@@ -34,12 +34,12 @@ export function CrewPicker({ label, value, onChange, error, disabled = false, re
   if (value) {
     return (
       <FieldShell id={id} label={label} error={error} required={required}>
-        <div className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-1.5 text-sm ring-1 ring-slate-300">
+        <div className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-1.5 text-sm ring-1 ring-slate-300 max-sm:min-h-10">
           <span id={id}>
             {value.name} <span className="text-slate-500">({value.id})</span>
           </span>
           {disabled ? null : (
-            <button type="button" className="text-xs text-navy-700 hover:underline" onClick={() => onChange(null)}>
+            <button type="button" className="text-xs text-navy-700 hover:underline max-sm:-my-3 max-sm:min-h-10" onClick={() => onChange(null)}>
               Change
             </button>
           )}
@@ -87,7 +87,7 @@ export function CrewPicker({ label, value, onChange, error, disabled = false, re
                     setText('')
                     setOpen(false)
                   }}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-slate-50"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-slate-50 max-sm:py-2.5"
                 >
                   <span>
                     {c.full_name} <span className="text-slate-500">{c.id}</span>

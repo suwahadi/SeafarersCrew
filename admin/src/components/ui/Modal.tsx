@@ -38,7 +38,7 @@ export function Modal({ open, title, onClose, children, footer, size = 'md' }: M
             <h2 id="modal-title" className="text-base font-semibold text-navy-800">
               {title}
             </h2>
-            <button type="button" onClick={onClose} aria-label="Close" className="inline-flex size-9 shrink-0 items-center justify-center rounded text-slate-500 hover:bg-slate-100">
+            <button type="button" onClick={onClose} aria-label="Close" className="inline-flex size-9 shrink-0 max-sm:size-10 items-center justify-center rounded text-slate-500 hover:bg-slate-100">
               ✕
             </button>
           </header>

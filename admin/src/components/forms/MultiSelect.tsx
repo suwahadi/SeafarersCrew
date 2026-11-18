@@ -43,7 +43,7 @@ export function MultiSelect({ label, options, value, onChange, placeholder = 'An
         onKeyDown={(e) => {
           if (e.key === 'Escape') setOpen(false)
         }}
-        className={`flex ${hideLabel ? 'h-9' : 'h-[34px]'} w-full items-center justify-between gap-2 rounded-md bg-white px-3 text-left text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500`}
+        className={`flex ${hideLabel ? 'h-9' : 'h-[34px]'} w-full max-sm:h-10 items-center justify-between gap-2 rounded-md bg-white px-3 text-left text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-navy-500`}
       >
         <span className={selected.length === 0 ? 'text-slate-500' : 'truncate text-slate-900'}>{summary}</span>
         <span aria-hidden className="text-slate-400">
@@ -62,7 +62,7 @@ export function MultiSelect({ label, options, value, onChange, placeholder = 'An
         >
           {options.length === 0 ? <p className="px-2 py-1 text-sm text-slate-500">No options</p> : null}
           {options.map((o) => (
-            <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-slate-50 sm:py-1">
+            <label key={o.value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-2.5 text-sm hover:bg-slate-50 sm:py-1">
               <input type="checkbox" checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
               {o.label}
             </label>

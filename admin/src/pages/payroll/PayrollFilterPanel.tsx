@@ -51,7 +51,6 @@ export function PayrollFilterPanel({ value, facets, onApply }: Props) {
         <div className="flex basis-full justify-end gap-2 sm:ml-auto sm:basis-auto">
           <Button
             variant="ghost"
-            className="max-sm:min-h-10"
             onClick={() => {
               setDraft(EMPTY_FILTERS)
               onApply(EMPTY_FILTERS)
@@ -59,9 +58,7 @@ export function PayrollFilterPanel({ value, facets, onApply }: Props) {
           >
             Reset
           </Button>
-          <Button type="submit" className="max-sm:min-h-10">
-            Apply filters
-          </Button>
+          <Button type="submit">Apply filters</Button>
         </div>
       </div>
     </form>

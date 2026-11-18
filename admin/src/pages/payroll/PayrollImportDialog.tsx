@@ -110,7 +110,7 @@ export function PayrollImportDialog({ periodId, onClose }: Props) {
               e.target.value = ''
             }}
           />
-          <Button variant="secondary" icon={<Icon name="upload" />} className="max-sm:min-h-10" loading={validate.isPending} onClick={() => input.current?.click()}>
+          <Button variant="secondary" icon={<Icon name="upload" />} loading={validate.isPending} onClick={() => input.current?.click()}>
             {preview ? 'Choose another file' : 'Choose Excel file'}
           </Button>
           {fileName ? <span className="min-w-0 text-sm break-all text-slate-700">{fileName}</span> : null}

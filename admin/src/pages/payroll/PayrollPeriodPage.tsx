@@ -20,8 +20,6 @@ import { PayrollImportDialog } from './PayrollImportDialog'
 import { PayrollTotals } from './PayrollTotals'
 import { PeriodFormDialog } from './PeriodFormDialog'
 
-const tap = 'max-sm:min-h-10 max-sm:min-w-10'
-
 const number = (text: string) => <span className="block text-right tabular-nums">{text}</span>
 
 const columns: ColumnDef<PayrollLine>[] = [
@@ -162,20 +160,20 @@ export default function PayrollPeriodPage() {
         description={`${formatDate(p.period_start)} – ${formatDate(p.period_end)} · Transfer date ${p.transfer_date ? formatDate(p.transfer_date) : 'not set'}`}
         actions={
           <>
-            <Button variant="ghost" collapse icon={<Icon name="edit" />} className={tap} onClick={() => setEditingPeriod(true)}>
+            <Button variant="ghost" collapse icon={<Icon name="edit" />} onClick={() => setEditingPeriod(true)}>
               Edit period
             </Button>
-            <Button variant="ghost" collapse icon={<Icon name="trash" />} className={tap} onClick={() => setDeleting(true)}>
+            <Button variant="ghost" collapse icon={<Icon name="trash" />} onClick={() => setDeleting(true)}>
               Delete period
             </Button>
-            <Button variant="secondary" collapse icon={<Icon name="upload" />} className={tap} onClick={() => setImporting(true)}>
+            <Button variant="secondary" collapse icon={<Icon name="upload" />} onClick={() => setImporting(true)}>
               Import xlsx
             </Button>
             <Button
               variant="secondary"
               collapse
               icon={<Icon name="download" />}
-              className={tap}
+
               loading={exportXlsx.isPending}
               onClick={() =>
                 exportXlsx.mutate(undefined, {
@@ -185,7 +183,7 @@ export default function PayrollPeriodPage() {
             >
               Export xlsx
             </Button>
-            <Button collapse icon={<Icon name="plus" />} className={tap} onClick={() => setEditing('new')}>
+            <Button collapse icon={<Icon name="plus" />} onClick={() => setEditing('new')}>
               Add row
             </Button>
           </>
@@ -221,7 +219,7 @@ export default function PayrollPeriodPage() {
             variant="secondary"
             collapse
             aria-expanded={showFilters}
-            className={tap}
+
             icon={
               <span className="relative inline-flex">
                 <Icon name="filter" />

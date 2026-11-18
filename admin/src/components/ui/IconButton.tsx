@@ -22,7 +22,7 @@ export function IconButton({ icon, label, tone = 'neutral', bordered = false, cl
       type={type}
       aria-label={label}
       title={label}
-      className={`inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors duration-150 ease-out disabled:cursor-not-allowed ${bordered ? 'ring-1 ring-inset ring-slate-300 bg-white' : ''} ${tones[tone]} ${className}`}
+      className={`inline-flex size-9 shrink-0 max-sm:size-10 items-center justify-center rounded-md transition-colors duration-150 ease-out disabled:cursor-not-allowed ${bordered ? 'ring-1 ring-inset ring-slate-300 bg-white' : ''} ${tones[tone]} ${className}`}
       {...rest}
     >
       <Icon name={icon} className="size-[1.125rem]" />
