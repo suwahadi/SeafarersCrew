@@ -19,3 +19,4 @@ node_modules/
 .claude/worktrees/
 /.lighthouseci/
 /.superpowers/
+/docs/superpowers/
