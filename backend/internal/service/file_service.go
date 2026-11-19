@@ -185,6 +185,11 @@ func (s *FileService) process(ctx context.Context, in UploadInput, kind filechec
 		return processed{data: data, mime: "application/pdf", ext: "pdf"}, err
 	case filecheck.KindDOC, filecheck.KindDOCX:
 		return s.processOffice(ctx, in, kind, cfg)
+	case filecheck.KindXLSX:
+		if err := filecheck.CheckXLSX(in.Data); err != nil {
+			return processed{}, err
+		}
+		return processed{data: in.Data, mime: xlsxMime, ext: "xlsx"}, nil
 	case filecheck.KindSVG:
 		data, err := filecheck.SanitizeSVG(in.Data)
 		return processed{data: data, mime: "image/svg+xml", ext: "svg"}, err

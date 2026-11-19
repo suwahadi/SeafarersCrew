@@ -7209,6 +7209,170 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PayrollImportPreviewRow'
+    CrewCVField:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+          example: Mobile phone
+        value:
+          type: string
+          example: '+6281234567890'
+        choice_key:
+          type: string
+          description: Set on the Rank field when the applied rank needs a choice.
+    CrewCVRow:
+      type: object
+      required: [row, cells]
+      properties:
+        row:
+          type: integer
+          description: 1-based sheet row; 0 for next-of-kin rows.
+        cells:
+          type: object
+          additionalProperties:
+            type: string
+          description: 'Next of kin: name, relationship, relationship_text, phone, address. Documents: type, number,
+            issued, expires, place. Certificates: text, issued, expires. Sea service: vessel, rank, flag, vessel_type,
+            grt_hp, company, from, to. Dates are YYYY-MM-DD.'
+        choice_keys:
+          type: array
+          items:
+            type: string
+          description: Choices this row waits for.
+        matched_as:
+          type: string
+          description: Name of the master record the row matched automatically.
+          example: Basic Safety Training
+        warnings:
+          type: array
+          items:
+            type: string
+    CrewCVChoice:
+      type: object
+      required: [key, kind, text, allow_create]
+      properties:
+        key:
+          type: string
+          description: '`<kind>:<normalised text>`; one choice per distinct text.'
+          example: 'certificate:SHIP SECURITY OFFICER SSO'
+        kind:
+          type: string
+          enum: [certificate, document, rank, vessel_type]
+        text:
+          type: string
+          example: Ship Security Officer (SSO)
+        suggested_id:
+          type: string
+          format: uuid
+          description: Preselected match, e.g. AHTS for "AHTS DP 1".
+        allow_create:
+          type: boolean
+          description: False for ranks.
+    CrewCVCellError:
+      type: object
+      required: [section, row, message]
+      properties:
+        section:
+          type: string
+          enum: [personal, documents, certificates, sea_service]
+        row:
+          type: integer
+        message:
+          type: string
+          example: The date could not be read.
+    CrewCVDuplicate:
+      type: object
+      required: [crew_id, full_name, reason]
+      properties:
+        crew_id:
+          type: string
+          example: K7Q2M9XA2
+        full_name:
+          type: string
+        reason:
+          type: string
+          enum: [passport, seaman_book, name_and_birth_date]
+    CrewCVPreview:
+      type: object
+      required: [token, full_name, personal, next_of_kin, documents, certificates, sea_service, not_imported, warnings, errors, choices]
+      properties:
+        token:
+          type: string
+          description: Empty when errors or a duplicate block the import; otherwise valid for one hour.
+        full_name:
+          type: string
+        personal:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewCVField'
+        next_of_kin:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewCVRow'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewCVRow'
+        certificates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewCVRow'
+        sea_service:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewCVRow'
+        not_imported:
+          type: array
+          items:
+            type: string
+          example: [Blood group]
+        warnings:
+          type: array
+          items:
+            type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewCVCellError'
+        duplicate:
+          $ref: '#/components/schemas/CrewCVDuplicate'
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewCVChoice'
+    CrewCVDecision:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [match, create, skip]
+        target_id:
+          type: string
+          format: uuid
+          description: Required for `match`. A certificate choice may target a certificate type or a document type.
+    CrewCVCommitInput:
+      type: object
+      required: [token, decisions]
+      properties:
+        token:
+          type: string
+        decisions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CrewCVDecision'
+          description: One decision per choice key.
+    CrewCVCommitResult:
+      type: object
+      required: [crew_id, full_name]
+      properties:
+        crew_id:
+          type: string
+          example: K7Q2M9XA2
+        full_name:
+          type: string
   responses:
     BadRequest:
       description: The request could not be understood (`bad_request`).
@@ -10944,6 +11108,93 @@ paths:
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
       security: *id105
+  /api/admin/v1/crews/cv-import/validate:
+    post:
+      tags:
+      - Crew import/export
+      operationId: validateCrewCVImport
+      summary: Validate a single crew CV (RVOS layout, .xlsx)
+      description: 'Upload one RVOS CV saved as .xlsx (multipart field `file`). The server reads it by its labels,
+        matches ranks, document, certificate and vessel types against master data and remembered aliases, and checks
+        for an existing crew member by passport, seaman book, or name and birth date. Nothing is saved. When there are
+        no errors and no duplicate, the preview and the file are staged under `token` for one hour. 422 on `file` with
+        "Save the CV as .xlsx and upload it again." for any other extension, or "This file does not look like an RVOS
+        CV." when the labels are missing.'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: CV preview.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CrewCVPreview'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+      security:
+      - sessionCookie: []
+        csrfHeader: []
+  /api/admin/v1/crews/cv-import/commit:
+    post:
+      tags:
+      - Crew import/export
+      operationId: commitCrewCVImport
+      summary: Create the crew member from a validated CV
+      description: 'Needs a decision for every choice of the preview. Stores the original .xlsx as the crew CV file,
+        creates chosen new types and remembers matches as aliases, then creates the crew member with next of kin,
+        travel documents, certificates (number "-") and sea service in one transaction. 410 import_expired when the
+        token is unknown, used or older than one hour; 409 crew_exists when the crew member was registered meanwhile;
+        422 on `decisions` when a choice is missing or invalid.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrewCVCommitInput'
+      responses:
+        '200':
+          description: Crew member created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CrewCVCommitResult'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '409':
+          description: The crew member is already registered.
+        '410':
+          description: The preview expired.
+      security:
+      - sessionCookie: []
+        csrfHeader: []
   /api/admin/v1/crews/{crew}:
     get:
       tags:
@@ -13457,7 +13708,7 @@ paths:
 
 
         Allowed extensions per `context`: `photo` and `cms_image`: jpg, jpeg, png, webp; `logo`: jpg,
-        jpeg, png, webp, svg; `flag`: svg; `crew_document`: pdf, jpg, jpeg, png, webp; `crew_cv` and `applicant`:
+        jpeg, png, webp, svg; `flag`: svg; `crew_document`: pdf, jpg, jpeg, png, webp; `crew_cv`: pdf, jpg, jpeg, png, webp, doc, docx, xlsx (kept as is); `applicant`:
         pdf, jpg, jpeg, png, webp, doc, docx; `csv_import`: csv.
 
 

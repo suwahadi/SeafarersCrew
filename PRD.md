@@ -60,6 +60,7 @@ Version 1 ships Parts A, B and C with one administrator account; audit log, 2FA 
 - Email dispatch of generated PDFs through the Brevo API.
 - Advanced datagrid, CSV/Excel export and CSV import.
 - Payroll transfer register: monthly periods of bank-transfer rows tied to crew records, Excel import and export in the bank-sheet layout, server-side filters with totals.
+- Crew CV import: one RVOS CV (.xlsx) becomes a crew profile with documents, certificates, sea service and next of kin after a preview.
 - Website CMS: page builder, news, hero slider, gallery, testimonials, client logos, stats counter, job vacancies, applicant pipeline, contact inbox, language list.
 - Public website on Next.js with SSR, career portal, contact form, Cloudflare Turnstile, Google Translate switcher, full SEO.
 - File pipeline: validation, WebP and PDF compression, DOC/DOCX to PDF conversion, random renaming, private S3 storage.
@@ -234,7 +235,7 @@ Every crew member receives a unique 9-character Crew ID on creation (see 11.1). 
 | 61–90 | Yellow |
 | Over 90, or no expiry | Green |
 
-**Crew CV upload:** the admin can attach an external CV file in the Personal Data tab. Images are converted to WebP; DOC/DOCX are converted to PDF (see Section 10).
+**Crew CV upload:** the admin can attach an external CV file in the Personal Data tab. Images are converted to WebP; DOC/DOCX are converted to PDF; XLSX (for example an imported RVOS CV) is kept as is (see Section 10).
 
 ### 6.4 Contract Management
 
@@ -536,7 +537,7 @@ Heavy steps (6) run in a bounded worker pool so many uploads cannot exhaust CPU;
 | --- | --- |
 | Profile photo, CMS images, logos | JPG, JPEG, PNG, WebP (SVG only for logos and flags, sanitized) |
 | Crew documents and certificates | PDF, JPG, JPEG, PNG, WebP |
-| Crew CV (admin) | PDF, JPG, JPEG, PNG, WebP, DOC, DOCX |
+| Crew CV (admin) | PDF, JPG, JPEG, PNG, WebP, DOC, DOCX, XLSX |
 | Applicant CV and documents (public) | PDF, JPG, JPEG, PNG, WebP, DOC, DOCX |
 | CSV import | CSV only (UTF-8, validated as text) |
 

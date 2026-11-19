@@ -73,7 +73,7 @@ export function PersonalFields({ register, control, errors, age, withFiles = tru
                 context="crew_cv"
                 fileId={field.value}
                 onChange={(id) => field.onChange(id)}
-                hint="PDF, image, DOC or DOCX; Word files are converted to PDF."
+                hint="PDF, image, DOC, DOCX or XLSX; Word files are converted to PDF."
                 error={fieldState.error?.message}
               />
             )}

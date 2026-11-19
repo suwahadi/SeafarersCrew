@@ -103,7 +103,7 @@ func TestAllowedExtensionsPerContextMatchPRDTable10_2(t *testing.T) {
 	assert.ElementsMatch(t, []string{"jpg", "jpeg", "png", "webp", "svg"}, Allowed(ContextLogo))
 	assert.ElementsMatch(t, []string{"svg"}, Allowed(ContextFlag))
 	assert.ElementsMatch(t, []string{"pdf", "jpg", "jpeg", "png", "webp"}, Allowed(ContextCrewDocument))
-	assert.ElementsMatch(t, []string{"pdf", "jpg", "jpeg", "png", "webp", "doc", "docx"}, Allowed(ContextCrewCV))
+	assert.ElementsMatch(t, []string{"pdf", "jpg", "jpeg", "png", "webp", "doc", "docx", "xlsx"}, Allowed(ContextCrewCV))
 	assert.ElementsMatch(t, []string{"pdf", "jpg", "jpeg", "png", "webp", "doc", "docx"}, Allowed(ContextApplicant))
 	assert.ElementsMatch(t, []string{"csv"}, Allowed(ContextCSVImport))
 

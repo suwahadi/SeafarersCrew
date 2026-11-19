@@ -84,6 +84,9 @@ export default function CrewListPage() {
         description="Seafarer records, documents, certificates and compliance."
         actions={
           <>
+            <Button variant="secondary" collapse icon={<Icon name="upload" />} onClick={() => void navigate('/crews/import?tab=cv')}>
+              Import CV
+            </Button>
             <Button variant="secondary" collapse icon={<Icon name="upload" />} onClick={() => void navigate('/crews/import')}>
               Import CSV
             </Button>

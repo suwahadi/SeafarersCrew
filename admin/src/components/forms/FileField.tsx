@@ -20,7 +20,7 @@ const acceptByContext: Record<UploadContext, string> = {
   logo: '.jpg,.jpeg,.png,.webp,.svg',
   flag: '.svg',
   crew_document: '.pdf,.jpg,.jpeg,.png,.webp',
-  crew_cv: '.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx',
+  crew_cv: '.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xlsx',
   applicant: '.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx',
   csv_import: '.csv',
 }

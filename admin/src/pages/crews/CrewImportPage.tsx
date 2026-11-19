@@ -1,15 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { errorMessage } from '@/api/client'
 import { crewKeys, crewsApi, type ImportPreview, type ImportReport } from '@/api/crews'
 import { waitForJob } from '@/api/jobs'
 import { Button } from '@/components/ui/Button'
 import { Card, PageHeader } from '@/components/ui/Layout'
+import { Tabs } from '@/components/ui/Tabs'
+import { CvImportPanel } from './CvImportPanel'
 import { ImportPreviewTable } from './ImportPreviewTable'
 import { downloadBlob } from './useJobDownload'
 
-export default function CrewImportPage() {
+function CsvImportPanel() {
   const qc = useQueryClient()
   const input = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<ImportPreview | null>(null)
@@ -45,7 +47,6 @@ export default function CrewImportPage() {
 
   return (
     <>
-      <PageHeader title="Import crew" description="Upload a CSV based on the template. Every row is validated before anything is saved." />
       <div className="space-y-4">
         <Card title="1. Prepare the file">
           <p className="mb-3 text-sm text-slate-600">Dates use YYYY-MM-DD, phones use E.164 (+62…), and ranks use the short code or the name.</p>
@@ -110,6 +111,32 @@ export default function CrewImportPage() {
           </Card>
         ) : null}
       </div>
+    </>
+  )
+}
+
+const TABS = [
+  { id: 'csv', label: 'CSV (many crew)' },
+  { id: 'cv', label: 'CV (one crew)' },
+]
+
+export default function CrewImportPage() {
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab') === 'cv' ? 'cv' : 'csv'
+  return (
+    <>
+      <PageHeader
+        title="Import crew"
+        description={
+          tab === 'cv'
+            ? 'Upload one RVOS CV saved as .xlsx, check the preview, then confirm to create the crew profile.'
+            : 'Upload a CSV based on the template. Every row is validated before anything is saved.'
+        }
+      />
+      <div className="mb-4">
+        <Tabs tabs={TABS} active={tab} onChange={(id) => setParams({ tab: id }, { replace: true })} />
+      </div>
+      {tab === 'cv' ? <CvImportPanel /> : <CsvImportPanel />}
     </>
   )
 }

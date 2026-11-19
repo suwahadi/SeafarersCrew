@@ -69,7 +69,7 @@ var allowed = map[Context][]string{
 	ContextLogo:          append(slices.Clone(imageExts), "svg"),
 	ContextFlag:          {"svg"},
 	ContextCrewDocument:  documentExts,
-	ContextCrewCV:        officeExts,
+	ContextCrewCV:        append(slices.Clone(officeExts), "xlsx"),
 	ContextApplicant:     officeExts,
 	ContextCSVImport:     {"csv"},
 	ContextPayrollImport: {"xlsx"},

@@ -19,6 +19,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xuri/excelize/v2"
 
 	"github.com/suwahadi/seafarerscrew/backend/internal/job"
 	"github.com/suwahadi/seafarerscrew/backend/internal/model"
@@ -200,7 +201,7 @@ var (
 	cleanPDFBytes = []byte("%PDF-1.7\n1 0 obj << /Type /Catalog >> endobj\n%%EOF")
 	jsPDFBytes    = []byte("%PDF-1.7\n1 0 obj << /OpenAction << /S /JavaScript /JS (x) >> >> endobj\n%%EOF")
 	exeBytes      = append([]byte("MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff"), make([]byte, 64)...)
-	storedKey     = regexp.MustCompile(`^(public/)?[a-z_]+/2026/10/[a-z0-9]{12}\.(webp|pdf|svg|csv)$`)
+	storedKey     = regexp.MustCompile(`^(public/)?[a-z_]+/2026/10/[a-z0-9]{12}\.(webp|pdf|svg|csv|xlsx)$`)
 )
 
 func requireFileErr(t *testing.T, err error, code string) {
@@ -231,6 +232,7 @@ func TestUploadAllowedInputPerContextAndTransformation(t *testing.T) {
 		{"applicant doc to pdf", filecheck.ContextApplicant, "cv.doc", func(*testing.T) []byte {
 			return append([]byte{0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1}, make([]byte, 600)...)
 		}, "application/pdf", "pdf", false},
+		{"crew cv xlsx kept as is", filecheck.ContextCrewCV, "cv.xlsx", testXLSX, xlsxMime, "xlsx", false},
 		{"csv import", filecheck.ContextCSVImport, "crew.csv", func(*testing.T) []byte { return []byte("full_name\nJohn\n") }, "text/csv", "csv", false},
 	}
 	for _, tc := range cases {
@@ -369,4 +371,35 @@ func TestImageURLIsInline(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, link.URL, "inline=true")
 	assert.Contains(t, link.URL, "filename=me.webp")
+}
+
+func testXLSX(t *testing.T) []byte {
+	t.Helper()
+	f := excelize.NewFile()
+	defer func() { _ = f.Close() }()
+	require.NoError(t, f.SetCellStr("Sheet1", "B7", "Name"))
+	buf, err := f.WriteToBuffer()
+	require.NoError(t, err)
+	return buf.Bytes()
+}
+
+func TestUpload_CrewCVKeepsXLSX(t *testing.T) {
+	f := newFileFixture(t)
+	data := testXLSX(t)
+	got, err := f.svc.Upload(context.Background(), UploadInput{Context: filecheck.ContextCrewCV, Filename: "CV RVOS.xlsx", Data: data})
+	require.NoError(t, err)
+	assert.Equal(t, xlsxMime, got.MimeType)
+	assert.Equal(t, data, f.storage.objects[got.StorageKey], "the workbook is stored byte for byte")
+
+	var macro bytes.Buffer
+	zw := zip.NewWriter(&macro)
+	for name, body := range map[string]string{"[Content_Types].xml": "<Types/>", "xl/workbook.xml": "<workbook/>", "xl/vbaProject.bin": "binary"} {
+		w, err := zw.Create(name)
+		require.NoError(t, err)
+		_, err = w.Write([]byte(body))
+		require.NoError(t, err)
+	}
+	require.NoError(t, zw.Close())
+	_, err = f.svc.Upload(context.Background(), UploadInput{Context: filecheck.ContextCrewCV, Filename: "cv.xlsx", Data: macro.Bytes()})
+	require.Error(t, err, "a workbook with macros is rejected")
 }

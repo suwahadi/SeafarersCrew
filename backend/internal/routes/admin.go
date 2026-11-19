@@ -25,6 +25,7 @@ type AdminDeps struct {
 	Jobs          *admin.JobHandler
 	Crews         *admin.CrewHandler
 	CrewTransfer  *admin.CrewTransferHandler
+	CrewCV        *admin.CrewCVHandler
 	Masters       map[string]admin.MasterRoutes
 	MasterData    *admin.MasterDataHandler
 	Files         *admin.FileHandler
@@ -84,7 +85,7 @@ func Admin(r chi.Router, d AdminDeps) {
 			r.Get("/dashboard/expiring", d.Dashboard.Expiring)
 			r.Get("/dashboard/reliefs", d.Dashboard.Reliefs)
 
-			Crew(r, d.Crews, d.CrewTransfer)
+			Crew(r, d.Crews, d.CrewTransfer, d.CrewCV)
 			Documents(r, d.Documents)
 			r.Post("/files", d.Files.Upload)
 			r.Get("/files/{id}/url", d.Files.URL)
