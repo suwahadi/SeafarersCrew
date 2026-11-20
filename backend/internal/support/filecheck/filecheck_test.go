@@ -523,3 +523,34 @@ func TestCheckStoredXLSXAllowsOnlyKnownRelationships(t *testing.T) {
 		p["xl/media/image1.png"] = "png"
 	})), "sensitivity labels, drawings and pictures are ordinary content")
 }
+
+func TestCheckStoredXLSXRejectsDataConnectionsAndShadowedAttributes(t *testing.T) {
+	cases := map[string]func(p map[string]string){
+		"data connection": func(p map[string]string) {
+			addRelationship(p, "xl/_rels/workbook.xml.rels", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/connections", "data.xml")
+			p["xl/data.xml"] = `<connections xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><connection id="1" name="q" type="4" refreshOnLoad="1"><webPr url="http://example.invalid/data"/></connection></connections>`
+		},
+		"query table": func(p map[string]string) {
+			p["xl/worksheets/_rels/sheet1.xml.rels"] = `<Relationships ` + relsNS + `><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/queryTable" Target="../tables/q1.xml"/></Relationships>`
+			p["xl/tables/q1.xml"] = `<queryTable xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" name="q" connectionId="1"/>`
+		},
+		"connections part at the usual path": func(p map[string]string) {
+			p["xl/connections.xml"] = `<connections xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>`
+		},
+		"namespaced Type next to a safe one": func(p map[string]string) {
+			p["xl/worksheets/_rels/sheet1.xml.rels"] = `<Relationships ` + relsNS + ` xmlns:x="urn:x"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" x:Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject" Target="../media/o.bin"/></Relationships>`
+		},
+		"relationships outside the package namespace": func(p map[string]string) {
+			p["xl/worksheets/_rels/sheet1.xml.rels"] = `<Relationships xmlns="urn:not-opc"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/i.png"/></Relationships>`
+		},
+		"namespaced content type override": func(p map[string]string) {
+			p["[Content_Types].xml"] = strings.Replace(p["[Content_Types].xml"], "</Types>",
+				`<Override xmlns:x="urn:x" PartName="/xl/workbook.xml" x:ContentType="application/vnd.ms-excel.sheet.macroEnabled.main+xml" ContentType="application/xml"/></Types>`, 1)
+		},
+	}
+	for name, change := range cases {
+		t.Run(name, func(t *testing.T) {
+			require.Error(t, CheckStoredXLSX(xlsxWith(t, change)))
+		})
+	}
+}

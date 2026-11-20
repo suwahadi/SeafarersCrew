@@ -57,7 +57,7 @@ func CheckXLSX(data []byte) error {
 	return nil
 }
 
-var storedXLSXBlockedDirs = []string{"xl/embeddings/", "xl/activex/", "xl/externallinks/"}
+var storedXLSXBlockedDirs = []string{"xl/embeddings/", "xl/activex/", "xl/externallinks/", "xl/querytables/", "xl/connections.xml"}
 
 var relationshipRoots = []string{
 	"http://schemas.openxmlformats.org/officedocument/2006/relationships/",
@@ -72,14 +72,19 @@ var allowedRelationships = map[string]bool{
 	"drawing": true, "vmldrawing": true, "image": true, "chart": true, "chartusershapes": true, "chartstyle": true, "chartcolorstyle": true,
 	"diagramdata": true, "diagramlayout": true, "diagramquickstyle": true, "diagramcolors": true, "diagramdrawing": true,
 	"comments": true, "threadedcomment": true, "person": true, "hyperlink": true, "printersettings": true,
-	"table": true, "querytable": true, "connections": true, "pivottable": true, "pivotcachedefinition": true, "pivotcacherecords": true,
+	"table": true, "pivottable": true, "pivotcachedefinition": true, "pivotcacherecords": true,
 	"slicer": true, "slicercache": true, "timeline": true, "timelinecache": true, "customxml": true, "customxmlprops": true,
 	"sheetmetadata": true, "volatiledependencies": true, "classificationlabels": true, "featurepropertybag": true,
 	"rdrichvalue": true, "rdrichvaluestructure": true, "rdrichvaluetypes": true, "richvaluerel": true, "rdarray": true,
 	"rdsupportingpropertybag": true, "rdsupportingpropertybagstructure": true,
 }
 
-var deniedContentTypes = []string{"macroenabled", "vbaproject", "oleobject", "activex", "externallink", "macrosheet", "dialogsheet"}
+var deniedContentTypes = []string{"macroenabled", "vbaproject", "oleobject", "activex", "externallink", "macrosheet", "dialogsheet", "connections", "querytable"}
+
+const (
+	relationshipsNamespace = "http://schemas.openxmlformats.org/package/2006/relationships"
+	contentTypesNamespace  = "http://schemas.openxmlformats.org/package/2006/content-types"
+)
 
 const activeWorkbook = "Workbooks with macros, embedded objects, ActiveX controls, external links or DDE formulas are not accepted."
 
@@ -159,13 +164,18 @@ func walkXML(f *zip.File, visit func(tok xml.Token) bool) error {
 	}
 }
 
-func xmlAttr(se xml.StartElement, name string) string {
+func opcAttrs(se xml.StartElement, keys ...string) (map[string]string, bool) {
+	out := map[string]string{}
 	for _, a := range se.Attr {
-		if a.Name.Local == name {
-			return a.Value
+		if !slices.Contains(keys, a.Name.Local) {
+			continue
 		}
+		if _, dup := out[a.Name.Local]; dup || a.Name.Space != "" {
+			return nil, false
+		}
+		out[a.Name.Local] = a.Value
 	}
-	return ""
+	return out, true
 }
 
 func readXLSXContentTypes(zr *zip.Reader) (xlsxContentTypes, bool, error) {
@@ -175,21 +185,30 @@ func readXLSXContentTypes(zr *zip.Reader) (xlsxContentTypes, bool, error) {
 		if !strings.EqualFold(f.Name, "[Content_Types].xml") {
 			continue
 		}
+		malformed := false
 		err := walkXML(f, func(tok xml.Token) bool {
 			se, ok := tok.(xml.StartElement)
 			if !ok {
 				return true
 			}
-			ct := strings.ToLower(xmlAttr(se, "ContentType"))
+			attrs, ok := opcAttrs(se, "ContentType", "Extension", "PartName")
+			if !ok || se.Name.Space != contentTypesNamespace {
+				malformed = true
+				return false
+			}
+			ct := strings.ToLower(strings.TrimSpace(attrs["ContentType"]))
 			switch se.Name.Local {
 			case "Default":
-				types.defaults[strings.ToLower(xmlAttr(se, "Extension"))] = ct
+				types.defaults[strings.ToLower(strings.TrimSpace(attrs["Extension"]))] = ct
 			case "Override":
-				types.overrides[strings.ToLower(strings.TrimPrefix(xmlAttr(se, "PartName"), "/"))] = ct
+				types.overrides[strings.ToLower(strings.TrimPrefix(strings.TrimSpace(attrs["PartName"]), "/"))] = ct
 			}
 			denied = denied || deniedContentType(ct)
 			return true
 		})
+		if err == nil && malformed {
+			err = errors.New("malformed content types")
+		}
 		return types, denied, err
 	}
 	return types, false, errors.New("no content types")
@@ -199,13 +218,21 @@ func activeRelationship(f *zip.File) (bool, error) {
 	active := false
 	err := walkXML(f, func(tok xml.Token) bool {
 		se, ok := tok.(xml.StartElement)
-		if !ok || se.Name.Local != "Relationship" {
+		if !ok {
 			return true
 		}
-		typ := strings.ToLower(strings.TrimSpace(xmlAttr(se, "Type")))
+		attrs, ok := opcAttrs(se, "Type", "Target", "TargetMode")
+		if !ok || se.Name.Space != relationshipsNamespace {
+			active = true
+			return false
+		}
+		if se.Name.Local != "Relationship" {
+			return true
+		}
+		typ := strings.ToLower(strings.TrimSpace(attrs["Type"]))
 		kind := typ[strings.LastIndex(typ, "/")+1:]
 		known := allowedRelationships[kind] && slices.ContainsFunc(relationshipRoots, func(root string) bool { return strings.HasPrefix(typ, root) })
-		external := strings.EqualFold(strings.TrimSpace(xmlAttr(se, "TargetMode")), "External")
+		external := strings.EqualFold(strings.TrimSpace(attrs["TargetMode"]), "External")
 		active = !known || (external && kind != "hyperlink")
 		return !active
 	})
