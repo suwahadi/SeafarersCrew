@@ -289,7 +289,7 @@ const (
 	cvMaxCols = 100
 )
 
-func cvHasText(cells []string) bool {
+func rowHasText(cells []string) bool {
 	for _, c := range cells {
 		if strings.TrimSpace(c) != "" {
 			return true
@@ -311,13 +311,13 @@ func readCVRows(f *excelize.File, sheet string) ([][]string, bool, error) {
 			return nil, false, err
 		}
 		if r >= cvMaxRows {
-			if cvHasText(cols) {
+			if rowHasText(cols) {
 				return nil, true, nil
 			}
 			continue
 		}
 		if len(cols) > cvMaxCols {
-			if cvHasText(cols[cvMaxCols:]) {
+			if rowHasText(cols[cvMaxCols:]) {
 				return nil, true, nil
 			}
 			cols = cols[:cvMaxCols]

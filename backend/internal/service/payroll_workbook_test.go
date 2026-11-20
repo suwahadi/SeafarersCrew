@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"testing"
@@ -272,4 +273,38 @@ func TestParsePayrollWorkbook_NeverEvaluatesUploadedFormulas(t *testing.T) {
 	require.Len(t, rows, 1)
 	assert.Nil(t, rows[0].USD, "a formula without a saved result must not be calculated")
 	assert.Equal(t, "USD is a formula with no saved result. Open the file in Excel and save it again.", rows[0].Errors["usd"])
+}
+
+func editWorkbook(t *testing.T, data []byte, edit func(f *excelize.File, sheet string)) []byte {
+	t.Helper()
+	f, err := excelize.OpenReader(bytes.NewReader(data))
+	require.NoError(t, err)
+	defer func() { _ = f.Close() }()
+	edit(f, f.GetSheetList()[0])
+	buf, err := f.WriteToBuffer()
+	require.NoError(t, err)
+	return buf.Bytes()
+}
+
+func TestParsePayrollWorkbook_ReadsOnlyTheRowArea(t *testing.T) {
+	base := buildPayrollWorkbook(t, wbOptions{}, wbRow{emp: 900101, bank: "BNI", holder: "A", account: "3200000001", idr: 1000})
+
+	far := editWorkbook(t, base, func(f *excelize.File, sheet string) {
+		require.NoError(t, f.SetCellValue(sheet, "D20100", 900102))
+		require.NoError(t, f.SetCellStr(sheet, "I20100", "3200000002"))
+		require.NoError(t, f.SetCellValue(sheet, "K20100", 5000))
+	})
+	_, err := ParsePayrollWorkbook(far)
+	e, ok := apperr.As(err)
+	require.True(t, ok, "%v", err)
+	assert.Equal(t, "The file may contain at most 5000 rows.", e.Fields["file"], "a row far below the transfer rows is refused instead of loading the whole sheet")
+
+	styled := editWorkbook(t, base, func(f *excelize.File, sheet string) {
+		style, err := f.NewStyle(&excelize.Style{Fill: excelize.Fill{Type: "pattern", Color: []string{"FFFF00"}, Pattern: 1}})
+		require.NoError(t, err)
+		require.NoError(t, f.SetCellStyle(sheet, "A30000", "A30000", style))
+	})
+	rows, err := ParsePayrollWorkbook(styled)
+	require.NoError(t, err, "formatting without values below the rows is fine")
+	assert.Len(t, rows, 1)
 }

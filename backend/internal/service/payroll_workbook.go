@@ -61,15 +61,58 @@ func ParsePayrollWorkbook(data []byte) ([]WorkbookRow, error) {
 		if visible, err := f.GetSheetVisible(sheet); err != nil || !visible {
 			continue
 		}
-		rows, err := f.GetRows(sheet, excelize.Options{RawCellValue: true})
+		rows, header, cols, err := readPayrollSheet(f, sheet)
 		if err != nil {
-			return nil, fmt.Errorf("read payroll sheet: %w", err)
+			return nil, err
 		}
-		if header, cols := findPayrollHeader(rows); header >= 0 {
+		if header >= 0 {
 			return readPayrollRows(f, sheet, rows, header, cols)
 		}
 	}
 	return nil, payrollFileError("The workbook has no payroll header row (Employee ID, ACCOUNT NO, IDR).")
+}
+
+const payrollMaxCols = 64
+
+func readPayrollSheet(f *excelize.File, sheet string) ([][]string, int, map[string]int, error) {
+	rows, err := f.Rows(sheet)
+	if err != nil {
+		return nil, -1, nil, fmt.Errorf("read payroll sheet: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+	var out [][]string
+	header, limit := -1, 0
+	var cols map[string]int
+	for r := 0; rows.Next(); r++ {
+		row, err := rows.Columns(excelize.Options{RawCellValue: true})
+		if err != nil {
+			return nil, -1, nil, fmt.Errorf("read payroll sheet: %w", err)
+		}
+		if len(row) > payrollMaxCols {
+			row = row[:payrollMaxCols]
+		}
+		if header < 0 {
+			if r >= payrollHeaderScanRows {
+				return nil, -1, nil, nil
+			}
+			out = append(out, row)
+			if header, cols = findPayrollHeader(out); header >= 0 {
+				limit = header + 1 + 2*MaxImportRows
+			}
+			continue
+		}
+		if r >= limit {
+			if rowHasText(row) {
+				return nil, -1, nil, payrollFileError(fmt.Sprintf("The file may contain at most %d rows.", MaxImportRows))
+			}
+			continue
+		}
+		out = append(out, row)
+	}
+	if err := rows.Error(); err != nil {
+		return nil, -1, nil, fmt.Errorf("read payroll sheet: %w", err)
+	}
+	return out, header, cols, nil
 }
 
 func normalizePayrollHeader(s string) string {
