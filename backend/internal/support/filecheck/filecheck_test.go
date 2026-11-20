@@ -11,6 +11,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -399,4 +400,48 @@ func TestCheckStoredXLSXRejectsActiveContent(t *testing.T) {
 		p["xl/media/image1.png"] = "png"
 		p["xl/worksheets/sheet1.xml"] = strings.Replace(p["xl/worksheets/sheet1.xml"], "</sheetData>", `<row r="5"><c r="A5"><f>SUM(A1:A2)</f></c></row></sheetData>`, 1)
 	})), "pictures and ordinary formulas are fine")
+}
+
+func utf16LE(s string) string {
+	units := utf16.Encode([]rune(s))
+	out := []byte{0xFF, 0xFE}
+	for _, u := range units {
+		out = append(out, byte(u), byte(u>>8))
+	}
+	return string(out)
+}
+
+const relsNS = `xmlns="http://schemas.openxmlformats.org/package/2006/relationships"`
+
+func TestCheckStoredXLSXRejectsDisguisedActiveContent(t *testing.T) {
+	cases := map[string]func(p map[string]string){
+		"relationship type written with an XML entity": func(p map[string]string) {
+			p["xl/worksheets/_rels/sheet1.xml.rels"] = `<?xml version="1.0" encoding="UTF-8"?><Relationships ` + relsNS + `><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships&#47;oleObject" Target="../media/o.bin"/></Relationships>`
+			p["xl/media/o.bin"] = "ole"
+		},
+		"relationships part in UTF-16": func(p map[string]string) {
+			p["xl/worksheets/_rels/sheet1.xml.rels"] = utf16LE(`<?xml version="1.0" encoding="UTF-16"?><Relationships ` + relsNS + `><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject" Target="../media/o.bin"/></Relationships>`)
+		},
+		"external link stored under another folder": func(p map[string]string) {
+			addRelationship(p, "xl/_rels/workbook.xml.rels", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/externalLink", "links/l1.xml")
+			p["xl/links/l1.xml"] = `<externalLink xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>`
+		},
+		"DDE in a defined name": func(p map[string]string) {
+			p["xl/workbook.xml"] = strings.Replace(p["xl/workbook.xml"], "</workbook>", `<definedNames><definedName name="x">cmd|' /C calc'!A0</definedName></definedNames></workbook>`, 1)
+		},
+		"DDE in a sheet stored under another folder": func(p map[string]string) {
+			p["xl/other/s.xml"] = `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1"><f>'cmd'|' /C calc'!A0</f></c></row></sheetData></worksheet>`
+		},
+		"image loaded from outside the file": func(p map[string]string) {
+			p["xl/drawings/_rels/drawing1.xml.rels"] = `<Relationships ` + relsNS + `><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" TargetMode="External" Target="http://example.invalid/x.png"/></Relationships>`
+		},
+	}
+	for name, change := range cases {
+		t.Run(name, func(t *testing.T) {
+			require.Error(t, CheckStoredXLSX(xlsxWith(t, change)))
+		})
+	}
+	require.NoError(t, CheckStoredXLSX(xlsxWith(t, func(p map[string]string) {
+		p["xl/worksheets/_rels/sheet1.xml.rels"] = `<Relationships ` + relsNS + `><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" TargetMode="External" Target="mailto:crew@example.com"/></Relationships>`
+	})), "an ordinary hyperlink is fine")
 }

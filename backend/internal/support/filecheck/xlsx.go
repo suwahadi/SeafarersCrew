@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"io"
+	"path"
 	"slices"
 	"strings"
 
@@ -52,7 +53,32 @@ func CheckXLSX(data []byte) error {
 
 var storedXLSXBlockedDirs = []string{"xl/embeddings/", "xl/activex/", "xl/externallinks/"}
 
-// CheckStoredXLSX checks a workbook that is kept and downloaded: no macros, embedded objects, ActiveX, external links or DDE formulas.
+var deniedRelationships = map[string]bool{
+	"vbaproject": true, "oleobject": true, "package": true, "control": true, "activexcontrol": true, "activexcontrolbinary": true,
+	"externallink": true, "externallinkpath": true, "xlmacrosheet": true, "xlintlmacrosheet": true, "dialogsheet": true, "attachedtemplate": true,
+}
+
+var deniedContentTypes = []string{"macroenabled", "vbaproject", "oleobject", "activex", "externallink", "macrosheet", "dialogsheet"}
+
+const activeWorkbook = "Workbooks with macros, embedded objects, ActiveX controls, external links or DDE formulas are not accepted."
+
+type xlsxContentTypes struct {
+	defaults  map[string]string
+	overrides map[string]string
+}
+
+func (c xlsxContentTypes) of(name string) string {
+	if ct, ok := c.overrides[name]; ok {
+		return ct
+	}
+	return c.defaults[strings.TrimPrefix(path.Ext(name), ".")]
+}
+
+func deniedContentType(ct string) bool {
+	return slices.ContainsFunc(deniedContentTypes, func(d string) bool { return strings.Contains(ct, d) })
+}
+
+// CheckStoredXLSX checks a workbook that is kept and downloaded: no macros, embedded objects, ActiveX, external links or DDE formulas wherever they sit.
 func CheckStoredXLSX(data []byte) error {
 	if err := CheckXLSX(data); err != nil {
 		return err
@@ -61,103 +87,125 @@ func CheckStoredXLSX(data []byte) error {
 	if err != nil {
 		return Rejected(invalidWorkbook)
 	}
+	types, denied, err := readXLSXContentTypes(zr)
+	if err != nil {
+		return Rejected(invalidWorkbook)
+	}
+	if denied {
+		return Rejected(activeWorkbook)
+	}
 	for _, f := range zr.File {
 		name := strings.ToLower(f.Name)
+		ct := types.of(name)
+		if slices.ContainsFunc(storedXLSXBlockedDirs, func(dir string) bool { return strings.HasPrefix(name, dir) }) || deniedContentType(ct) {
+			return Rejected(activeWorkbook)
+		}
+		var active bool
 		switch {
-		case slices.ContainsFunc(storedXLSXBlockedDirs, func(dir string) bool { return strings.HasPrefix(name, dir) }):
-			return Rejected("Workbooks with embedded objects, ActiveX controls or external links are not accepted.")
-		case name == "[content_types].xml" && partContains(f, "macroenabled"):
-			return Rejected("Workbooks containing macros are not accepted.")
-		case strings.HasSuffix(name, ".rels") && partContains(f, "relationships/vbaproject", "relationships/oleobject"):
-			return Rejected("Workbooks with macros or embedded objects are not accepted.")
-		case strings.HasPrefix(name, "xl/worksheets/") && strings.HasSuffix(name, ".xml") && hasDDEFormula(f):
-			return Rejected("Workbooks with DDE formulas are not accepted.")
+		case strings.HasSuffix(name, ".rels") || strings.HasSuffix(ct, "relationships+xml"):
+			active, err = activeRelationship(f)
+		case strings.HasSuffix(name, ".xml") || strings.HasSuffix(ct, "+xml") || strings.HasSuffix(ct, "/xml"):
+			active, err = formulaWithDDE(f)
+		}
+		if err != nil {
+			return Rejected(invalidWorkbook)
+		}
+		if active {
+			return Rejected(activeWorkbook)
 		}
 	}
 	return nil
 }
 
-func partContains(f *zip.File, needles ...string) bool {
+func walkXML(f *zip.File, visit func(tok xml.Token) bool) error {
 	rc, err := f.Open()
 	if err != nil {
-		return true
-	}
-	defer func() { _ = rc.Close() }()
-	longest := 0
-	for _, n := range needles {
-		longest = max(longest, len(n))
-	}
-	buf := make([]byte, 64<<10)
-	var tail []byte
-	for {
-		n, err := rc.Read(buf)
-		window := bytes.ToLower(append(tail, buf[:n]...))
-		for _, needle := range needles {
-			if bytes.Contains(window, []byte(needle)) {
-				return true
-			}
-		}
-		if len(window) > longest {
-			tail = append([]byte{}, window[len(window)-longest:]...)
-		} else {
-			tail = window
-		}
-		if errors.Is(err, io.EOF) {
-			return false
-		}
-		if err != nil {
-			return true
-		}
-	}
-}
-
-func hasDDEFormula(f *zip.File) bool {
-	rc, err := f.Open()
-	if err != nil {
-		return true
+		return err
 	}
 	defer func() { _ = rc.Close() }()
 	d := xml.NewDecoder(rc)
-	var formula strings.Builder
-	inFormula := false
 	for {
 		tok, err := d.Token()
 		if errors.Is(err, io.EOF) {
-			return false
+			return nil
 		}
 		if err != nil {
-			return true
+			return err
 		}
-		switch t := tok.(type) {
-		case xml.StartElement:
-			if t.Name.Local == "f" {
-				inFormula = true
-				formula.Reset()
-			}
-		case xml.CharData:
-			if inFormula && formula.Len() < 1<<16 {
-				formula.Write(t)
-			}
-		case xml.EndElement:
-			if t.Name.Local == "f" {
-				inFormula = false
-				if ddeOutsideQuotes(formula.String()) {
-					return true
-				}
-			}
+		if !visit(tok) {
+			return nil
 		}
 	}
 }
 
-func ddeOutsideQuotes(formula string) bool {
-	quoted := false
-	for _, r := range formula {
-		switch {
-		case r == '"':
-			quoted = !quoted
-		case r == '|' && !quoted:
-			return true
+func xmlAttr(se xml.StartElement, name string) string {
+	for _, a := range se.Attr {
+		if a.Name.Local == name {
+			return a.Value
 		}
 	}
-	return false
+	return ""
+}
+
+func readXLSXContentTypes(zr *zip.Reader) (xlsxContentTypes, bool, error) {
+	types := xlsxContentTypes{defaults: map[string]string{}, overrides: map[string]string{}}
+	denied := false
+	for _, f := range zr.File {
+		if !strings.EqualFold(f.Name, "[Content_Types].xml") {
+			continue
+		}
+		err := walkXML(f, func(tok xml.Token) bool {
+			se, ok := tok.(xml.StartElement)
+			if !ok {
+				return true
+			}
+			ct := strings.ToLower(xmlAttr(se, "ContentType"))
+			switch se.Name.Local {
+			case "Default":
+				types.defaults[strings.ToLower(xmlAttr(se, "Extension"))] = ct
+			case "Override":
+				types.overrides[strings.ToLower(strings.TrimPrefix(xmlAttr(se, "PartName"), "/"))] = ct
+			}
+			denied = denied || deniedContentType(ct)
+			return true
+		})
+		return types, denied, err
+	}
+	return types, false, errors.New("no content types")
+}
+
+func activeRelationship(f *zip.File) (bool, error) {
+	active := false
+	err := walkXML(f, func(tok xml.Token) bool {
+		se, ok := tok.(xml.StartElement)
+		if !ok || se.Name.Local != "Relationship" {
+			return true
+		}
+		typ := strings.ToLower(xmlAttr(se, "Type"))
+		kind := typ[strings.LastIndex(typ, "/")+1:]
+		external := strings.EqualFold(xmlAttr(se, "TargetMode"), "External")
+		active = deniedRelationships[kind] || (external && kind != "hyperlink")
+		return !active
+	})
+	return active, err
+}
+
+func formulaWithDDE(f *zip.File) (bool, error) {
+	found, depth := false, 0
+	err := walkXML(f, func(tok xml.Token) bool {
+		switch t := tok.(type) {
+		case xml.StartElement:
+			if t.Name.Local == "f" || t.Name.Local == "definedName" {
+				depth++
+			}
+		case xml.EndElement:
+			if (t.Name.Local == "f" || t.Name.Local == "definedName") && depth > 0 {
+				depth--
+			}
+		case xml.CharData:
+			found = depth > 0 && bytes.IndexByte(t, '|') >= 0
+		}
+		return !found
+	})
+	return found, err
 }
