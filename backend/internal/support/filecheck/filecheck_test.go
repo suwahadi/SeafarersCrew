@@ -445,3 +445,81 @@ func TestCheckStoredXLSXRejectsDisguisedActiveContent(t *testing.T) {
 		p["xl/worksheets/_rels/sheet1.xml.rels"] = `<Relationships ` + relsNS + `><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" TargetMode="External" Target="mailto:crew@example.com"/></Relationships>`
 	})), "an ordinary hyperlink is fine")
 }
+
+type zipEntry struct{ name, body string }
+
+func zipOf(t *testing.T, entries []zipEntry) []byte {
+	t.Helper()
+	var b bytes.Buffer
+	zw := zip.NewWriter(&b)
+	for _, e := range entries {
+		w, err := zw.Create(e.name)
+		require.NoError(t, err)
+		_, err = w.Write([]byte(e.body))
+		require.NoError(t, err)
+	}
+	require.NoError(t, zw.Close())
+	return b.Bytes()
+}
+
+func xlsxEntries(t *testing.T) []zipEntry {
+	t.Helper()
+	base := xlsxBytes(t)
+	zr, err := zip.NewReader(bytes.NewReader(base), int64(len(base)))
+	require.NoError(t, err)
+	var out []zipEntry
+	for _, f := range zr.File {
+		rc, err := f.Open()
+		require.NoError(t, err)
+		b, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		out = append(out, zipEntry{f.Name, string(b)})
+	}
+	return out
+}
+
+func TestCheckXLSXRejectsDuplicateEntries(t *testing.T) {
+	macroTypes := `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/xl/workbook.xml" ContentType="application/vnd.ms-excel.sheet.macroEnabled.main+xml"/></Types>`
+	for name, extra := range map[string]zipEntry{
+		"same name":         {"[Content_Types].xml", macroTypes},
+		"different case":    {"[content_types].XML", macroTypes},
+		"backslash in path": {`xl\workbook.xml`, "<workbook/>"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			data := zipOf(t, append(xlsxEntries(t), extra))
+			require.Error(t, CheckXLSX(data))
+			require.Error(t, CheckStoredXLSX(data))
+		})
+	}
+}
+
+func TestCheckStoredXLSXAllowsOnlyKnownRelationships(t *testing.T) {
+	cases := map[string]func(p map[string]string){
+		"dangerous type padded with spaces": func(p map[string]string) {
+			p["xl/worksheets/_rels/sheet1.xml.rels"] = `<Relationships ` + relsNS + `><Relationship Id="rId1" Type=" http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject " Target="../media/o.bin"/></Relationships>`
+		},
+		"unknown relationship type": func(p map[string]string) {
+			addRelationship(p, "xl/_rels/workbook.xml.rels", "http://example.invalid/relationships/anything", "anything.bin")
+		},
+		"add-in web extension": func(p map[string]string) {
+			addRelationship(p, "_rels/.rels", "http://schemas.microsoft.com/office/2011/relationships/webextensiontaskpanes", "xl/webextensions/taskpanes.xml")
+		},
+		"DDE in a data validation formula": func(p map[string]string) {
+			p["xl/worksheets/sheet1.xml"] = strings.Replace(p["xl/worksheets/sheet1.xml"], "</worksheet>",
+				`<dataValidations count="1"><dataValidation type="list" sqref="B2"><formula1>cmd|' /C calc'!A0</formula1></dataValidation></dataValidations></worksheet>`, 1)
+		},
+	}
+	for name, change := range cases {
+		t.Run(name, func(t *testing.T) {
+			require.Error(t, CheckStoredXLSX(xlsxWith(t, change)))
+		})
+	}
+	require.NoError(t, CheckStoredXLSX(xlsxWith(t, func(p map[string]string) {
+		addRelationship(p, "_rels/.rels", "http://schemas.microsoft.com/office/2020/02/relationships/classificationlabels", "docMetadata/LabelInfo.xml")
+		p["docMetadata/LabelInfo.xml"] = `<clbl:labelList xmlns:clbl="http://schemas.microsoft.com/office/2020/mipLabelMetadata"/>`
+		p["xl/worksheets/_rels/sheet1.xml.rels"] = `<Relationships ` + relsNS + `><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>`
+		p["xl/drawings/_rels/drawing1.xml.rels"] = `<Relationships ` + relsNS + `><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/></Relationships>`
+		p["xl/media/image1.png"] = "png"
+	})), "sensitivity labels, drawings and pictures are ordinary content")
+}

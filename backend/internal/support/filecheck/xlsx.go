@@ -29,7 +29,13 @@ func CheckXLSX(data []byte) error {
 	}
 	var total uint64
 	hasTypes, hasWorkbook := false, false
+	seen := make(map[string]bool, len(zr.File))
 	for _, f := range zr.File {
+		key := strings.ToLower(path.Clean("/" + strings.ReplaceAll(f.Name, "\\", "/")))
+		if seen[key] {
+			return Rejected(invalidWorkbook)
+		}
+		seen[key] = true
 		total += f.UncompressedSize64
 		name := strings.ToLower(f.Name)
 		if strings.HasSuffix(name, "vbaproject.bin") {
@@ -53,9 +59,24 @@ func CheckXLSX(data []byte) error {
 
 var storedXLSXBlockedDirs = []string{"xl/embeddings/", "xl/activex/", "xl/externallinks/"}
 
-var deniedRelationships = map[string]bool{
-	"vbaproject": true, "oleobject": true, "package": true, "control": true, "activexcontrol": true, "activexcontrolbinary": true,
-	"externallink": true, "externallinkpath": true, "xlmacrosheet": true, "xlintlmacrosheet": true, "dialogsheet": true, "attachedtemplate": true,
+var relationshipRoots = []string{
+	"http://schemas.openxmlformats.org/officedocument/2006/relationships/",
+	"http://schemas.openxmlformats.org/package/2006/relationships/",
+	"http://purl.oclc.org/ooxml/officedocument/relationships/",
+	"http://schemas.microsoft.com/office/",
+}
+
+var allowedRelationships = map[string]bool{
+	"officedocument": true, "extended-properties": true, "core-properties": true, "custom-properties": true, "thumbnail": true,
+	"worksheet": true, "chartsheet": true, "theme": true, "styles": true, "sharedstrings": true, "calcchain": true,
+	"drawing": true, "vmldrawing": true, "image": true, "chart": true, "chartusershapes": true, "chartstyle": true, "chartcolorstyle": true,
+	"diagramdata": true, "diagramlayout": true, "diagramquickstyle": true, "diagramcolors": true, "diagramdrawing": true,
+	"comments": true, "threadedcomment": true, "person": true, "hyperlink": true, "printersettings": true,
+	"table": true, "querytable": true, "connections": true, "pivottable": true, "pivotcachedefinition": true, "pivotcacherecords": true,
+	"slicer": true, "slicercache": true, "timeline": true, "timelinecache": true, "customxml": true, "customxmlprops": true,
+	"sheetmetadata": true, "volatiledependencies": true, "classificationlabels": true, "featurepropertybag": true,
+	"rdrichvalue": true, "rdrichvaluestructure": true, "rdrichvaluetypes": true, "richvaluerel": true, "rdarray": true,
+	"rdsupportingpropertybag": true, "rdsupportingpropertybagstructure": true,
 }
 
 var deniedContentTypes = []string{"macroenabled", "vbaproject", "oleobject", "activex", "externallink", "macrosheet", "dialogsheet"}
@@ -181,13 +202,18 @@ func activeRelationship(f *zip.File) (bool, error) {
 		if !ok || se.Name.Local != "Relationship" {
 			return true
 		}
-		typ := strings.ToLower(xmlAttr(se, "Type"))
+		typ := strings.ToLower(strings.TrimSpace(xmlAttr(se, "Type")))
 		kind := typ[strings.LastIndex(typ, "/")+1:]
-		external := strings.EqualFold(xmlAttr(se, "TargetMode"), "External")
-		active = deniedRelationships[kind] || (external && kind != "hyperlink")
+		known := allowedRelationships[kind] && slices.ContainsFunc(relationshipRoots, func(root string) bool { return strings.HasPrefix(typ, root) })
+		external := strings.EqualFold(strings.TrimSpace(xmlAttr(se, "TargetMode")), "External")
+		active = !known || (external && kind != "hyperlink")
 		return !active
 	})
 	return active, err
+}
+
+func formulaElement(local string) bool {
+	return local == "f" || local == "definedName" || strings.HasPrefix(local, "formula")
 }
 
 func formulaWithDDE(f *zip.File) (bool, error) {
@@ -195,11 +221,11 @@ func formulaWithDDE(f *zip.File) (bool, error) {
 	err := walkXML(f, func(tok xml.Token) bool {
 		switch t := tok.(type) {
 		case xml.StartElement:
-			if t.Name.Local == "f" || t.Name.Local == "definedName" {
+			if formulaElement(t.Name.Local) {
 				depth++
 			}
 		case xml.EndElement:
-			if (t.Name.Local == "f" || t.Name.Local == "definedName") && depth > 0 {
+			if formulaElement(t.Name.Local) && depth > 0 {
 				depth--
 			}
 		case xml.CharData:
