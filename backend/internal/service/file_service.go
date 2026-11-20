@@ -186,7 +186,7 @@ func (s *FileService) process(ctx context.Context, in UploadInput, kind filechec
 	case filecheck.KindDOC, filecheck.KindDOCX:
 		return s.processOffice(ctx, in, kind, cfg)
 	case filecheck.KindXLSX:
-		if err := filecheck.CheckXLSX(in.Data); err != nil {
+		if err := filecheck.CheckStoredXLSX(in.Data); err != nil {
 			return processed{}, err
 		}
 		return processed{data: in.Data, mime: xlsxMime, ext: "xlsx"}, nil

@@ -257,3 +257,25 @@ func TestParseCrewCV_ReportsMissingSections(t *testing.T) {
 	assert.True(t, wb.Certificates[0].Competency)
 	assert.Empty(t, parseCV(t).Missing)
 }
+
+func TestParseCrewCV_RejectsContentBeyondTheCVArea(t *testing.T) {
+	for name, edit := range map[string]func(f *excelize.File){
+		"far below":     func(f *excelize.File) { require.NoError(t, f.SetCellStr(cvPersonalSheet, "B600", "extra")) },
+		"far right":     func(f *excelize.File) { require.NoError(t, f.SetCellStr(cvPersonalSheet, "DA10", "extra")) },
+		"sea far below": func(f *excelize.File) { require.NoError(t, f.SetCellStr(cvSeaSheet, "B700", "extra")) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := ParseCrewCV(buildCrewCV(t, edit))
+			e, ok := apperr.As(err)
+			require.True(t, ok, "%v", err)
+			assert.Equal(t, "This file does not look like an RVOS CV.", e.Fields["file"])
+		})
+	}
+	styled := buildCrewCV(t, func(f *excelize.File) {
+		style, err := f.NewStyle(&excelize.Style{Fill: excelize.Fill{Type: "pattern", Color: []string{"FFFF00"}, Pattern: 1}})
+		require.NoError(t, err)
+		require.NoError(t, f.SetCellStyle(cvPersonalSheet, "A900", "A900", style))
+	})
+	_, err := ParseCrewCV(styled)
+	require.NoError(t, err, "formatting without values below the CV is fine")
+}

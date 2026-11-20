@@ -211,7 +211,7 @@ func (s *CrewCVImportService) Validate(ctx context.Context, filename string, dat
 	}
 	var wb CVWorkbook
 	if err := s.cpu.Do(ctx, func(context.Context) error {
-		if err := filecheck.CheckXLSX(data); err != nil {
+		if err := filecheck.CheckStoredXLSX(data); err != nil {
 			return err
 		}
 		var err error

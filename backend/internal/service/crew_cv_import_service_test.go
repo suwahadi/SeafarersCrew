@@ -418,3 +418,32 @@ func TestCrewCVCommit_LongTextAliasFitsTheColumn(t *testing.T) {
 	}
 	assert.True(t, found)
 }
+
+func withPart(t *testing.T, data []byte, name, body string) []byte {
+	t.Helper()
+	r, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	require.NoError(t, err)
+	var out bytes.Buffer
+	zw := zip.NewWriter(&out)
+	for _, file := range r.File {
+		w, err := zw.Create(file.Name)
+		require.NoError(t, err)
+		rc, err := file.Open()
+		require.NoError(t, err)
+		_, err = io.Copy(w, rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+	}
+	w, err := zw.Create(name)
+	require.NoError(t, err)
+	_, err = w.Write([]byte(body))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	return out.Bytes()
+}
+
+func TestCrewCVValidate_RefusesActiveContent(t *testing.T) {
+	f := newCVFixture()
+	_, err := f.svc.Validate(context.Background(), "CV RVOS 2024.xlsx", withPart(t, buildCrewCV(t), "xl/externalLinks/externalLink1.xml", "<externalLink/>"))
+	require.Error(t, err, "a CV that will be stored and opened later may not carry external links")
+}

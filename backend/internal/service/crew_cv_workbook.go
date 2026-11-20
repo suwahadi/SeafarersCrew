@@ -284,6 +284,49 @@ func (g *cvGrid) sectionEnd(start int, headers []int) int {
 	return end
 }
 
+const (
+	cvMaxRows = 500
+	cvMaxCols = 100
+)
+
+func cvHasText(cells []string) bool {
+	for _, c := range cells {
+		if strings.TrimSpace(c) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func readCVRows(f *excelize.File, sheet string) ([][]string, bool, error) {
+	rows, err := f.Rows(sheet)
+	if err != nil {
+		return nil, false, err
+	}
+	defer func() { _ = rows.Close() }()
+	var out [][]string
+	for r := 0; rows.Next(); r++ {
+		cols, err := rows.Columns(excelize.Options{RawCellValue: true})
+		if err != nil {
+			return nil, false, err
+		}
+		if r >= cvMaxRows {
+			if cvHasText(cols) {
+				return nil, true, nil
+			}
+			continue
+		}
+		if len(cols) > cvMaxCols {
+			if cvHasText(cols[cvMaxCols:]) {
+				return nil, true, nil
+			}
+			cols = cols[:cvMaxCols]
+		}
+		out = append(out, cols)
+	}
+	return out, false, rows.Error()
+}
+
 // ParseCrewCV reads an RVOS CV workbook by its labels.
 func ParseCrewCV(data []byte) (CVWorkbook, error) {
 	f, err := excelize.OpenReader(bytes.NewReader(data), excelize.Options{
@@ -302,7 +345,10 @@ func ParseCrewCV(data []byte) (CVWorkbook, error) {
 		if visible, err := f.GetSheetVisible(sheet); err != nil || !visible {
 			continue
 		}
-		rows, err := f.GetRows(sheet, excelize.Options{RawCellValue: true})
+		rows, tooBig, err := readCVRows(f, sheet)
+		if tooBig {
+			return CVWorkbook{}, cvLayoutError()
+		}
 		if err != nil {
 			continue
 		}

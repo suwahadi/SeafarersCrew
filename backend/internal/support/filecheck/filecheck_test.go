@@ -8,6 +8,8 @@ import (
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -336,4 +338,65 @@ func TestDetect_XLSX(t *testing.T) {
 	assert.ElementsMatch(t, []string{"xlsx"}, Allowed(ContextPayrollImport))
 	_, ok := ParseContext("payroll_import")
 	assert.True(t, ok)
+}
+
+func xlsxWith(t *testing.T, change func(parts map[string]string)) []byte {
+	t.Helper()
+	base := xlsxBytes(t)
+	zr, err := zip.NewReader(bytes.NewReader(base), int64(len(base)))
+	require.NoError(t, err)
+	parts := map[string]string{}
+	for _, f := range zr.File {
+		rc, err := f.Open()
+		require.NoError(t, err)
+		b, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		parts[f.Name] = string(b)
+	}
+	change(parts)
+	return docxBytes(t, parts)
+}
+
+func addRelationship(p map[string]string, part, relType, target string) {
+	rel := `<Relationship Id="rIdX" Type="` + relType + `" Target="` + target + `"/>`
+	if body, ok := p[part]; ok {
+		p[part] = strings.Replace(body, "</Relationships>", rel+"</Relationships>", 1)
+		return
+	}
+	p[part] = `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` + rel + `</Relationships>`
+}
+
+func TestCheckStoredXLSXRejectsActiveContent(t *testing.T) {
+	cases := map[string]func(p map[string]string){
+		"embedded OLE object": func(p map[string]string) { p["xl/embeddings/oleObject1.bin"] = "ole" },
+		"ActiveX control":     func(p map[string]string) { p["xl/activeX/activeX1.xml"] = "<ax/>" },
+		"external link":       func(p map[string]string) { p["xl/externalLinks/externalLink1.xml"] = "<externalLink/>" },
+		"macro content type": func(p map[string]string) {
+			p["[Content_Types].xml"] = strings.Replace(p["[Content_Types].xml"], "</Types>",
+				`<Override PartName="/xl/workbook.xml" ContentType="application/vnd.ms-excel.sheet.macroEnabled.main+xml"/></Types>`, 1)
+		},
+		"vbaProject under another name": func(p map[string]string) {
+			addRelationship(p, "xl/_rels/workbook.xml.rels", "http://schemas.microsoft.com/office/2006/relationships/vbaProject", "data.bin")
+			p["xl/data.bin"] = "code"
+		},
+		"OLE object relationship": func(p map[string]string) {
+			addRelationship(p, "xl/worksheets/_rels/sheet1.xml.rels", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject", "../objects/o.bin")
+		},
+		"DDE formula": func(p map[string]string) {
+			p["xl/worksheets/sheet1.xml"] = strings.Replace(p["xl/worksheets/sheet1.xml"], "</sheetData>", `<row r="5"><c r="A5"><f>cmd|' /C calc'!A0</f></c></row></sheetData>`, 1)
+		},
+	}
+	for name, change := range cases {
+		t.Run(name, func(t *testing.T) {
+			data := xlsxWith(t, change)
+			require.Error(t, CheckStoredXLSX(data))
+		})
+	}
+
+	require.NoError(t, CheckStoredXLSX(xlsxBytes(t)))
+	require.NoError(t, CheckStoredXLSX(xlsxWith(t, func(p map[string]string) {
+		p["xl/media/image1.png"] = "png"
+		p["xl/worksheets/sheet1.xml"] = strings.Replace(p["xl/worksheets/sheet1.xml"], "</sheetData>", `<row r="5"><c r="A5"><f>SUM(A1:A2)</f></c></row></sheetData>`, 1)
+	})), "pictures and ordinary formulas are fine")
 }
